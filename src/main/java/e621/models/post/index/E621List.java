@@ -3,7 +3,7 @@ package e621.models.post.index;
 
 import java.util.ArrayList;
 
-public class List {
+public class E621List {
 
     private long id;
     private Tags tags;
