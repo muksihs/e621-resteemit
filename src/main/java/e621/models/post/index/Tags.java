@@ -4,6 +4,9 @@ package e621.models.post.index;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class Tags {
 
     private List<String> general = new ArrayList<String>();

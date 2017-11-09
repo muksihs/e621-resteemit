@@ -1,7 +1,9 @@
 
 package e621.models.post.tags;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class E621Tag {
 
     private long id;

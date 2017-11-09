@@ -3,6 +3,9 @@ package e621.models.post.index;
 
 import java.util.ArrayList;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class E621List {
 
     private long id;

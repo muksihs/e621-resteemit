@@ -1,7 +1,9 @@
 
 package e621.models.post.index;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class CreatedAt {
 
     private String jsonClass;
