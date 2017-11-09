@@ -6,7 +6,7 @@
  "https://raw.githubusercontent.com/gwtproject/gwt/master/distro-source/core/src/gwt-module.dtd">
 <module rename-to='e621resteemit'>
 
-	<entry-point class='muksihs.e621.resteemit.E621EP' />
+	<entry-point class='muksihs.e621.resteemit.client.E621EP' />
 
 	<source path='client' />
 	<source path='shared' />
@@ -17,6 +17,8 @@
 	
 	<!-- steemjs -->
 	<inherits name="steem.Steem" />
+	<!-- e621 -->
+	<inherits name="e621.E621" />
 	<!-- HTML5 -->
 	<inherits name="elemental2.dom.Dom" />
 

@@ -1,4 +1,4 @@
-package muksihs.e621.resteemit;
+package muksihs.e621.resteemit.client;
 
 import com.google.gwt.core.client.EntryPoint;
 

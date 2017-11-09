@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
-public class E621List {
+public class E621Post {
 
     private long id;
     private Tags tags;

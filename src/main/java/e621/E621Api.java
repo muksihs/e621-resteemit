@@ -10,7 +10,7 @@ import javax.ws.rs.QueryParam;
 
 import org.fusesource.restygwt.client.Options;
 
-import e621.models.post.index.E621List;
+import e621.models.post.index.E621Post;
 import e621.models.post.tags.E621Tag;
 
 /**
@@ -24,11 +24,11 @@ import e621.models.post.tags.E621Tag;
 public interface E621Api {
 	@GET
 	@Path("post/index.json?typed_tags=true")
-	E621List index(@QueryParam("tags") String tags, @QueryParam("before_id") long beforeId, @QueryParam("limit") int limit);
+	List<E621Post> index(@QueryParam("tags") String tags, @QueryParam("before_id") long beforeId, @QueryParam("limit") int limit);
 	
 	@GET
 	@Path("post/index.json?typed_tags=true")
-	E621List index(@QueryParam("tags") String tags, @QueryParam("limit") int limit);
+	List<E621Post> index(@QueryParam("tags") String tags, @QueryParam("limit") int limit);
 	
 	@GET
 	@Path("post/tags.json")
