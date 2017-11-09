@@ -6,7 +6,7 @@ apply plugin: 'eclipse-wtp'
 apply plugin: 'org.akhikhl.gretty'
 //apply plugin: 'maven'
 
-version = '20171021'
+version = '20171108'
 group = "muksihs"
 
 sourceCompatibility = 1.8
@@ -99,10 +99,10 @@ dependencies {
 	compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
 	
 	gwt 'com.google.gwt:gwt-user:'+gwt.gwtVersion
-	gwt 'org.fusesource.restygwt:restygwt:2.2.+'
-	gwt 'com.google.code.findbugs:jsr305:3.0.0' //required for restygwt compile
-	gwt 'de.knightsoft-net:gwt-commons-lang3:3.6-0'
-	gwt 'com.fasterxml.jackson.core:jackson-annotations:2.7.+'
+	//gwt 'org.fusesource.restygwt:restygwt:2.2.+'
+	//gwt 'com.google.code.findbugs:jsr305:3.0.0' //required for restygwt compile
+	//gwt 'de.knightsoft-net:gwt-commons-lang3:3.6-0'
+	//gwt 'com.fasterxml.jackson.core:jackson-annotations:2.7.+'
 	
 	gwt 'com.github.gwtmaterialdesign:gwt-material:2.0+'
 	gwt 'com.github.gwtmaterialdesign:gwt-material-themes:2.0+'
@@ -111,20 +111,20 @@ dependencies {
 	gwt 'com.google.elemental2:elemental2-core:1.0.0-beta-1'
 	gwt 'com.google.elemental2:elemental2-dom:1.0.0-beta-1'
 	/*gwt 'com.google.elemental2:elemental2-promise:1.0.0-beta-1'
-	gwt 'com.google.elemental2:elemental2-indexeddb:1.0.0-beta-1'
-	gwt 'com.google.elemental2:elemental2-svg:1.0.0-beta-1'
-	gwt 'com.google.elemental2:elemental2-webgl:1.0.0-beta-1'
-	gwt 'com.google.elemental2:elemental2-media:1.0.0-beta-1'
-	gwt 'com.google.elemental2:elemental2-webstorage:1.0.0-beta-1'*/
+	//gwt 'com.google.elemental2:elemental2-indexeddb:1.0.0-beta-1'
+	//gwt 'com.google.elemental2:elemental2-svg:1.0.0-beta-1'
+	//gwt 'com.google.elemental2:elemental2-webgl:1.0.0-beta-1'
+	//gwt 'com.google.elemental2:elemental2-media:1.0.0-beta-1'
+	//gwt 'com.google.elemental2:elemental2-webstorage:1.0.0-beta-1'*/
 	
 	gwt ('com.google.gwt.eventbinder:eventbinder:1.1.0') {
 		exclude module: 'gwt-user'
 	}
 	
-	compile 'org.mitre.dsmiley.httpproxy:smiley-http-proxy-servlet:1.9'
+	//compile 'org.mitre.dsmiley.httpproxy:smiley-http-proxy-servlet:1.9'
 	
 	testCompile 'org.testng:testng:6.+'
-	testCompile 'org.seleniumhq.selenium:selenium-server:+'
+	//testCompile 'org.seleniumhq.selenium:selenium-server:+'
 }
  
 sourceSets {
@@ -195,7 +195,7 @@ project.afterEvaluate {
 
 eclipse {
 	project {
-		name = 'ipfs-photo-gallery'
+		name = 'e621-resteemit'
 		referencedProjects
 		natures 'org.eclipse.buildship.core.gradleprojectnature'
 		webAppDirName = 'src/main/webapp'
