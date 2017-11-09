@@ -99,10 +99,10 @@ dependencies {
 	compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
 	
 	gwt 'com.google.gwt:gwt-user:'+gwt.gwtVersion
-	//gwt 'org.fusesource.restygwt:restygwt:2.2.+'
-	//gwt 'com.google.code.findbugs:jsr305:3.0.0' //required for restygwt compile
+	gwt 'org.fusesource.restygwt:restygwt:2.2.+'
+	gwt 'com.google.code.findbugs:jsr305:3.0.0' //required for restygwt compile
 	//gwt 'de.knightsoft-net:gwt-commons-lang3:3.6-0'
-	//gwt 'com.fasterxml.jackson.core:jackson-annotations:2.7.+'
+	gwt 'com.fasterxml.jackson.core:jackson-annotations:2.7.+'
 	
 	gwt 'com.github.gwtmaterialdesign:gwt-material:2.0+'
 	gwt 'com.github.gwtmaterialdesign:gwt-material-themes:2.0+'
