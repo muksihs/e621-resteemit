@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:m="urn:import:gwt.material.design.client.ui"
+	xmlns:x="urn:import:muksihs.e621.resteemit.ui">
+	<ui:style>
+	
+	</ui:style>
+	<m:MaterialPanel style='margin: auto; min-width: 840px; text-align: center;'>
+	<x:HeaderBlock></x:HeaderBlock>
+	<m:MaterialPanel style='text-align: left;' ui:field="panel"></m:MaterialPanel>
+	</m:MaterialPanel>
+</ui:UiBinder> 

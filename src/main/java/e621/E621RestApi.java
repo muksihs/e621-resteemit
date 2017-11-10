@@ -2,7 +2,6 @@ package e621;
 
 import java.util.List;
 
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
@@ -24,10 +23,16 @@ public interface E621RestApi extends RestService {
 	@Path("post/index.json")
 	@JSONP
 	void index(@QueryParam("tags") String tags, @QueryParam("before_id") long beforeId, @QueryParam("limit") int limit, @QueryParam("typed_tags") boolean typedTags, MethodCallback<List<E621Post>> callback);
+	default void index(String tags, long beforeId, int limit, MethodCallback<List<E621Post>> callback) {
+		index(tags, beforeId, limit, true, callback);
+	}
 	
 	@Path("post/index.json")
 	@JSONP
 	void index(@QueryParam("tags") String tags, @QueryParam("limit") int limit, @QueryParam("typed_tags") boolean typedTags, MethodCallback<List<E621Post>> callback);
+	default void index(String tags, int limit, MethodCallback<List<E621Post>> callback) {
+		index(tags, limit, true, callback);
+	}
 	
 	@Path("post/tags.json")
 	@JSONP
