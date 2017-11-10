@@ -15,30 +15,27 @@ import e621.models.post.tags.E621Tag;
 
 /**
  * See <a href='https://e621.net/help/show/api'>E621 Api Documentation</a>.
+ * 
  * @author muksihs
  *
  */
-@Options(serviceRootKey="E621")
+@Options(serviceRootKey = "E621")
 public interface E621RestApi extends RestService {
 	@Path("post/index.json")
 	@JSONP
-	void index(@QueryParam("tags") String tags, @QueryParam("before_id") long beforeId, @QueryParam("limit") int limit, @QueryParam("typed_tags") boolean typedTags, MethodCallback<List<E621Post>> callback);
-	default void index(String tags, long beforeId, int limit, MethodCallback<List<E621Post>> callback) {
-		index(tags, beforeId, limit, true, callback);
-	}
-	
+	void index(@QueryParam("tags") String tags, @QueryParam("before_id") long beforeId, @QueryParam("limit") int limit,
+			MethodCallback<List<E621Post>> callback);
+
 	@Path("post/index.json")
 	@JSONP
-	void index(@QueryParam("tags") String tags, @QueryParam("limit") int limit, @QueryParam("typed_tags") boolean typedTags, MethodCallback<List<E621Post>> callback);
-	default void index(String tags, int limit, MethodCallback<List<E621Post>> callback) {
-		index(tags, limit, true, callback);
-	}
-	
+	void index(@QueryParam("tags") String tags, @QueryParam("limit") int limit,
+			MethodCallback<List<E621Post>> callback);
+
 	@Path("post/tags.json")
 	@JSONP
-	void tags(@QueryParam("id")long id, MethodCallback<List<E621Tag>> callback);
-	
+	void tags(@QueryParam("id") long id, MethodCallback<List<E621Tag>> callback);
+
 	@Path("post/tags.json")
 	@JSONP
-	void tags(@QueryParam("md5")String md5, MethodCallback<List<E621Tag>> callback);
+	void tags(@QueryParam("md5") String md5, MethodCallback<List<E621Tag>> callback);
 }
