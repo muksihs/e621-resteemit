@@ -1,3 +1,4 @@
+
 package e621.models.post.index;
 
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class E621Post {
     @JsonProperty("id")
     private long id;
     @JsonProperty("tags")
-    private Tags tags;
+    private String tags;
     @JsonProperty("locked_tags")
     private Object lockedTags;
     @JsonProperty("description")
@@ -119,12 +120,12 @@ public class E621Post {
     }
 
     @JsonProperty("tags")
-    public Tags getTags() {
+    public String getTags() {
         return tags;
     }
 
     @JsonProperty("tags")
-    public void setTags(Tags tags) {
+    public void setTags(String tags) {
         this.tags = tags;
     }
 
