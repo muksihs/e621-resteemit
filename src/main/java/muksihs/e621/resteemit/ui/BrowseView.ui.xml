@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:m="urn:import:gwt.material.design.client.ui"
+	xmlns:x="urn:import:muksihs.e621.resteemit.ui">
+	<ui:style>
+	
+	</ui:style>
+	<m:MaterialPanel>
+	<m:MaterialPanel ui:field="menu"></m:MaterialPanel>
+	<m:MaterialPanel ui:field="filterTags"></m:MaterialPanel>
+	<m:MaterialPanel ui:field="availableTags"></m:MaterialPanel>
+	<m:MaterialPanel style="text-align: center;" ui:field="posts"></m:MaterialPanel>
+	</m:MaterialPanel>
+</ui:UiBinder> 

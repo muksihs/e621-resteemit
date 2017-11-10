@@ -24,7 +24,7 @@ public class BasicApiTests implements ScheduledCommand, IsSdm {
 				GWT.log("Raw Response Size: " + response.size());
 				for (E621Post post : response) {
 					GWT.log("id: " + post.getId());
-					GWT.log("description: " + post.getDescription());
+//					GWT.log("description: " + post.getDescription());
 					GWT.log("sample url: " + post.getSampleUrl());
 					GWT.log("file url: " + post.getFileUrl());
 					GWT.log("preview url: " + post.getPreviewUrl());
@@ -37,7 +37,7 @@ public class BasicApiTests implements ScheduledCommand, IsSdm {
 				GWT.log("Failure: " + method.getResponse().getText(), exception);
 			}
 		};
-		api.index("", 2, callback);
+		api.index("", 1, callback);
 	}
 
 }

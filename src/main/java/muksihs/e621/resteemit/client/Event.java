@@ -1,10 +1,31 @@
 package muksihs.e621.resteemit.client;
 
+import java.util.List;
+
 import com.google.web.bindery.event.shared.binder.GenericEvent;
 
+import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
+
+	public class ShowPreviews extends GenericEvent {
+
+		private final List<PostPreview> previews;
+
+		public ShowPreviews(List<PostPreview> previews) {
+			this.previews=previews;
+		}
+
+		public List<PostPreview> getPreviews() {
+			return previews;
+		}
+
+	}
+
+	public class InitialPreviews extends GenericEvent {
+
+	}
 
 	public class Loading extends GenericEvent {
 
