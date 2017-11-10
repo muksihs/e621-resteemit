@@ -1,40 +1,22 @@
 package e621;
 
-import java.util.List;
+import org.fusesource.restygwt.client.Defaults;
+import org.fusesource.restygwt.client.ServiceRoots;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import com.google.gwt.core.client.GWT;
 
-import org.fusesource.restygwt.client.Options;
+import muksihs.e621.resteemit.client.IsSdm;
 
-import e621.models.post.index.E621Post;
-import e621.models.post.tags.E621Tag;
-
-/**
- * See <a href='https://e621.net/help/show/api'>E621 Api Documentation</a>.
- * @author muksihs
- *
- */
-@Produces("application/json")
-@Consumes("application/json")
-@Options(serviceRootKey="https://e621.net/")
-public interface E621Api {
-	@GET
-	@Path("post/index.json?typed_tags=true")
-	List<E621Post> index(@QueryParam("tags") String tags, @QueryParam("before_id") long beforeId, @QueryParam("limit") int limit);
-	
-	@GET
-	@Path("post/index.json?typed_tags=true")
-	List<E621Post> index(@QueryParam("tags") String tags, @QueryParam("limit") int limit);
-	
-	@GET
-	@Path("post/tags.json")
-	List<E621Tag> tags(@QueryParam("id")long id);
-	
-	@GET
-	@Path("post/tags.json")
-	List<E621Tag> tags(@QueryParam("md5")String md5);
+public class E621Api implements IsSdm {
+	private static E621RestApi instance;
+	protected E621Api() {};
+	public static E621RestApi api() {
+		if (instance==null) {
+			Defaults.setAddXHttpMethodOverrideHeader(false);
+			Defaults.setRequestTimeout(5000);
+			ServiceRoots.add("E621", "https://e621.net");
+			instance=GWT.create(E621RestApi.class);
+		}
+		return instance;
+	}
 }
