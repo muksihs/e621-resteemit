@@ -1,15 +1,17 @@
 package muksihs.e621.resteemit.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Display;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.binder.EventBinder;
 import com.google.web.bindery.event.shared.binder.EventHandler;
 
+import gwt.material.design.client.constants.Display;
+import gwt.material.design.client.ui.MaterialAnchorButton;
 import gwt.material.design.client.ui.MaterialImage;
+import gwt.material.design.client.ui.MaterialLabel;
 import gwt.material.design.client.ui.MaterialPanel;
 import gwt.material.design.client.ui.html.Anchor;
 import gwt.material.design.client.ui.html.Br;
@@ -47,6 +49,16 @@ public class BrowseView extends EventBusComposite {
 	}
 	
 	@EventHandler
+	protected void showAvailableTags(Event.ShowAvailableTags event) {
+		availableTags.clear();
+		for (String tag: event.getAvailableTags()) {
+			MaterialAnchorButton tagLabel = new MaterialAnchorButton(tag);
+//			tagLabel.setDisplay(Display.INLINE_BLOCK);// getElement().getStyle().setDisplay(Style.Display.INLINE_BLOCK);
+			availableTags.add(tagLabel);
+		}
+	}
+	
+	@EventHandler
 	protected void showPreviews(Event.ShowPreviews event) {
 		GWT.log("BrowseView#showPreviews");
 		GWT.log("previews="+event.getPreviews().size());
@@ -59,9 +71,9 @@ public class BrowseView extends EventBusComposite {
 			a.getElement().setAttribute("target", "_blank");
 			a.add(img);
 			MaterialPanel panel = new MaterialPanel();
-			panel.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
-			panel.getElement().getStyle().setPadding(1, Unit.PCT);
-			panel.getElement().getStyle().setMargin(0, Unit.PCT);
+			panel.getElement().getStyle().setDisplay(Style.Display.INLINE_BLOCK);
+			panel.getElement().getStyle().setPadding(1, Style.Unit.PCT);
+			panel.getElement().getStyle().setMargin(0, Style.Unit.PCT);
 			String style = panel.getElement().getAttribute("style");
 			if (!style.endsWith(";")&&!style.trim().isEmpty()) {
 				style+=";";

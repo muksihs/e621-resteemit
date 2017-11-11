@@ -1,6 +1,7 @@
 package muksihs.e621.resteemit.client;
 
 import java.util.List;
+import java.util.Set;
 
 import com.google.web.bindery.event.shared.binder.GenericEvent;
 
@@ -8,6 +9,17 @@ import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
+
+	public class ShowAvailableTags extends GenericEvent {
+		private final Set<String> availableTags;
+		public ShowAvailableTags(Set<String> availableTags) {
+			this.availableTags=availableTags;
+		}
+		public Set<String> getAvailableTags() {
+			return availableTags;
+		}
+
+	}
 
 	public class ShowPreviews extends GenericEvent {
 

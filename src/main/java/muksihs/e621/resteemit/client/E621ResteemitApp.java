@@ -1,6 +1,7 @@
 package muksihs.e621.resteemit.client;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +24,10 @@ import muksihs.e621.resteemit.shared.View;
 import muksihs.e621.resteemit.ui.MainView;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
+	
+	public E621ResteemitApp() {
+		extensionsWhitelist.addAll(Arrays.asList("png", "jpg", "gif", "jpeg"));
+	}
 
 	private static final int MAX_TAGS_PER_QUERY = 6;
 
@@ -35,6 +40,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 	private final Set<String> mustHaveTags=new TreeSet<>();
 	private final Set<String> mustNotHaveTags=new TreeSet<>();
 	private final List<PostPreview> activeSet=new ArrayList<>();
+	private final Set<String> extensionsWhitelist= new TreeSet<>();
+	private final Set<String> availableTags = new TreeSet<>();
 
 	private MethodCallback<List<E621Post>> onPostsLoaded=new MethodCallback<List<E621Post>>() {
 
@@ -48,16 +55,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 			}
 			int size = response.size();
 			GWT.log("have "+size+" posts to examine");
-			response.removeIf((p)->p.getFileExt().endsWith("swf"));
+			response.removeIf((p)->!extensionsWhitelist.contains(p.getFileExt().toLowerCase()));
 			GWT.log("removed "+(size-response.size())+" non-image posts");
 			size = response.size();
 			response.removeIf((p)->{
 				String[] tags = p.getTags().split("\\s+");
 				//first scan for must remove tags
-				for (String tag:tags) {
-					tag=tag.toLowerCase().trim();
-					if (mustNotHaveTags.contains(tag)) {
-						return true; //remove post
+				if (!mustNotHaveTags.isEmpty()) {
+					for (String tag:tags) {
+						tag=tag.toLowerCase().trim();
+						if (mustNotHaveTags.contains(tag)) {
+							return true; //remove post
+						}
 					}
 				}
 				//second scan for must have tags
@@ -67,7 +76,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 						return false; //keep post
 					}
 				}
-				return true; //remove post
+				 //remove post only if we have tags that must be matched
+				return !mustHaveTags.isEmpty(); 
 			});
 			GWT.log("removed "+(size-response.size())+" unwanted posts");
 			List<PostPreview> previews = new ArrayList<>();
@@ -76,6 +86,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 				E621Post next = iter.next();
 				PostPreview preview = new PostPreview(next.getId(), next.getSampleUrl(), next.getFileUrl(), next.getCreatedAt().getS());
 				previews.add(preview);
+				String[] tags = next.getTags().split("\\s+");
+				for (String tag: tags) {
+					availableTags.add(tag);
+				}
 			}
 			activeSet.addAll(previews);
 			GWT.log("Have "+activeSet.size()+" previews to display.");
@@ -87,6 +101,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 				activeSet.subList(Consts.MIN_PREVIEWS, activeSet.size()).clear();
 			}
 			fireEvent(new Event.ShowPreviews(activeSet));
+			fireEvent(new Event.ShowAvailableTags(availableTags));
 			fireEvent(new Event.Loading(false));
 		}
 		
@@ -99,24 +114,24 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 
 	@Override
 	public void execute() {
-		mustHaveTags.add("male/male");
-		mustHaveTags.add("anal_penetration");
+//		mustHaveTags.add("male/male");
+//		mustHaveTags.add("anal_penetration");
 //		mustHaveTags.add("canine");
 //		mustHaveTags.add("bondage");
 		
-		mustNotHaveTags.add("young");
-		mustNotHaveTags.add("girly");
-		mustNotHaveTags.add("blood");
-		mustNotHaveTags.add("feline");
-		mustNotHaveTags.add("equine");
-		mustNotHaveTags.add("dragon");
-		mustNotHaveTags.add("pokémon_(species)");
-		mustNotHaveTags.add("avian");
-		mustNotHaveTags.add("fish");
-		mustNotHaveTags.add("alien");
-		mustNotHaveTags.add("scalie");
-		mustNotHaveTags.add("reptile");
-		mustNotHaveTags.add("size_difference");
+//		mustNotHaveTags.add("young");
+//		mustNotHaveTags.add("girly");
+//		mustNotHaveTags.add("blood");
+//		mustNotHaveTags.add("feline");
+//		mustNotHaveTags.add("equine");
+//		mustNotHaveTags.add("dragon");
+//		mustNotHaveTags.add("pokémon_(species)");
+//		mustNotHaveTags.add("avian");
+//		mustNotHaveTags.add("fish");
+//		mustNotHaveTags.add("alien");
+//		mustNotHaveTags.add("scalie");
+//		mustNotHaveTags.add("reptile");
+//		mustNotHaveTags.add("size_difference");
 		
 		rp = RootPanel.get("e621resteemit");
 		rp.clear();
@@ -165,6 +180,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 	@EventHandler
 	protected void initialPreviewsLoad(Event.InitialPreviews event) {
 		activeSet.clear();
+		availableTags.clear();
 		List<String> tags = new ArrayList<>();
 		Iterator<String> iMust = mustHaveTags.iterator();
 		while (iMust.hasNext() && tags.size()<MAX_TAGS_PER_QUERY) {
