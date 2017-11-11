@@ -17,9 +17,9 @@ public class E621EP implements EntryPoint, IsSdm {
 	@Override
 	public void onModuleLoad() {
 		GWT.setUncaughtExceptionHandler(handler);
-		if (isSdm()) {
-			Scheduler.get().scheduleDeferred(new BasicApiTests());
-		}
+//		if (isSdm()) {
+//			Scheduler.get().scheduleDeferred(new BasicApiTests());
+//		}
 		Scheduler.get().scheduleDeferred(new E621ResteemitApp());
 	}
 

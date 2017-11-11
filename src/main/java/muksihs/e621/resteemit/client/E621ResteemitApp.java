@@ -34,13 +34,15 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 	
 	private final Set<String> mustHaveTags=new TreeSet<>();
 	private final Set<String> mustNotHaveTags=new TreeSet<>();
-	private final List<E621Post> activeSet=new ArrayList<>();
+	private final List<PostPreview> activeSet=new ArrayList<>();
 
 	private MethodCallback<List<E621Post>> onPostsLoaded=new MethodCallback<List<E621Post>>() {
+
 		@Override
 		public void onSuccess(Method method, List<E621Post> response) {
+			long minId=0;
 			try {
-				long minId = response.stream().mapToLong((p)->p.getId()).min().getAsLong();
+				minId = response.stream().mapToLong((p)->p.getId()).min().getAsLong();
 				GWT.log("minId: "+minId);
 			} catch (Exception e) {
 			}
@@ -75,29 +77,46 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 				PostPreview preview = new PostPreview(next.getId(), next.getSampleUrl(), next.getFileUrl(), next.getCreatedAt().getS());
 				previews.add(preview);
 			}
-			GWT.log("Have "+previews.size()+" previews to display.");
-			fireEvent(new Event.ShowPreviews(previews));
+			activeSet.addAll(previews);
+			GWT.log("Have "+activeSet.size()+" previews to display.");
+			if (activeSet.size()<Consts.MIN_PREVIEWS && minId>0) {
+				additionalPreviewsLoad(minId);
+				return;
+			}
+			if (activeSet.size()>Consts.MIN_PREVIEWS) {
+				activeSet.subList(Consts.MIN_PREVIEWS, activeSet.size()).clear();
+			}
+			fireEvent(new Event.ShowPreviews(activeSet));
 			fireEvent(new Event.Loading(false));
 		}
 		
 		@Override
 		public void onFailure(Method method, Throwable exception) {
-			// TODO Auto-generated method stub
+			GWT.log("EXCEPTION: "+String.valueOf(exception.getMessage()), exception);
 			
 		}
 	};
 
 	@Override
 	public void execute() {
-		mustHaveTags.add("gay");
+		mustHaveTags.add("male/male");
 		mustHaveTags.add("anal_penetration");
-		mustHaveTags.add("canine");
-		mustHaveTags.add("bestiality");
-//		mustHaveTags.add("forced");
-		mustHaveTags.add("from_behind_position");
+//		mustHaveTags.add("canine");
+//		mustHaveTags.add("bondage");
 		
 		mustNotHaveTags.add("young");
+		mustNotHaveTags.add("girly");
+		mustNotHaveTags.add("blood");
 		mustNotHaveTags.add("feline");
+		mustNotHaveTags.add("equine");
+		mustNotHaveTags.add("dragon");
+		mustNotHaveTags.add("pokémon_(species)");
+		mustNotHaveTags.add("avian");
+		mustNotHaveTags.add("fish");
+		mustNotHaveTags.add("alien");
+		mustNotHaveTags.add("scalie");
+		mustNotHaveTags.add("reptile");
+		mustNotHaveTags.add("size_difference");
 		
 		rp = RootPanel.get("e621resteemit");
 		rp.clear();
@@ -121,8 +140,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		fireEvent(new Event.AppVersion(Consts.APP_VERSION));
 	}
 	
-	@EventHandler
-	protected void initialPreviewsLoad(Event.InitialPreviews event) {
+	protected void additionalPreviewsLoad(long minId) {
+		GWT.log("additionalPreviewsLoad: "+minId);
 		List<String> tags = new ArrayList<>();
 		Iterator<String> iMust = mustHaveTags.iterator();
 		while (iMust.hasNext() && tags.size()<MAX_TAGS_PER_QUERY) {
@@ -140,7 +159,30 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 				sb.append(" ");
 			}
 		}
-		E621Api.api().index(sb.toString(), 16, onPostsLoaded);
+		E621Api.api().index(sb.toString(), (int) minId, 3, onPostsLoaded);
+	}
+	
+	@EventHandler
+	protected void initialPreviewsLoad(Event.InitialPreviews event) {
+		activeSet.clear();
+		List<String> tags = new ArrayList<>();
+		Iterator<String> iMust = mustHaveTags.iterator();
+		while (iMust.hasNext() && tags.size()<MAX_TAGS_PER_QUERY) {
+			tags.add(iMust.next());
+		}
+		Iterator<String> iMustNot = mustNotHaveTags.iterator();
+		while (iMustNot.hasNext() && tags.size()<MAX_TAGS_PER_QUERY) {
+			tags.add("-"+iMustNot.next());
+		}
+		StringBuilder sb = new StringBuilder();
+		Iterator<String> iTags = tags.iterator();
+		while (iTags.hasNext()) {
+			sb.append(iTags.next());
+			if (iTags.hasNext()) {
+				sb.append(" ");
+			}
+		}
+		E621Api.api().index(sb.toString(), 3, onPostsLoaded);
 	}
 
 }

@@ -1,7 +1,6 @@
 package muksihs.e621.resteemit.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -10,7 +9,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.binder.EventBinder;
 import com.google.web.bindery.event.shared.binder.EventHandler;
 
-import gwt.material.design.client.constants.Color;
 import gwt.material.design.client.ui.MaterialImage;
 import gwt.material.design.client.ui.MaterialPanel;
 import gwt.material.design.client.ui.html.Anchor;
@@ -62,12 +60,13 @@ public class BrowseView extends EventBusComposite {
 			a.add(img);
 			MaterialPanel panel = new MaterialPanel();
 			panel.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
-			panel.getElement().getStyle().setMargin(1, Unit.PCT);
+			panel.getElement().getStyle().setPadding(1, Unit.PCT);
+			panel.getElement().getStyle().setMargin(0, Unit.PCT);
 			String style = panel.getElement().getAttribute("style");
 			if (!style.endsWith(";")&&!style.trim().isEmpty()) {
 				style+=";";
 			}
-			style=style+"max-width: 30%;";
+			style+="max-width: 400px; max-height: 400px";
 			panel.getElement().setAttribute("style", style);
 			panel.add(a);
 			panel.add(new Br());

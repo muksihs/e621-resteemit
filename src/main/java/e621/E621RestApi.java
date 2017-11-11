@@ -23,7 +23,7 @@ import e621.models.post.tags.E621Tag;
 public interface E621RestApi extends RestService {
 	@Path("post/index.json")
 	@JSONP
-	void index(@QueryParam("tags") String tags, @QueryParam("before_id") long beforeId, @QueryParam("limit") int limit,
+	void index(@QueryParam("tags") String tags, @QueryParam("before_id") int beforeId, @QueryParam("limit") int limit,
 			MethodCallback<List<E621Post>> callback);
 
 	@Path("post/index.json")
