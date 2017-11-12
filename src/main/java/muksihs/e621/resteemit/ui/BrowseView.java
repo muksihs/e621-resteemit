@@ -53,6 +53,7 @@ public class BrowseView extends EventBusComposite {
 		availableTags.clear();
 		for (String tag: event.getAvailableTags()) {
 			MaterialAnchorButton tagLabel = new MaterialAnchorButton(tag);
+			tagLabel.setMargin(1);
 //			tagLabel.setDisplay(Display.INLINE_BLOCK);// getElement().getStyle().setDisplay(Style.Display.INLINE_BLOCK);
 			availableTags.add(tagLabel);
 		}
