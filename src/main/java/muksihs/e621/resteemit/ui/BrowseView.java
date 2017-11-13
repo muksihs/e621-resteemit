@@ -199,13 +199,11 @@ public class BrowseView extends EventBusComposite {
 
 	@EventHandler
 	protected void showPreviews(Event.ShowPreviews event) {
-		GWT.log("BrowseView#showPreviews");
-		GWT.log("previews=" + event.getPreviews().size());
 		posts.clear();
 		for (PostPreview preview : event.getPreviews()) {
 			MaterialImage img = new MaterialImage(preview.getSampleUrl());
 			img.setHoverable(true);
-			img.setTitle(preview.getTags());
+			img.setTitle("#"+preview.getId()+" "+preview.getTags());
 			Anchor a = new Anchor();
 			String href = Consts.E621_SHOW_POST + preview.getId();
 			a.getElement().setAttribute("href", href);

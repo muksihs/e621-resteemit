@@ -9,7 +9,6 @@ public interface GlobalEventBus {
 		@Override
 		public void fireEvent(com.google.web.bindery.event.shared.Event<?> event) {
 			if (event != null) {
-				// GWT.log("event: " + event.getClass().getSimpleName());
 			} else {
 				GWT.log("null event!");
 			}
@@ -19,7 +18,6 @@ public interface GlobalEventBus {
 		@Override
 		public void fireEventFromSource(com.google.web.bindery.event.shared.Event<?> event, Object source) {
 			if (event != null) {
-				GWT.log("event with source: " + event.getClass().getSimpleName());
 			} else {
 				GWT.log("null event!");
 			}

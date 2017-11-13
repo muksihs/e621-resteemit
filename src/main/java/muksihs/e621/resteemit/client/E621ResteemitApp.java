@@ -52,6 +52,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 
 	@EventHandler
 	protected void removeFromFilter(Event.RemoveFromFilter event) {
+		reloadingOnFilterChange = true;
 		mustHaveTags.remove(event.getTag().substring(1));
 		mustNotHaveTags.remove(event.getTag().substring(1));
 		fireEvent(new Event.InitialPreviews());
@@ -59,6 +60,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 
 	@EventHandler
 	protected void setRating(Event.SetRating event) {
+		reloadingOnFilterChange = true;
 		mustHaveRatings.clear();
 		/*
 		 * if ALL ratings, then leave settings clear so that more tags can be used as
@@ -70,16 +72,19 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 			}
 		}
 		fireEvent(new Event.InitialPreviews());
+
 	}
 
 	@EventHandler
 	protected void addToIncludeFilter(Event.AddToIncludeFilter event) {
+		reloadingOnFilterChange = true;
 		mustHaveTags.add(event.getTag());
 		fireEvent(new Event.InitialPreviews());
 	}
 
 	@EventHandler
 	protected void addToExcludeFilter(Event.AddToExcludeFilter event) {
+		reloadingOnFilterChange = true;
 		mustNotHaveTags.add(event.getTag());
 		fireEvent(new Event.InitialPreviews());
 	}
@@ -107,6 +112,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		}
 		availableTags.removeAll(mustHaveTags);
 		availableTags.removeAll(mustNotHaveTags);
+		
+		reloadingOnFilterChange = false;
+		savedPageStartId = previewsToShow.stream().mapToLong((p) -> p.getId()).max().getAsLong();
+		GWT.log("new savedPageStartId: "+savedPageStartId);
+		
 		fireEvent(new Event.ShowAvailableTags(availableTags));
 		fireEvent(new Event.ShowPreviews(previewsToShow));
 		fireEvent(new Event.Loading(false));
@@ -119,21 +129,20 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		return previewsToShow;
 	}
 
+	private boolean reloadingOnFilterChange = false;
+	private long savedPageStartId = 0;
+
 	private MethodCallback<List<E621Post>> onPostsLoaded = new MethodCallback<List<E621Post>>() {
 
 		@Override
 		public void onSuccess(Method method, List<E621Post> response) {
-			long maxId = 0;
-			long minId = 0;
+			long pageStartId = 0;
+			long nextBeforeId = 0;
 			try {
-				minId = response.stream().mapToLong((p) -> p.getId()).min().getAsLong();
-				GWT.log("minId: " + minId);
-				maxId = response.stream().mapToLong((p) -> p.getId()).max().getAsLong();
-				GWT.log("maxId: " + maxId);
+				nextBeforeId = response.stream().mapToLong((p) -> p.getId()).min().getAsLong();
+				pageStartId = response.stream().mapToLong((p) -> p.getId()).max().getAsLong();
 			} catch (Exception e) {
 			}
-			int size = response.size();
-			GWT.log("have " + size + " posts to examine");
 
 			Set<Long> ids = new HashSet<>();
 			for (PostPreview active : activeSet) {
@@ -146,18 +155,12 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 					iter.remove();
 				}
 			}
-			GWT.log("Removed " + (size - response.size()) + " posts already in active set");
-			size = response.size();
 
 			if (!mustHaveRatings.isEmpty()) {
 				response.removeIf((p) -> !mustHaveRatings.contains(p.getRating()));
 			}
-			GWT.log("removed " + (size - response.size()) + " posts that did not match desired ratings");
-			size = response.size();
 
 			response.removeIf((p) -> !extensionsWhitelist.contains(p.getFileExt().toLowerCase()));
-			GWT.log("removed " + (size - response.size()) + " non-image posts");
-			size = response.size();
 			if (!mustNotHaveTags.isEmpty()) {
 				response.removeIf((p) -> {
 					String[] tags = p.getTags().split("\\s+");
@@ -170,8 +173,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 					return false; // keep post
 				});
 			}
-			GWT.log("removed " + (size - response.size()) + " must not have tag posts");
-			size = response.size();
 
 			if (!mustHaveTags.isEmpty()) {
 				response.removeIf((p) -> {
@@ -185,7 +186,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 					return true; // remove post
 				});
 			}
-			GWT.log("removed " + (size - response.size()) + " did not have tag posts");
 
 			List<PostPreview> previews = new ArrayList<>();
 			iter = response.iterator();
@@ -198,10 +198,21 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 			// remove previews already in the activeset
 			previews.removeAll(activeSet);
 			activeSet.addAll(previews);
-			GWT.log("Have " + activeSet.size() + " previews available for display.");
-			if (activeSet.size() < (1 + activePage) * Consts.PREVIEWS_TO_SHOW && minId > 0) {
-				final long beforeId = minId;
+			boolean moreAvailable = nextBeforeId > 0;
+			int activePageEnd = (1 + activePage) * Consts.PREVIEWS_TO_SHOW;
+			if ((activeSet.size() < activePageEnd) && moreAvailable) {
+				final long beforeId = nextBeforeId;
 				Scheduler.get().scheduleDeferred(() -> additionalPreviewsLoad(beforeId));
+				return;
+			}
+			List<PostPreview> previewsToShow = activeSetForPage(activePage);
+			long beforeId = previewsToShow.stream().mapToLong((p) -> p.getId()).min().getAsLong();
+			boolean skipForwards = reloadingOnFilterChange //
+					&& beforeId > savedPageStartId //
+					&& savedPageStartId > 0;
+			GWT.log("skip forwards to savedPageStartId: " + savedPageStartId+" ["+skipForwards+"]");
+			if (skipForwards && moreAvailable) {
+				fireEvent(new Event.NextPreviewSet());
 				return;
 			}
 			fireEvent(new Event.PreviewsLoaded());
@@ -251,14 +262,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 	protected void showNextSet(Event.NextPreviewSet event) {
 		fireEvent(new Event.Loading(true));
 		List<PostPreview> previewsToShow = activeSetForPage(activePage);
-		long minId = previewsToShow.stream().mapToLong((p) -> p.getId()).min().getAsLong();
+		long beforeId = previewsToShow.stream().mapToLong((p) -> p.getId()).min().getAsLong();
 		activePage++;
-		additionalPreviewsLoad(minId);
+		additionalPreviewsLoad(beforeId);
 	}
 
 	protected void additionalPreviewsLoad(long beforeId) {
 		fireEvent(new Event.Loading(true));
-		GWT.log("additionalPreviewsLoad: " + beforeId);
 		List<String> tags = new ArrayList<>();
 		Iterator<String> iRatings = mustHaveRatings.iterator();
 		while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
