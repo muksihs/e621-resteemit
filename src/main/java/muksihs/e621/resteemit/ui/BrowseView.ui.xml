@@ -6,9 +6,47 @@
 	
 	</ui:style>
 	<m:MaterialPanel>
-	<m:MaterialPanel ui:field="menu"></m:MaterialPanel>
-	<m:MaterialPanel ui:field="filterTags"></m:MaterialPanel>
-	<m:MaterialPanel ui:field="availableTags"></m:MaterialPanel>
-	<m:MaterialPanel style="text-align: center;" ui:field="posts"></m:MaterialPanel>
+		<m:MaterialPanel style='text-align: right;' ui:field="menu">
+			<m:MaterialPanel
+				style='text-align: left; margin: 4px; display: inline-block;'>
+				<m:MaterialCheckBox ui:field="ratingSafe" text="Show Safe"
+					type="FILLED" />
+			</m:MaterialPanel>
+			<m:MaterialPanel
+				style='text-align: left; margin: 4px; display: inline-block;'>
+				<m:MaterialCheckBox ui:field="ratingQuestionable"
+					text="Show Questionable" type="FILLED" />
+			</m:MaterialPanel>
+			<m:MaterialPanel
+				style='text-align: left; margin: 4px; display: inline-block;'>
+				<m:MaterialCheckBox ui:field="ratingExplicit"
+					text="Show Explicit" type="FILLED" />
+			</m:MaterialPanel>
+			<m:MaterialButton ui:field="previous" style='margin: 2px;'
+				text="Previous"></m:MaterialButton>
+			<m:MaterialButton ui:field="next" style='margin: 2px;'
+				text="Next"></m:MaterialButton>
+		</m:MaterialPanel>
+		<m:MaterialCollapsible ui:field="tags">
+			<m:MaterialCollapsibleItem>
+				<m:MaterialCollapsibleHeader>
+					<m:MaterialLink text="Active Tag Filters" iconType="POLYMER"
+						iconPosition="LEFT" textColor="BLACK" />
+				</m:MaterialCollapsibleHeader>
+				<m:MaterialCollapsibleBody>
+					<m:MaterialPanel ui:field="filterTags"></m:MaterialPanel>
+				</m:MaterialCollapsibleBody>
+			</m:MaterialCollapsibleItem>
+			<m:MaterialCollapsibleItem>
+				<m:MaterialCollapsibleHeader>
+					<m:MaterialLink text="Available Tag Filters"
+						iconType="POLYMER" iconPosition="LEFT" textColor="BLACK" />
+				</m:MaterialCollapsibleHeader>
+				<m:MaterialCollapsibleBody>
+					<m:MaterialPanel ui:field="availableTags"></m:MaterialPanel>
+				</m:MaterialCollapsibleBody>
+			</m:MaterialCollapsibleItem>
+		</m:MaterialCollapsible>
+		<m:MaterialPanel style="text-align: center;" ui:field="posts"></m:MaterialPanel>
 	</m:MaterialPanel>
 </ui:UiBinder> 

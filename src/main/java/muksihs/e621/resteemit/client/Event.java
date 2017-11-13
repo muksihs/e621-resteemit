@@ -10,13 +10,101 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
-	public class ShowAvailableTags extends GenericEvent {
-		private final Set<String> availableTags;
-		public ShowAvailableTags(Set<String> availableTags) {
-			this.availableTags=availableTags;
+	public class RemoveFromFilter extends GenericEvent {
+		private final String tag;
+		public RemoveFromFilter(String tag) {
+			this.tag=tag;
 		}
-		public Set<String> getAvailableTags() {
-			return availableTags;
+		public String getTag() {
+			return tag;
+		}
+
+	}
+
+	public static enum Rating {
+		SAFE("s"), QUESTIONABLE("q"), EXPLICIT("e");
+		private final String tag;
+
+		private Rating(String tag) {
+			this.tag = tag;
+		}
+
+		public String getTag() {
+			return tag;
+		}
+	}
+
+	public class SetRating extends GenericEvent {
+		private final Set<Rating> rating;
+		public SetRating(Set<Rating> rating) {
+			this.rating=rating;
+		}
+		public Set<Rating> getRating() {
+			return rating;
+		}
+	}
+
+	public class ShowFilterTags extends GenericEvent {
+		private final Set<String> tags;
+
+		public ShowFilterTags(Set<String> tags) {
+			this.tags = tags;
+		}
+
+		public Set<String> getTags() {
+			return tags;
+		}
+	}
+
+	public class AddToExcludeFilter extends GenericEvent {
+		private final String tag;
+
+		public AddToExcludeFilter(String tag) {
+			this.tag = tag;
+		}
+
+		public String getTag() {
+			return tag;
+		}
+
+	}
+
+	public class AddToIncludeFilter extends GenericEvent {
+		private final String tag;
+
+		public AddToIncludeFilter(String tag) {
+			this.tag = tag;
+		}
+
+		public String getTag() {
+			return tag;
+		}
+
+	}
+
+	public class PreviewsLoaded extends GenericEvent {
+
+	}
+
+	public class PreviousPreviewSet extends GenericEvent {
+		public PreviousPreviewSet() {
+		}
+	}
+
+	public class NextPreviewSet extends GenericEvent {
+		public NextPreviewSet() {
+		}
+	}
+
+	public class ShowAvailableTags extends GenericEvent {
+		private final Set<String> tags;
+
+		public ShowAvailableTags(Set<String> availableTags) {
+			this.tags = availableTags;
+		}
+
+		public Set<String> getTags() {
+			return tags;
 		}
 
 	}
@@ -26,7 +114,7 @@ public interface Event {
 		private final List<PostPreview> previews;
 
 		public ShowPreviews(List<PostPreview> previews) {
-			this.previews=previews;
+			this.previews = previews;
 		}
 
 		public List<PostPreview> getPreviews() {
@@ -44,7 +132,7 @@ public interface Event {
 		private final boolean loading;
 
 		public Loading(boolean loading) {
-			this.loading=loading;
+			this.loading = loading;
 		}
 
 		public boolean isLoading() {
@@ -55,9 +143,11 @@ public interface Event {
 
 	public class ShowView extends GenericEvent {
 		private final View view;
+
 		public ShowView(View view) {
-			this.view=view;
+			this.view = view;
 		}
+
 		public View getView() {
 			return view;
 		}
@@ -65,9 +155,11 @@ public interface Event {
 
 	public class AppVersion extends GenericEvent {
 		private final String appVersion;
+
 		public AppVersion(String appVersion) {
-			this.appVersion=appVersion;
+			this.appVersion = appVersion;
 		}
+
 		public String getAppVersion() {
 			return appVersion;
 		}
