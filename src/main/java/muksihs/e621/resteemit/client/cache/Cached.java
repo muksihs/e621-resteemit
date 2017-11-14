@@ -5,7 +5,7 @@ import java.util.List;
 
 import e621.models.post.index.E621Post;
 
-public class Cached {
+public class Cached implements HasExpiration {
 	public Cached(List<E621Post> posts) {
 		this(posts, new Date(System.currentTimeMillis() + 30l * 60l * 1000l));
 	}
@@ -13,6 +13,7 @@ public class Cached {
 	public Cached() {
 	}
 
+	@Override
 	public void setExpires(Date expires) {
 		this.expires = expires;
 	}
@@ -29,10 +30,7 @@ public class Cached {
 	private Date expires;
 	private List<E621Post> list;
 
-	public boolean isExpired() {
-		return new Date().after(getExpires());
-	}
-
+	@Override
 	public Date getExpires() {
 		return expires;
 	}

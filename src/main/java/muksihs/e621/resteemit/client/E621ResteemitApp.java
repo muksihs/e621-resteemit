@@ -29,6 +29,10 @@ import muksihs.e621.resteemit.ui.MainView;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 
+
+	private static final int CACHED_PAGE_SIZE = 20;
+	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
+
 	public E621ResteemitApp() {
 		extensionsWhitelist.addAll(Arrays.asList("png", "jpg", "gif", "jpeg"));
 	}
@@ -102,31 +106,40 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 
 	@EventHandler
 	protected void showPreviews(Event.PreviewsLoaded event) {
-		List<PostPreview> previewsToShow = activeSetForPage(activePage);
-		Set<String> availableTags = new TreeSet<>();
-		for (PostPreview preview : previewsToShow) {
-			String[] tags = preview.getTags().split("\\s+");
-			for (String tag : tags) {
-				availableTags.add(tag);
-			}
+		if (activePage==0) {
+			fireEvent(new Event.EnablePreviousButton(false));
+		} else {
+			fireEvent(new Event.EnablePreviousButton(true));
 		}
-		availableTags.removeAll(mustHaveTags);
-		availableTags.removeAll(mustNotHaveTags);
-		
-		reloadingOnFilterChange = false;
-		savedPageStartId = previewsToShow.stream().mapToLong((p) -> p.getId()).max().getAsLong();
-		GWT.log("new savedPageStartId: "+savedPageStartId);
-		
-		fireEvent(new Event.ShowAvailableTags(availableTags));
-		fireEvent(new Event.ShowPreviews(previewsToShow));
-		fireEvent(new Event.Loading(false));
+		fireEvent(new Event.Loading(true));
+		Scheduler.get().scheduleDeferred(() -> {
+			List<PostPreview> previewsToShow = activeSetForPage(activePage);
+			Set<String> availableTags = tagsForActiveSet();
+			availableTags.removeAll(mustHaveTags);
+			availableTags.removeAll(mustNotHaveTags);
+
+			reloadingOnFilterChange = false;
+			savedPageStartId = previewsToShow.stream().mapToLong((p) -> p.getId()).max().getAsLong();
+			GWT.log("new savedPageStartId: " + savedPageStartId);
+			fireEvent(new Event.ShowAvailableTags(availableTags));
+			fireEvent(new Event.ShowPreviews(previewsToShow));
+			fireEvent(new Event.Loading(false));
+		});
 	}
 
-	public List<PostPreview> activeSetForPage(int activePage) {
+	private List<PostPreview> activeSetForPage(int activePage) {
 		int start = activePage * Consts.PREVIEWS_TO_SHOW;
 		List<PostPreview> previewsToShow = activeSet.subList(start,
 				Math.min(start + Consts.PREVIEWS_TO_SHOW, activeSet.size()));
 		return previewsToShow;
+	}
+
+	private Set<String> tagsForActiveSet() {
+		Set<String> tags = new TreeSet<>();
+		for (PostPreview post : activeSet) {
+			tags.addAll(Arrays.asList(post.getTags().split("\\s+")));
+		}
+		return tags;
 	}
 
 	private boolean reloadingOnFilterChange = false;
@@ -137,11 +150,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		@Override
 		public void onSuccess(Method method, List<E621Post> response) {
 			long pageStartId = 0;
-			long nextBeforeId = 0;
-			try {
-				nextBeforeId = response.stream().mapToLong((p) -> p.getId()).min().getAsLong();
-				pageStartId = response.stream().mapToLong((p) -> p.getId()).max().getAsLong();
-			} catch (Exception e) {
+			long nextBeforeId = Long.MAX_VALUE;
+			for (E621Post post: response) {
+				nextBeforeId=Long.min(nextBeforeId, post.getId());
+				pageStartId = Long.max(pageStartId, post.getId());
 			}
 
 			Set<Long> ids = new HashSet<>();
@@ -152,7 +164,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 			while (iter.hasNext()) {
 				E621Post next = iter.next();
 				if (ids.contains(next.getId())) {
+					GWT.log("Removing already have: "+next.getId());
 					iter.remove();
+					continue;
 				}
 			}
 
@@ -210,7 +224,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 			boolean skipForwards = reloadingOnFilterChange //
 					&& beforeId > savedPageStartId //
 					&& savedPageStartId > 0;
-			GWT.log("skip forwards to savedPageStartId: " + savedPageStartId+" ["+skipForwards+"]");
+			GWT.log("skip forwards to savedPageStartId: " + savedPageStartId + " [" + skipForwards + "]");
 			if (skipForwards && moreAvailable) {
 				fireEvent(new Event.NextPreviewSet());
 				return;
@@ -262,13 +276,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 	protected void showNextSet(Event.NextPreviewSet event) {
 		fireEvent(new Event.Loading(true));
 		List<PostPreview> previewsToShow = activeSetForPage(activePage);
-		long beforeId = previewsToShow.stream().mapToLong((p) -> p.getId()).min().getAsLong();
+		long tmp = Long.MAX_VALUE;
+		for (PostPreview preview : previewsToShow) {
+			tmp = Long.min(tmp, preview.getId());
+		}
 		activePage++;
-		additionalPreviewsLoad(beforeId);
+		long beforeId = tmp;
+		Scheduler.get().scheduleDeferred(() -> {
+			additionalPreviewsLoad(beforeId);
+		});
 	}
 
 	protected void additionalPreviewsLoad(long beforeId) {
-		fireEvent(new Event.Loading(true));
 		List<String> tags = new ArrayList<>();
 		Iterator<String> iRatings = mustHaveRatings.iterator();
 		while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
@@ -290,11 +309,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 				sb.append(" ");
 			}
 		}
-		// keep beforeId aligned with multiples of 10 so the cache works correctly
-		beforeId = (long) (Math.ceil(beforeId / 10) * 10);
-		List<E621Post> cached = new IndexCache().get(sb.toString() + "," + beforeId);
+		// keep beforeId aligned with multiples of CACHED_PAGE_SIZE so the cache works
+		// correctly
+		beforeId = (long) (Math.ceil((double)beforeId / (double)CACHED_PAGE_SIZE) * CACHED_PAGE_SIZE);
+		List<E621Post> cached = INDEX_CACHE.get(sb.toString() + "," + beforeId);
 		if (cached == null) {
-			E621Api.api().index(sb.toString(), (int) beforeId, 10, cacheIndexResponse(sb.toString(), beforeId));
+			E621Api.api().postIndex(sb.toString(), (int) beforeId, CACHED_PAGE_SIZE,
+					cacheIndexResponse(sb.toString(), beforeId));
 		} else {
 			Scheduler.get().scheduleDeferred(() -> onPostsLoaded.onSuccess(null, cached));
 		}
@@ -305,7 +326,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 
 			@Override
 			public void onSuccess(Method method, List<E621Post> response) {
-				new IndexCache().put(tags + "," + minId, response);
+				INDEX_CACHE.put(tags + "," + minId, response);
 				onPostsLoaded.onSuccess(method, response);
 			}
 
@@ -343,7 +364,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 				sb.append(" ");
 			}
 		}
-		E621Api.api().index(sb.toString(), 10, onPostsLoaded);
+		E621Api.api().postIndex(sb.toString(), CACHED_PAGE_SIZE, onPostsLoaded);
 	}
 
 }

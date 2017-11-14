@@ -14,6 +14,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.binder.EventBinder;
 import com.google.web.bindery.event.shared.binder.EventHandler;
 
+import gwt.material.design.client.constants.ButtonType;
+import gwt.material.design.client.constants.Color;
 import gwt.material.design.client.constants.TextAlign;
 import gwt.material.design.client.ui.MaterialAnchorButton;
 import gwt.material.design.client.ui.MaterialButton;
@@ -72,7 +74,7 @@ public class BrowseView extends EventBusComposite {
 			ratingExplicit.setValue(true);
 			checkbox.setValue(false);
 		}
-		Set<Rating> ratings=new HashSet<>();
+		Set<Rating> ratings = new HashSet<>();
 		if (ratingSafe.getValue()) {
 			ratings.add(Rating.SAFE);
 		}
@@ -82,7 +84,7 @@ public class BrowseView extends EventBusComposite {
 		if (ratingExplicit.getValue()) {
 			ratings.add(Rating.EXPLICIT);
 		}
-		//update app
+		// update app
 		fireEvent(new Event.SetRating(ratings));
 	}
 
@@ -91,9 +93,9 @@ public class BrowseView extends EventBusComposite {
 		previous.addClickHandler(this::getPrevious);
 		next.addClickHandler(this::getNext);
 
-		ratingSafe.addClickHandler((e)->updateRatings(ratingSafe));
-		ratingQuestionable.addClickHandler((e)->updateRatings(ratingQuestionable));
-		ratingExplicit.addClickHandler((e)->updateRatings(ratingExplicit));
+		ratingSafe.addClickHandler((e) -> updateRatings(ratingSafe));
+		ratingQuestionable.addClickHandler((e) -> updateRatings(ratingQuestionable));
+		ratingExplicit.addClickHandler((e) -> updateRatings(ratingExplicit));
 	}
 
 	interface MyEventBinder extends EventBinder<BrowseView> {
@@ -116,17 +118,32 @@ public class BrowseView extends EventBusComposite {
 	@UiField
 	protected MaterialCollapsible tags;
 
+//	private void addAvailableTag(Iterator<String> tags) {
+//		if (!tags.hasNext()) {
+//			fireEvent(new Event.Loading(false));
+//			return;
+//		}
+//		fireEvent(new Event.Loading(true));
+//	}
+	
+	@EventHandler
+	protected void enablePreviousButton(Event.EnablePreviousButton event) {
+		this.previous.setEnabled(event.isEnable());
+	}
+
 	@EventHandler
 	protected void showAvailableTags(Event.ShowAvailableTags event) {
 		availableTags.clear();
 		tags.closeAll();
 		Scheduler.get().scheduleDeferred(() -> {
+			MaterialPanel panel = new MaterialPanel();
 			for (String tag : event.getTags()) {
 				MaterialAnchorButton tagLabel = new MaterialAnchorButton(tag);
 				tagLabel.addClickHandler((e) -> showAddToFilterDialog(tag));
 				tagLabel.setMargin(1);
-				availableTags.add(tagLabel);
+				panel.add(tagLabel);
 			}
+			availableTags.add(panel);
 		});
 	}
 
@@ -202,8 +219,9 @@ public class BrowseView extends EventBusComposite {
 		posts.clear();
 		for (PostPreview preview : event.getPreviews()) {
 			MaterialImage img = new MaterialImage(preview.getSampleUrl());
+			img.setMargin(2);
 			img.setHoverable(true);
-			img.setTitle("#"+preview.getId()+" "+preview.getTags());
+			img.setTitle("#" + preview.getId() + " " + preview.getTags());
 			Anchor a = new Anchor();
 			String href = Consts.E621_SHOW_POST + preview.getId();
 			a.getElement().setAttribute("href", href);
@@ -217,17 +235,46 @@ public class BrowseView extends EventBusComposite {
 			if (!style.endsWith(";") && !style.trim().isEmpty()) {
 				style += ";";
 			}
-			style += "max-width: 400px; max-height: 400px";
+			style += "max-width: 400px; max-height: 400px; margin: 6px;";
 			panel.getElement().setAttribute("style", style);
 			panel.add(a);
 			panel.add(new Br());
-			MaterialLink link=new MaterialLink();
-			link.setTarget("_blank");
-			link.setHref(href);
-			link.setText("VIEW POST");
-			panel.add(link);
+			MaterialButton showTagFilterDialog = new MaterialButton();
+			showTagFilterDialog.setMargin(2);
+			showTagFilterDialog.setText("VIEW TAGS");
+			showTagFilterDialog.addClickHandler((e) -> showPostTags(preview.getTags()));
+			panel.add(showTagFilterDialog);
+			MaterialLink viewPostLink = new MaterialLink();
+			viewPostLink.setMargin(2);
+			viewPostLink.setTarget("_blank");
+			viewPostLink.setHref(href);
+			viewPostLink.setText("VIEW POST");
+			viewPostLink.setType(ButtonType.RAISED);
+			panel.add(viewPostLink);
 			posts.add(panel);
 		}
+	}
+
+	private void showPostTags(String tags) {
+		MaterialModal modal = new MaterialModal();
+		modal.addCloseHandler((e) -> modal.removeFromParent());
+		MaterialPanel panel = new MaterialPanel();
+		for (String tag : tags.split("\\s+")) {
+			MaterialAnchorButton tagLabel = new MaterialAnchorButton(tag);
+			tagLabel.addClickHandler((e) -> showAddToFilterDialog(tag));
+			tagLabel.addClickHandler((e) -> modal.close());
+			tagLabel.setMargin(1);
+			panel.add(tagLabel);
+		}
+		MaterialButton cancel = new MaterialButton("DISMISS");
+		cancel.setBackgroundColor(Color.GREEN_LIGHTEN_1);
+		cancel.setTextColor(Color.WHITE);
+		cancel.setMargin(1);
+		cancel.addClickHandler((e)->modal.close());
+		panel.add(cancel);
+		modal.add(panel);
+		RootPanel.get().add(modal);
+		modal.open();
 	}
 
 }

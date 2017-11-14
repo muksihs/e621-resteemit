@@ -37,7 +37,7 @@ public class BasicApiTests implements ScheduledCommand, IsSdm {
 				GWT.log("Failure: " + method.getResponse().getText(), exception);
 			}
 		};
-		api.index("", 1, callback);
+		api.postIndex("", 1, callback);
 	}
 
 }

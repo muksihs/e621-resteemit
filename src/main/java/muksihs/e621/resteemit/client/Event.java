@@ -10,6 +10,20 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class EnablePreviousButton extends GenericEvent {
+
+		private final boolean enable;
+
+		public EnablePreviousButton(boolean enable) {
+			this.enable=enable;
+		}
+
+		public boolean isEnable() {
+			return enable;
+		}
+
+	}
+
 	public class RemoveFromFilter extends GenericEvent {
 		private final String tag;
 		public RemoveFromFilter(String tag) {

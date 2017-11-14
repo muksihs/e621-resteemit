@@ -27,6 +27,7 @@
 			<m:MaterialButton ui:field="next" style='margin: 2px;'
 				text="Next"></m:MaterialButton>
 		</m:MaterialPanel>
+		<m:MaterialPanel style="text-align: center;" ui:field="posts"></m:MaterialPanel>
 		<m:MaterialCollapsible ui:field="tags">
 			<m:MaterialCollapsibleItem>
 				<m:MaterialCollapsibleHeader>
@@ -47,6 +48,5 @@
 				</m:MaterialCollapsibleBody>
 			</m:MaterialCollapsibleItem>
 		</m:MaterialCollapsible>
-		<m:MaterialPanel style="text-align: center;" ui:field="posts"></m:MaterialPanel>
 	</m:MaterialPanel>
 </ui:UiBinder> 
