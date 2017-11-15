@@ -2,6 +2,7 @@ package muksihs.e621.resteemit.ui;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -147,9 +148,11 @@ public class BrowseView extends EventBusComposite {
 		});
 	}
 
+	private final Set<String> activeFilterTags = new TreeSet<>();
 	@EventHandler
 	protected void showFilterTags(Event.ShowFilterTags event) {
 		filterTags.clear();
+		activeFilterTags.clear();
 		tags.closeAll();
 		Scheduler.get().scheduleDeferred(() -> {
 			for (String tag : event.getTags()) {
@@ -157,6 +160,7 @@ public class BrowseView extends EventBusComposite {
 				tagLabel.addClickHandler((e) -> showRemoveFromFilterDialog(tag));
 				tagLabel.setMargin(1);
 				filterTags.add(tagLabel);
+				activeFilterTags.add(tag);
 			}
 		});
 	}
@@ -264,6 +268,10 @@ public class BrowseView extends EventBusComposite {
 			tagLabel.addClickHandler((e) -> showAddToFilterDialog(tag));
 			tagLabel.addClickHandler((e) -> modal.close());
 			tagLabel.setMargin(1);
+			if (activeFilterTags.contains("+"+tag)) {
+				tagLabel.setEnabled(false);
+				tagLabel.setBackgroundColor(Color.LIGHT_GREEN);
+			}
 			panel.add(tagLabel);
 		}
 		MaterialButton cancel = new MaterialButton("DISMISS");
