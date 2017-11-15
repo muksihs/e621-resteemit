@@ -6,6 +6,10 @@
  "https://raw.githubusercontent.com/gwtproject/gwt/master/distro-source/core/src/gwt-module.dtd">
 <module rename-to='e621resteemit'>
 
+	<!-- System.getProperties() -->
+	<define-configuration-property name="version" is-multi-valued='false'/>
+	<set-configuration-property name="version" value="20171114"/>
+
 	<entry-point class='muksihs.e621.resteemit.client.E621EP' />
 
 	<source path='client' />

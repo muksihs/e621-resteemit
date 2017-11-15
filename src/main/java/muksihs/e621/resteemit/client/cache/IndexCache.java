@@ -14,7 +14,7 @@ import elemental2.dom.DomGlobal;
 
 public class IndexCache {
 	private static final String LIST_E621POST = "list-e621post-";
-	//only deserialize the date property for the expires check loop (speed/work issue)
+	//only deserialize the date property for the expires check loop
 	protected interface ExpiresCodec extends JsonEncoderDecoder<CachedExpiration>{}
 	protected final ExpiresCodec expiresCodec = GWT.create(ExpiresCodec.class);
 	//full post stashing in html5 local storage
