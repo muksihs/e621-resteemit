@@ -31,7 +31,7 @@ import muksihs.e621.resteemit.ui.MainView;
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 
 
-	private static final int CACHED_PAGE_SIZE = 20;
+	private static final int CACHED_PAGE_SIZE = 10;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
 	public E621ResteemitApp() {
@@ -312,7 +312,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		}
 		// keep beforeId aligned with multiples of CACHED_PAGE_SIZE so the cache works
 		// correctly
-		beforeId = (long) (Math.ceil((double)beforeId / (double)CACHED_PAGE_SIZE) * CACHED_PAGE_SIZE);
+		beforeId = (long) (Math.ceil((double)beforeId / (double)CACHED_PAGE_SIZE) * (double)CACHED_PAGE_SIZE);
 		E621PostList cached = INDEX_CACHE.get(sb.toString() + "," + beforeId);
 		if (cached == null) {
 			E621Api.api().postIndex(sb.toString(), (int) beforeId, CACHED_PAGE_SIZE,
