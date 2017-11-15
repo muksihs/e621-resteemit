@@ -3,19 +3,17 @@ package muksihs.e621.resteemit.client.cache;
 import org.fusesource.restygwt.client.JsonEncoderDecoder;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.storage.client.StorageMap;
 
 import e621.models.post.index.E621PostList;
-import elemental2.dom.DomGlobal;
 
 public class IndexCache {
 	private static final String LIST_E621POST = "list-e621post-";
 	//only deserialize the date property for the expires check loop
 	protected interface ExpiresCodec extends JsonEncoderDecoder<CachedExpiration>{}
 	protected final ExpiresCodec expiresCodec = GWT.create(ExpiresCodec.class);
-	//full post stashing in html5 local storage
+	//full post list stashing in html5 local storage
 	protected interface Codec extends JsonEncoderDecoder<Cached>{}
 	protected final Codec codec = GWT.create(Codec.class);
 	private final String prefix;
@@ -26,28 +24,28 @@ public class IndexCache {
 	public void put(String key, E621PostList posts) {
 		expiresCheck();
 		Cached value = new Cached(posts);
-		JSONValue encode = codec.encode(value);
+		String jsonString = codec.encode(value).toString();
 		try {
-			cache.put(prefix+key, encode.toString());
+			cache.put(prefix+key, jsonString);
 		} catch (Exception e) {
 			clear();
 			try {
-				cache.put(prefix+key, encode.toString());
+				cache.put(prefix+key, jsonString);
 			} catch (Exception e1) {
 				//panic clear the whole mess
+				cache.clear();
+				cache.put(prefix+key, jsonString);
 			}
 		}
 	}
 	public E621PostList get(String key) {
 		expiresCheck();
-		String json = cache.get(prefix+key);
-		if (json==null) {
+		String jsonString = cache.get(prefix+key);
+		if (jsonString==null) {
 			return null;
 		}
 		try {
-			long start=System.currentTimeMillis();
-			E621PostList posts = codec.decode(json).getPosts();
-			DomGlobal.console.log("get()-decode: "+(System.currentTimeMillis()-start));
+			E621PostList posts = codec.decode(jsonString).getPosts();
 			if (posts!=null && !posts.isEmpty()) {
 				return posts;
 			}
