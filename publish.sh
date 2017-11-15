@@ -10,11 +10,9 @@ cd "$(dirname "$0")"
 z="$(pwd)"
 
 #automatic version bump
-version="$(date +yyyyMMdd)"
-sed -i "#<set-configuration-property name=\"version\" value=\"........\"/>#<set-configuration-property name="version" value="$version"/>#" ./src/main/resources/muksihs/e621/resteemit/e621resteemit.gwt.xml
-sed -i "#version = '........'#version = '$version'#" build.gradle
+version="$(date +%Y%m%d)"
+sed -i "s#<set-configuration-property name=\"version\" value=\"........\"/>#<set-configuration-property name="version" value="$version"/>#" ./src/main/resources/muksihs/e621/resteemit/e621resteemit.gwt.xml
 git add ./src/main/resources/muksihs/e621/resteemit/e621resteemit.gwt.xml || true
-git add build.gradle || true
 git commit -a -m "autocommit on build" || true
 
 #build
