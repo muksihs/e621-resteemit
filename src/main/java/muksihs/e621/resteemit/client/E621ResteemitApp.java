@@ -20,7 +20,7 @@ import com.google.web.bindery.event.shared.binder.EventHandler;
 
 import e621.E621Api;
 import e621.models.post.index.E621Post;
-import e621.models.post.index.E621PostList;
+import e621.models.tag.index.Tag;
 import muksihs.e621.resteemit.client.Event.Rating;
 import muksihs.e621.resteemit.client.cache.IndexCache;
 import muksihs.e621.resteemit.shared.Consts;
@@ -29,7 +29,6 @@ import muksihs.e621.resteemit.shared.View;
 import muksihs.e621.resteemit.ui.MainView;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
-
 
 	private static final int CACHED_PAGE_SIZE = 10;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
@@ -107,7 +106,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 
 	@EventHandler
 	protected void showPreviews(Event.PreviewsLoaded event) {
-		if (activePage==0) {
+		if (activePage == 0) {
 			fireEvent(new Event.EnablePreviousButton(false));
 		} else {
 			fireEvent(new Event.EnablePreviousButton(true));
@@ -116,6 +115,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		Scheduler.get().scheduleDeferred(() -> {
 			List<PostPreview> previewsToShow = activeSetForPage(activePage);
 			Set<String> availableTags = tagsForActiveSet();
+			availableTags.addAll(topAvailableTags);
 			availableTags.removeAll(mustHaveTags);
 			availableTags.removeAll(mustNotHaveTags);
 
@@ -127,6 +127,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 			fireEvent(new Event.Loading(false));
 		});
 	}
+	
+	private final List<String> topAvailableTags = new ArrayList<>();
 
 	private List<PostPreview> activeSetForPage(int activePage) {
 		int start = activePage * Consts.PREVIEWS_TO_SHOW;
@@ -146,14 +148,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 	private boolean reloadingOnFilterChange = false;
 	private long savedPageStartId = 0;
 
-	private MethodCallback<E621PostList> onPostsLoaded = new MethodCallback<E621PostList>() {
+	private MethodCallback<List<E621Post>> onPostsLoaded = new MethodCallback<List<E621Post>>() {
 
 		@Override
-		public void onSuccess(Method method, E621PostList response) {
+		public void onSuccess(Method method, List<E621Post> response) {
 			long pageStartId = 0;
 			long nextBeforeId = Long.MAX_VALUE;
-			for (E621Post post: response) {
-				nextBeforeId=Long.min(nextBeforeId, post.getId());
+			for (E621Post post : response) {
+				nextBeforeId = Long.min(nextBeforeId, post.getId());
 				pageStartId = Long.max(pageStartId, post.getId());
 			}
 
@@ -165,7 +167,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 			while (iter.hasNext()) {
 				E621Post next = iter.next();
 				if (ids.contains(next.getId())) {
-					GWT.log("Removing already have: "+next.getId());
+					GWT.log("Removing already have: " + next.getId());
 					iter.remove();
 					continue;
 				}
@@ -249,7 +251,24 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		eventBinder.bindEventHandlers(this, eventBus);
 		setController(new ViewController(mainView.getPanel()));
 		fireEvent(new Event.Loading(true));
-		fireEvent(new Event.ShowView(View.BrowseView));
+		//load most common available tags, then show the view
+		E621Api.api().tagList(1, 500, new MethodCallback<List<Tag>>() {
+			@Override
+			public void onSuccess(Method method, List<Tag> response) {
+				topAvailableTags.clear();
+				for (Tag tag: response) {
+					topAvailableTags.add(tag.getName());
+				}
+				GWT.log("Have "+topAvailableTags.size()+" top tags loaded.");
+				fireEvent(new Event.ShowView(View.BrowseView));
+			}
+			
+			@Override
+			public void onFailure(Method method, Throwable exception) {
+				GWT.log("Failed loading top tags!", exception);
+				fireEvent(new Event.ShowView(View.BrowseView));				
+			}
+		});
 	}
 
 	public ViewController getController() {
@@ -312,8 +331,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		}
 		// keep beforeId aligned with multiples of CACHED_PAGE_SIZE so the cache works
 		// correctly
-		beforeId = (long) (Math.ceil((double)beforeId / (double)CACHED_PAGE_SIZE) * (double)CACHED_PAGE_SIZE);
-		E621PostList cached = INDEX_CACHE.get(sb.toString() + "," + beforeId);
+		beforeId = (long) (Math.ceil((double) beforeId / (double) CACHED_PAGE_SIZE) * (double) CACHED_PAGE_SIZE);
+		List<E621Post> cached = INDEX_CACHE.get(sb.toString() + "," + beforeId);
 		if (cached == null) {
 			E621Api.api().postIndex(sb.toString(), (int) beforeId, CACHED_PAGE_SIZE,
 					cacheIndexResponse(sb.toString(), beforeId));
@@ -322,11 +341,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		}
 	}
 
-	private MethodCallback<E621PostList> cacheIndexResponse(String tags, long minId) {
-		return new MethodCallback<E621PostList>() {
+	private MethodCallback<List<E621Post>> cacheIndexResponse(String tags, long minId) {
+		return new MethodCallback<List<E621Post>>() {
 
 			@Override
-			public void onSuccess(Method method, E621PostList response) {
+			public void onSuccess(Method method, List<E621Post> response) {
 				INDEX_CACHE.put(tags + "," + minId, response);
 				onPostsLoaded.onSuccess(method, response);
 			}

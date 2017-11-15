@@ -1,7 +1,9 @@
 package e621.models.tag.index;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class Tag {
 	@JsonProperty("id")
 	private long id;
@@ -9,7 +11,7 @@ public class Tag {
 	private String name;
 	@JsonProperty("count")
 	private long count;
-	@JsonProperty("ttoe")
+	@JsonProperty("type")
 	private int type;
 	@JsonProperty("type_locked")
 	private Object typeLocked;

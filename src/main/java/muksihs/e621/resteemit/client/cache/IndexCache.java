@@ -1,12 +1,15 @@
 package muksihs.e621.resteemit.client.cache;
 
+import java.util.List;
+
 import org.fusesource.restygwt.client.JsonEncoderDecoder;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.storage.client.StorageMap;
 
-import e621.models.post.index.E621PostList;
+import e621.models.post.index.E621Post;
+
 
 public class IndexCache {
 	private static final String LIST_E621POST = "list-e621post-";
@@ -21,7 +24,7 @@ public class IndexCache {
 	public IndexCache(int cachedPageSize) {
 		prefix=LIST_E621POST+cachedPageSize+":";
 	}
-	public void put(String key, E621PostList posts) {
+	public void put(String key, List<E621Post> posts) {
 		expiresCheck();
 		Cached value = new Cached(posts);
 		String jsonString = codec.encode(value).toString();
@@ -38,14 +41,14 @@ public class IndexCache {
 			}
 		}
 	}
-	public E621PostList get(String key) {
+	public List<E621Post> get(String key) {
 		expiresCheck();
 		String jsonString = cache.get(prefix+key);
 		if (jsonString==null) {
 			return null;
 		}
 		try {
-			E621PostList posts = codec.decode(jsonString).getPosts();
+			List<E621Post> posts = codec.decode(jsonString).getPosts();
 			if (posts!=null && !posts.isEmpty()) {
 				return posts;
 			}
