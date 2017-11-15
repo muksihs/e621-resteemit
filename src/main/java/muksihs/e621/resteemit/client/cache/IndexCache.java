@@ -1,7 +1,5 @@
 package muksihs.e621.resteemit.client.cache;
 
-import java.util.List;
-
 import org.fusesource.restygwt.client.JsonEncoderDecoder;
 
 import com.google.gwt.core.client.GWT;
@@ -9,7 +7,7 @@ import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.storage.client.StorageMap;
 
-import e621.models.post.index.E621Post;
+import e621.models.post.index.E621PostList;
 import elemental2.dom.DomGlobal;
 
 public class IndexCache {
@@ -25,7 +23,7 @@ public class IndexCache {
 	public IndexCache(int cachedPageSize) {
 		prefix=LIST_E621POST+cachedPageSize+":";
 	}
-	public void put(String key, List<E621Post> posts) {
+	public void put(String key, E621PostList posts) {
 		expiresCheck();
 		Cached value = new Cached(posts);
 		JSONValue encode = codec.encode(value);
@@ -40,7 +38,7 @@ public class IndexCache {
 			}
 		}
 	}
-	public List<E621Post> get(String key) {
+	public E621PostList get(String key) {
 		expiresCheck();
 		String json = cache.get(prefix+key);
 		if (json==null) {
@@ -48,7 +46,7 @@ public class IndexCache {
 		}
 		try {
 			long start=System.currentTimeMillis();
-			List<E621Post> posts = codec.decode(json).getPosts();
+			E621PostList posts = codec.decode(json).getPosts();
 			DomGlobal.console.log("get()-decode: "+(System.currentTimeMillis()-start));
 			if (posts!=null && !posts.isEmpty()) {
 				return posts;

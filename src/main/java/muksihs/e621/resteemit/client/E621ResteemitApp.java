@@ -20,6 +20,7 @@ import com.google.web.bindery.event.shared.binder.EventHandler;
 
 import e621.E621Api;
 import e621.models.post.index.E621Post;
+import e621.models.post.index.E621PostList;
 import muksihs.e621.resteemit.client.Event.Rating;
 import muksihs.e621.resteemit.client.cache.IndexCache;
 import muksihs.e621.resteemit.shared.Consts;
@@ -145,10 +146,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 	private boolean reloadingOnFilterChange = false;
 	private long savedPageStartId = 0;
 
-	private MethodCallback<List<E621Post>> onPostsLoaded = new MethodCallback<List<E621Post>>() {
+	private MethodCallback<E621PostList> onPostsLoaded = new MethodCallback<E621PostList>() {
 
 		@Override
-		public void onSuccess(Method method, List<E621Post> response) {
+		public void onSuccess(Method method, E621PostList response) {
 			long pageStartId = 0;
 			long nextBeforeId = Long.MAX_VALUE;
 			for (E621Post post: response) {
@@ -312,7 +313,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		// keep beforeId aligned with multiples of CACHED_PAGE_SIZE so the cache works
 		// correctly
 		beforeId = (long) (Math.ceil((double)beforeId / (double)CACHED_PAGE_SIZE) * CACHED_PAGE_SIZE);
-		List<E621Post> cached = INDEX_CACHE.get(sb.toString() + "," + beforeId);
+		E621PostList cached = INDEX_CACHE.get(sb.toString() + "," + beforeId);
 		if (cached == null) {
 			E621Api.api().postIndex(sb.toString(), (int) beforeId, CACHED_PAGE_SIZE,
 					cacheIndexResponse(sb.toString(), beforeId));
@@ -321,11 +322,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		}
 	}
 
-	private MethodCallback<List<E621Post>> cacheIndexResponse(String tags, long minId) {
-		return new MethodCallback<List<E621Post>>() {
+	private MethodCallback<E621PostList> cacheIndexResponse(String tags, long minId) {
+		return new MethodCallback<E621PostList>() {
 
 			@Override
-			public void onSuccess(Method method, List<E621Post> response) {
+			public void onSuccess(Method method, E621PostList response) {
 				INDEX_CACHE.put(tags + "," + minId, response);
 				onPostsLoaded.onSuccess(method, response);
 			}
