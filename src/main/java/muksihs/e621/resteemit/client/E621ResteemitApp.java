@@ -2,7 +2,6 @@ package muksihs.e621.resteemit.client;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -14,6 +13,9 @@ import org.fusesource.restygwt.client.MethodCallback;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.web.bindery.event.shared.binder.EventBinder;
 import com.google.web.bindery.event.shared.binder.EventHandler;
@@ -21,16 +23,19 @@ import com.google.web.bindery.event.shared.binder.EventHandler;
 import e621.E621Api;
 import e621.models.post.index.E621Post;
 import e621.models.tag.index.Tag;
+import elemental2.dom.DomGlobal;
 import muksihs.e621.resteemit.client.Event.Rating;
 import muksihs.e621.resteemit.client.cache.IndexCache;
+import muksihs.e621.resteemit.client.cache.TagsCache;
 import muksihs.e621.resteemit.shared.Consts;
 import muksihs.e621.resteemit.shared.PostPreview;
+import muksihs.e621.resteemit.shared.SavedState;
 import muksihs.e621.resteemit.shared.View;
 import muksihs.e621.resteemit.ui.MainView;
 
-public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
+public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
-	private static final int CACHED_PAGE_SIZE = 10;
+	private static final int CACHED_PAGE_SIZE = 12;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
 	public E621ResteemitApp() {
@@ -79,6 +84,15 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 
 	}
 
+	private void updateHash() {
+		SavedState hash = new SavedState();
+		hash.setMustHave(mustHaveTags);
+		hash.setMustNotHave(mustNotHaveTags);
+		hash.setPostId(savedPageStartId);
+		hash.setRatings(mustHaveRatings);
+		History.newItem(SavedState.asHistoryToken(hash), false);
+	}
+
 	@EventHandler
 	protected void addToIncludeFilter(Event.AddToIncludeFilter event) {
 		reloadingOnFilterChange = true;
@@ -125,14 +139,15 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 			fireEvent(new Event.ShowAvailableTags(availableTags));
 			fireEvent(new Event.ShowPreviews(previewsToShow));
 			fireEvent(new Event.Loading(false));
+			updateHash();
 		});
 	}
-	
+
 	private final List<String> topAvailableTags = new ArrayList<>();
 
 	private List<PostPreview> activeSetForPage(int activePage) {
 		int start = activePage * Consts.PREVIEWS_TO_SHOW;
-		List<PostPreview> previewsToShow = activeSet.subList(start,
+		List<PostPreview> previewsToShow = activeSet.subList(Math.min(start, activeSet.size() - 1),
 				Math.min(start + Consts.PREVIEWS_TO_SHOW, activeSet.size()));
 		return previewsToShow;
 	}
@@ -159,19 +174,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 				pageStartId = Long.max(pageStartId, post.getId());
 			}
 
-			Set<Long> ids = new HashSet<>();
-			for (PostPreview active : activeSet) {
-				ids.add(active.getId());
-			}
-			Iterator<E621Post> iter = response.iterator();
-			while (iter.hasNext()) {
-				E621Post next = iter.next();
-				if (ids.contains(next.getId())) {
-					GWT.log("Removing already have: " + next.getId());
-					iter.remove();
-					continue;
-				}
-			}
+//			Set<Long> ids = new HashSet<>();
+//			for (PostPreview active : activeSet) {
+//				ids.add(active.getId());
+//			}
+//			Iterator<E621Post> iter = response.iterator();
+//			while (iter.hasNext()) {
+//				E621Post next = iter.next();
+//				if (ids.contains(next.getId())) {
+//					iter.remove();
+//					continue;
+//				}
+//			}
 
 			if (!mustHaveRatings.isEmpty()) {
 				response.removeIf((p) -> !mustHaveRatings.contains(p.getRating()));
@@ -205,7 +219,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 			}
 
 			List<PostPreview> previews = new ArrayList<>();
-			iter = response.iterator();
+			Iterator<E621Post> iter = response.iterator();
 			while (iter.hasNext()) {
 				E621Post next = iter.next();
 				PostPreview preview = new PostPreview(next.getId(), next.getSampleUrl(), next.getFileUrl(),
@@ -251,24 +265,37 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 		eventBinder.bindEventHandlers(this, eventBus);
 		setController(new ViewController(mainView.getPanel()));
 		fireEvent(new Event.Loading(true));
-		//load most common available tags, then show the view
-		E621Api.api().tagList(1, 500, new MethodCallback<List<Tag>>() {
-			@Override
-			public void onSuccess(Method method, List<Tag> response) {
-				topAvailableTags.clear();
-				for (Tag tag: response) {
-					topAvailableTags.add(tag.getName());
+		// hash parsing
+		History.addValueChangeHandler(this);
+		// load most common available tags, then show the view
+		int limit = 500;
+		TagsCache tagsCache = new TagsCache(limit);
+		List<Tag> tags = tagsCache.get(limit + "");
+		if (tags != null && !tags.isEmpty()) {
+			for (Tag tag : tags) {
+				topAvailableTags.add(tag.getName());
+			}
+			fireEvent(new Event.ShowView(View.BrowseView));
+		} else {
+			E621Api.api().tagList(1, limit, new MethodCallback<List<Tag>>() {
+				@Override
+				public void onSuccess(Method method, List<Tag> response) {
+					topAvailableTags.clear();
+					for (Tag tag : response) {
+						topAvailableTags.add(tag.getName());
+					}
+					tagsCache.put(limit + "", response);
+					GWT.log("Have " + topAvailableTags.size() + " top tags loaded.");
+					fireEvent(new Event.ShowView(View.BrowseView));
 				}
-				GWT.log("Have "+topAvailableTags.size()+" top tags loaded.");
-				fireEvent(new Event.ShowView(View.BrowseView));
-			}
-			
-			@Override
-			public void onFailure(Method method, Throwable exception) {
-				GWT.log("Failed loading top tags!", exception);
-				fireEvent(new Event.ShowView(View.BrowseView));				
-			}
-		});
+
+				@Override
+				public void onFailure(Method method, Throwable exception) {
+					GWT.log("Failed loading top tags!", exception);
+					fireEvent(new Event.ShowView(View.BrowseView));
+				}
+			});
+		}
 	}
 
 	public ViewController getController() {
@@ -385,6 +412,30 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus {
 			}
 		}
 		E621Api.api().postIndex(sb.toString(), CACHED_PAGE_SIZE, onPostsLoaded);
+	}
+
+	@Override
+	public void onValueChange(ValueChangeEvent<String> event) {
+		String token = event.getValue();
+		DomGlobal.console.log("RECONSTRUCTING STATE: " + token);
+		SavedState state = SavedState.parseHistoryToken(token);
+		mustHaveTags.clear();
+		mustNotHaveTags.clear();
+		mustHaveRatings.clear();
+		savedPageStartId = state.getPostId();
+		if (state.getMustHave() != null) {
+			mustHaveTags.addAll(state.getMustHave());
+		}
+		if (state.getMustNotHave() != null) {
+			mustNotHaveTags.addAll(state.getMustNotHave());
+		}
+		if (state.getRatings() != null) {
+			mustHaveRatings.addAll(state.getRatings());
+		}
+		reloadingOnFilterChange = true;
+		DomGlobal.console.log("STATE: " + state.toString());
+		fireEvent(new Event.SetRatingsBoxes(state.getRatings()));
+		fireEvent(new Event.InitialPreviews());
 	}
 
 }

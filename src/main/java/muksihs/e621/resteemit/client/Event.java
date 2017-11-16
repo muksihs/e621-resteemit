@@ -10,6 +10,24 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class SetRatingsBoxes extends GenericEvent {
+
+		private final Set<String> mustHaveRatings;
+
+		public SetRatingsBoxes(Set<String> mustHaveRatings) {
+			this.mustHaveRatings=mustHaveRatings;
+		}
+
+		public Set<String> getMustHaveRatings() {
+			return mustHaveRatings;
+		}
+
+	}
+
+	public class BrowseViewLoaded extends GenericEvent {
+
+	}
+
 	public class EnablePreviousButton extends GenericEvent {
 
 		private final boolean enable;

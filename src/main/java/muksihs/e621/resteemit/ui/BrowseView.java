@@ -114,6 +114,7 @@ public class BrowseView extends EventBusComposite {
 		ratingQuestionable.setValue(false);
 		ratingExplicit.setValue(false);
 		updateRatings(ratingSafe);
+		fireEvent(new Event.BrowseViewLoaded());
 	}
 
 	@UiField
@@ -126,6 +127,20 @@ public class BrowseView extends EventBusComposite {
 //		}
 //		fireEvent(new Event.Loading(true));
 //	}
+	
+	@EventHandler
+	protected void setRatingsBoxes(Event.SetRatingsBoxes event) {
+		GWT.log("setRatingsBoxes: "+event.getMustHaveRatings());
+		if (event.getMustHaveRatings()==null||event.getMustHaveRatings().isEmpty()) {
+			ratingExplicit.setValue(true);
+			ratingQuestionable.setValue(true);
+			ratingSafe.setValue(true);
+			return;
+		}
+		ratingExplicit.setValue(event.getMustHaveRatings().contains("e"));
+		ratingQuestionable.setValue(event.getMustHaveRatings().contains("q"));
+		ratingSafe.setValue(event.getMustHaveRatings().contains("s"));
+	}
 	
 	@EventHandler
 	protected void enablePreviousButton(Event.EnablePreviousButton event) {
