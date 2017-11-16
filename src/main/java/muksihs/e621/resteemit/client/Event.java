@@ -10,6 +10,20 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class FatalError extends GenericEvent {
+
+		private final String message;
+
+		public FatalError(String message) {
+			this.message=message;
+		}
+
+		public String getMessage() {
+			return message;
+		}
+
+	}
+
 	public class SetRatingsBoxes extends GenericEvent {
 
 		private final Set<String> mustHaveRatings;
@@ -155,7 +169,7 @@ public interface Event {
 
 	}
 
-	public class InitialPreviews extends GenericEvent {
+	public class LoadInitialPreviews extends GenericEvent {
 
 	}
 

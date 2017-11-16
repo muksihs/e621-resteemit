@@ -110,24 +110,18 @@ public class BrowseView extends EventBusComposite {
 	@Override
 	protected void onLoad() {
 		super.onLoad();
-		ratingSafe.setValue(true);
-		ratingQuestionable.setValue(false);
-		ratingExplicit.setValue(false);
-		updateRatings(ratingSafe);
+//		if (History.getToken().trim().isEmpty()) {
+//			ratingSafe.setValue(true);
+//			ratingQuestionable.setValue(false);
+//			ratingExplicit.setValue(false);
+//			updateRatings(ratingSafe);
+//		}
 		fireEvent(new Event.BrowseViewLoaded());
 	}
 
 	@UiField
 	protected MaterialCollapsible tags;
 
-//	private void addAvailableTag(Iterator<String> tags) {
-//		if (!tags.hasNext()) {
-//			fireEvent(new Event.Loading(false));
-//			return;
-//		}
-//		fireEvent(new Event.Loading(true));
-//	}
-	
 	@EventHandler
 	protected void setRatingsBoxes(Event.SetRatingsBoxes event) {
 		GWT.log("setRatingsBoxes: "+event.getMustHaveRatings());

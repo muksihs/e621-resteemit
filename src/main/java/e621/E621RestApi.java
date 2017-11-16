@@ -1,6 +1,7 @@
 package e621;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -43,4 +44,8 @@ public interface E621RestApi extends RestService {
 	@Path("tag/index.json")
 	@JSONP
 	void tagList(@QueryParam("page")int page, @QueryParam("limit")int limit, MethodCallback<List<Tag>> callback);
+	
+	@Path("tag/related.json")
+	@JSONP
+	void tagRelated(@QueryParam("tags")String tags, MethodCallback<Map<String, List<List<String>>>> callback);
 }

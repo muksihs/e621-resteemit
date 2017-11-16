@@ -17,6 +17,7 @@ public class DeferredEventBus extends SimpleEventBus {
 
 	@Override
 	public void fireEvent(Event<?> event) {
+		GWT.log("event: "+event.getClass().getSimpleName());
 		defer(() -> super.fireEvent(event));
 	}
 

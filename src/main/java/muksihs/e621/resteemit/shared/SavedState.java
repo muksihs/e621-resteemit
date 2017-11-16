@@ -37,6 +37,9 @@ public class SavedState {
 			while (must.hasNext() || mustNot.hasNext()) {
 				if (must.hasNext()) {
 					sb.append(escape(must.next()));
+					if (mustNot.hasNext()) {
+						sb.append("<");
+					}
 				}
 				if (mustNot.hasNext()) {
 					sb.append("-");

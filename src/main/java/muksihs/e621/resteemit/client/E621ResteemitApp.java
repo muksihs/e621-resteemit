@@ -2,8 +2,10 @@ package muksihs.e621.resteemit.client;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -16,6 +18,8 @@ import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.web.bindery.event.shared.binder.EventBinder;
 import com.google.web.bindery.event.shared.binder.EventHandler;
@@ -60,11 +64,26 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private int activePage;
 
 	@EventHandler
+	protected void browseViewLoaded(Event.BrowseViewLoaded event) {
+		DomGlobal.console.log("History.getToken()="+History.getToken());
+		if (History.getToken().trim().isEmpty()) {
+			Set<String> boxes=new HashSet<>();
+			boxes.add(Rating.SAFE.getTag());
+			fireEvent(new Event.SetRatingsBoxes(boxes));
+			Set<Rating> safe=new HashSet<>();
+			safe.add(Rating.SAFE);
+			fireEvent(new Event.SetRating(safe));
+		} else {
+			History.fireCurrentHistoryState();
+		}
+	}
+	
+	@EventHandler
 	protected void removeFromFilter(Event.RemoveFromFilter event) {
 		reloadingOnFilterChange = true;
 		mustHaveTags.remove(event.getTag().substring(1));
 		mustNotHaveTags.remove(event.getTag().substring(1));
-		fireEvent(new Event.InitialPreviews());
+		fireEvent(new Event.LoadInitialPreviews());
 	}
 
 	@EventHandler
@@ -80,8 +99,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				mustHaveRatings.add(rating.getTag());
 			}
 		}
-		fireEvent(new Event.InitialPreviews());
-
+		fireEvent(new Event.LoadInitialPreviews());
 	}
 
 	private void updateHash() {
@@ -97,14 +115,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	protected void addToIncludeFilter(Event.AddToIncludeFilter event) {
 		reloadingOnFilterChange = true;
 		mustHaveTags.add(event.getTag());
-		fireEvent(new Event.InitialPreviews());
+		fireEvent(new Event.LoadInitialPreviews());
 	}
 
 	@EventHandler
 	protected void addToExcludeFilter(Event.AddToExcludeFilter event) {
 		reloadingOnFilterChange = true;
 		mustNotHaveTags.add(event.getTag());
-		fireEvent(new Event.InitialPreviews());
+		fireEvent(new Event.LoadInitialPreviews());
 	}
 
 	private void updateActiveTagFilters() {
@@ -143,7 +161,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		});
 	}
 
-	private final List<String> topAvailableTags = new ArrayList<>();
+	private final Set<String> topAvailableTags = new TreeSet<>();
 
 	private List<PostPreview> activeSetForPage(int activePage) {
 		int start = activePage * Consts.PREVIEWS_TO_SHOW;
@@ -173,19 +191,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				nextBeforeId = Long.min(nextBeforeId, post.getId());
 				pageStartId = Long.max(pageStartId, post.getId());
 			}
-
-//			Set<Long> ids = new HashSet<>();
-//			for (PostPreview active : activeSet) {
-//				ids.add(active.getId());
-//			}
-//			Iterator<E621Post> iter = response.iterator();
-//			while (iter.hasNext()) {
-//				E621Post next = iter.next();
-//				if (ids.contains(next.getId())) {
-//					iter.remove();
-//					continue;
-//				}
-//			}
 
 			if (!mustHaveRatings.isEmpty()) {
 				response.removeIf((p) -> !mustHaveRatings.contains(p.getRating()));
@@ -252,9 +257,20 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		@Override
 		public void onFailure(Method method, Throwable exception) {
 			GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
-
+			//try reloading everything from scratch
+			fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
 		}
 	};
+	
+	@EventHandler
+	protected void fatalError(Event.FatalError event) {
+		new Timer() {
+			@Override
+			public void run() {
+				Location.reload();
+			}
+		}.schedule(45000);
+	}
 
 	@Override
 	public void execute() {
@@ -380,12 +396,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			@Override
 			public void onFailure(Method method, Throwable exception) {
 				onPostsLoaded.onFailure(method, exception);
+				fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
 			}
 		};
 	}
 
 	@EventHandler
-	protected void initialPreviewsLoad(Event.InitialPreviews event) {
+	protected void initialPreviewsLoad(Event.LoadInitialPreviews event) {
 		fireEvent(new Event.Loading(true));
 		updateActiveTagFilters();
 		activePage = 0;
@@ -417,7 +434,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	@Override
 	public void onValueChange(ValueChangeEvent<String> event) {
 		String token = event.getValue();
-		DomGlobal.console.log("RECONSTRUCTING STATE: " + token);
+		DomGlobal.console.log("RECONSTRUCTING VIEW STATE: " + token);
 		SavedState state = SavedState.parseHistoryToken(token);
 		mustHaveTags.clear();
 		mustNotHaveTags.clear();
@@ -432,10 +449,61 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		if (state.getRatings() != null) {
 			mustHaveRatings.addAll(state.getRatings());
 		}
-		reloadingOnFilterChange = true;
-		DomGlobal.console.log("STATE: " + state.toString());
 		fireEvent(new Event.SetRatingsBoxes(state.getRatings()));
-		fireEvent(new Event.InitialPreviews());
+		validateTags();
+	}
+
+	private void validateTags() {
+		StringBuilder sb = new StringBuilder();
+		String tags = String.join(" ", mustHaveTags) + String.join(" ", mustNotHaveTags);
+		MethodCallback<Map<String, List<List<String>>>> validated = new MethodCallback<Map<String, List<List<String>>>>() {
+			@Override
+			public void onSuccess(Method method, Map<String, List<List<String>>> response) {
+				if (response.size()==0) {
+					mustHaveTags.clear();
+					mustNotHaveTags.clear();
+					reloadingOnFilterChange = true;
+					fireEvent(new Event.LoadInitialPreviews());
+					return;
+				}
+				/*
+				 * add all to the in memory available tags then remove any invalid ones
+				 */
+				for (String tag: response.keySet()) {
+					topAvailableTags.add(tag);
+				}
+				Iterator<String> iter = mustHaveTags.iterator();
+				while (iter.hasNext()) {
+					String next = iter.next();
+					if (!topAvailableTags.contains(next)) {
+						DomGlobal.console.log("Removing invalid tag: "+next);
+						iter.remove();
+					}
+				}
+				iter = mustNotHaveTags.iterator();
+				while (iter.hasNext()) {
+					String next = iter.next();
+					if (!topAvailableTags.contains(next)) {
+						DomGlobal.console.log("Removing invalid tag: "+next);
+						iter.remove();
+					}
+				}
+				reloadingOnFilterChange = true;
+				fireEvent(new Event.LoadInitialPreviews());
+			}
+
+			@Override
+			public void onFailure(Method method, Throwable exception) {
+				/*
+				 * something went horribly wrong, dump all must have tags, thse are the only
+				 * ones which if they are invalid will make things break in a horrible way.
+				 */
+				mustHaveTags.clear();
+				reloadingOnFilterChange = true;
+				fireEvent(new Event.LoadInitialPreviews());
+			}
+		};
+		E621Api.api().tagRelated(tags, validated);
 	}
 
 }
