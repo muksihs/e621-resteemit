@@ -42,7 +42,7 @@ public class IndexCache {
 		Cached value = new Cached(posts);
 		String jsonString = codec.encode(value).toString();
 		try {
-			jsonString = LZSEncoding.compressToUTF16(jsonString);
+			jsonString = LZSEncoding.compressToBase64(jsonString);
 			cache.put(prefix + key, jsonString);
 		} catch (JavaScriptException e) {
 			GWT.log("=== Javascript Exception");

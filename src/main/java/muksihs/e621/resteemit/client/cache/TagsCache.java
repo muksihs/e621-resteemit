@@ -36,7 +36,7 @@ public class TagsCache {
 		expiresCheck();
 		CachedTags value = new CachedTags(tags);
 		String jsonString = codec.encode(value).toString();
-		jsonString = LZSEncoding.compressToUTF16(jsonString);
+		jsonString = LZSEncoding.compressToBase64(jsonString);
 		try {
 			cache.put(prefix + key, jsonString);
 		} catch (Exception e) {
