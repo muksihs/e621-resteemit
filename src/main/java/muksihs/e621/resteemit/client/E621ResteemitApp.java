@@ -39,7 +39,7 @@ import muksihs.e621.resteemit.ui.MainView;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
-	private static final int CACHED_PAGE_SIZE = 30;
+	private static final int CACHED_PAGE_SIZE = 25;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
 	public E621ResteemitApp() {
@@ -283,6 +283,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		fireEvent(new Event.Loading(true));
 		// hash parsing
 		History.addValueChangeHandler(this);
+		Scheduler.get().scheduleDeferred(this::startApp);
+	}
+
+	private void startApp() {
 		// load most common available tags, then show the view
 		int limit = 500;
 		TagsCache tagsCache = new TagsCache(limit);

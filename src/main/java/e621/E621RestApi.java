@@ -23,29 +23,35 @@ import e621.models.tag.index.Tag;
  */
 @Options(serviceRootKey = "E621")
 public interface E621RestApi extends RestService {
+	@Options(timeout = 5000)
 	@Path("post/index.json")
 	@JSONP
-	void postIndex(@QueryParam("tags") String tags, @QueryParam("before_id") int beforeId, @QueryParam("limit") int limit,
-			MethodCallback<List<E621Post>> callback);
+	void postIndex(@QueryParam("tags") String tags, @QueryParam("before_id") int beforeId,
+			@QueryParam("limit") int limit, MethodCallback<List<E621Post>> callback);
 
+	@Options(timeout = 5000)
 	@Path("post/index.json")
 	@JSONP
 	void postIndex(@QueryParam("tags") String tags, @QueryParam("limit") int limit,
 			MethodCallback<List<E621Post>> callback);
 
+	@Options(timeout = 5000)
 	@Path("post/tags.json")
 	@JSONP
 	void postTags(@QueryParam("id") long id, MethodCallback<List<E621Tag>> callback);
 
+	@Options(timeout = 5000)
 	@Path("post/tags.json")
 	@JSONP
 	void postTags(@QueryParam("md5") String md5, MethodCallback<List<E621Tag>> callback);
-	
+
+	@Options(timeout = 5000)
 	@Path("tag/index.json")
 	@JSONP
-	void tagList(@QueryParam("page")int page, @QueryParam("limit")int limit, MethodCallback<List<Tag>> callback);
-	
+	void tagList(@QueryParam("page") int page, @QueryParam("limit") int limit, MethodCallback<List<Tag>> callback);
+
+	@Options(timeout = 5000)
 	@Path("tag/related.json")
 	@JSONP
-	void tagRelated(@QueryParam("tags")String tags, MethodCallback<Map<String, List<List<String>>>> callback);
+	void tagRelated(@QueryParam("tags") String tags, MethodCallback<Map<String, List<List<String>>>> callback);
 }

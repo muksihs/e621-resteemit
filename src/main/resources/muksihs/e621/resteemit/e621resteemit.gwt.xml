@@ -19,6 +19,9 @@
 	<!-- eventbinder -->
 	<inherits name='com.google.web.bindery.event.EventBinder'/>
 	
+	<!-- compression for the cache -->
+	<inherits name='blazing.chain' />
+	
 	<!-- steemjs -->
 	<inherits name="steem.Steem" />
 	<!-- e621 -->
