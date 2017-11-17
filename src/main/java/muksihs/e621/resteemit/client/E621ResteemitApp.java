@@ -39,7 +39,7 @@ import muksihs.e621.resteemit.ui.MainView;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
-	private static final int CACHED_PAGE_SIZE = 12;
+	private static final int CACHED_PAGE_SIZE = 30;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
 	public E621ResteemitApp() {
@@ -375,8 +375,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		// keep beforeId aligned with multiples of CACHED_PAGE_SIZE so the cache works
 		// correctly
 		beforeId = (long) (Math.ceil((double) beforeId / (double) CACHED_PAGE_SIZE) * (double) CACHED_PAGE_SIZE);
-		List<E621Post> cached = INDEX_CACHE.get(sb.toString() + "," + beforeId);
+		String key = sb.toString()+","+beforeId;
+		List<E621Post> cached = INDEX_CACHE.get(key);
 		if (cached == null) {
+			GWT.log("Cache miss: "+key);
 			E621Api.api().postIndex(sb.toString(), (int) beforeId, CACHED_PAGE_SIZE,
 					cacheIndexResponse(sb.toString(), beforeId));
 		} else {
@@ -389,7 +391,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 			@Override
 			public void onSuccess(Method method, List<E621Post> response) {
-				INDEX_CACHE.put(tags + "," + minId, response);
+				String key = tags + "," + minId;
+				GWT.log("index cache put: "+key);
+				INDEX_CACHE.put(key, response);
 				onPostsLoaded.onSuccess(method, response);
 			}
 
@@ -397,6 +401,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			public void onFailure(Method method, Throwable exception) {
 				onPostsLoaded.onFailure(method, exception);
 				fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
+				GWT.log(exception.getMessage(), exception);
 			}
 		};
 	}
@@ -454,7 +459,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	private void validateTags() {
-		StringBuilder sb = new StringBuilder();
 		String tags = String.join(" ", mustHaveTags) + String.join(" ", mustNotHaveTags);
 		MethodCallback<Map<String, List<List<String>>>> validated = new MethodCallback<Map<String, List<List<String>>>>() {
 			@Override

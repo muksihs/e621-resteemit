@@ -1,14 +1,22 @@
 package muksihs.e621.resteemit.client.cache;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.fusesource.restygwt.client.JsonEncoderDecoder;
+import org.fusesource.restygwt.client.JsonEncoderDecoder.DecodingException;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.storage.client.StorageMap;
 
 import e621.models.post.index.E621Post;
+import elemental2.dom.DomGlobal;
 
 
 public class IndexCache {
@@ -30,16 +38,57 @@ public class IndexCache {
 		String jsonString = codec.encode(value).toString();
 		try {
 			cache.put(prefix+key, jsonString);
+		} catch (JavaScriptException e) {
+			GWT.log("=== Javascript Exception");
+			GWT.log(e.getMessage(), e);
 		} catch (Exception e) {
-			clear();
+			GWT.log(e.getMessage(), e);
+			clearOldest();
 			try {
 				cache.put(prefix+key, jsonString);
 			} catch (Exception e1) {
+				GWT.log(e1.getMessage(), e1);
 				//panic clear the whole mess
 				cache.clear();
 				cache.put(prefix+key, jsonString);
 			}
 		}
+	}
+	private void clearOldest() {
+		class KeyDate {
+			String key;
+			Date expires;
+		}
+		List<KeyDate> forRemoval = new ArrayList<>();
+		for (String prefixedKey: cache.keySet()) {
+			String json = cache.get(prefixedKey);
+			if (json==null) {
+				cache.remove(prefixedKey);
+				continue;
+			}
+			if (!json.contains("\"expires\"")){
+				continue;
+			}
+			CachedExpiration cached;
+			try {
+				cached = expiresCodec.decode(json);
+			} catch (Exception e) {
+				GWT.log(e.getMessage(), e);
+				cache.remove(prefixedKey);
+				continue;
+			}
+			KeyDate k = new KeyDate();
+			k.expires=cached.getExpires();
+			k.key=prefixedKey;
+			if (k.expires==null) {
+				cache.remove(prefixedKey);
+				continue;
+			}
+			forRemoval.add(k);
+		}
+		Collections.sort(forRemoval, (a,b)->a.expires.compareTo(b.expires));
+		int size=forRemoval.size();
+		
 	}
 	public List<E621Post> get(String key) {
 		expiresCheck();
@@ -57,25 +106,30 @@ public class IndexCache {
 		return null;
 	}
 	private void expiresCheck() {
-		for (String key: cache.keySet()) {
-			if (key.startsWith(LIST_E621POST)) {
-				String json = cache.get(key);
-				if (json==null) {
-					continue;
-				}
-				CachedExpiration cached;
-				try {
-					cached = expiresCodec.decode(json);
-				} catch (Exception e) {
-					continue;
-				}
-				if (cached.isExpired()) {
-					cache.remove(key);
-				}
+		for (String prefixedKey: cache.keySet()) {
+			String json = cache.get(prefixedKey);
+			if (json==null) {
+				cache.remove(prefixedKey);
+				continue;
+			}
+			if (!json.contains("\"expires\"")){
+				continue;
+			}
+			CachedExpiration cached;
+			try {
+				cached = expiresCodec.decode(json);
+			} catch (Exception e) {
+				GWT.log(e.getMessage(), e);
+				continue;
+			}
+			if (cached.isExpired()) {
+				DomGlobal.console.log("Expired: ", prefixedKey);
+				cache.remove(prefixedKey);
 			}
 		}
 	}
 	private void clear() {
+		DomGlobal.console.log("Index Cache Clear");
 		for (String key: cache.keySet()) {
 			if (key.startsWith(LIST_E621POST)) {
 				cache.remove(key);
