@@ -2,6 +2,7 @@ package muksihs.e621.resteemit.client;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +18,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window.Location;
@@ -64,7 +66,29 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private final List<PostPreview> activeSet = new ArrayList<>();
 	private final Set<String> extensionsWhitelist = new TreeSet<>();
 	private int activePage;
+	
+	@EventHandler
+	protected void refreshView(Event.RefreshView event) {
+		if (activePage==0) {
+			savedPageStartId=0;
+		}
+		reloadingOnFilterChange = true;
+		fireEvent(new Event.LoadInitialPreviews());
+	}
+	
+	@EventHandler
+	protected void showAccountDialog(Event.ShowAccountDialog event) {
+		
+	}
+	
 
+	@EventHandler
+	protected void mostRecent(Event.MostRecentSet event) {
+		savedPageStartId=0;
+		reloadingOnFilterChange = true;
+		fireEvent(new Event.LoadInitialPreviews());
+	}
+	
 	@EventHandler
 	protected void steemPost(Event.SteemPost event) {
 		if (!isLoggedIn()) {
@@ -175,7 +199,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		Scheduler.get().scheduleDeferred(() -> {
 			List<PostPreview> previewsToShow = activeSetForPage(activePage);
 			Set<String> availableTags = tagsForActiveSet();
-			availableTags.addAll(topAvailableTags);
+			for (Tag topTag: topAvailableTags) {
+				availableTags.add(topTag.getName());
+			}
 			availableTags.removeAll(mustHaveTags);
 			availableTags.removeAll(mustNotHaveTags);
 
@@ -189,7 +215,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		});
 	}
 
-	private final Set<String> topAvailableTags = new TreeSet<>();
+	private final Set<Tag> topAvailableTags = new TreeSet<>();
 
 	private List<PostPreview> activeSetForPage(int activePage) {
 		int start = activePage * Consts.PREVIEWS_TO_SHOW;
@@ -214,6 +240,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 		@Override
 		public void onSuccess(Method method, List<E621Post> response) {
+			//do NOT alter response object, it screws up the cache if done!
 			final int responseSize = response.size();
 			long pageStartId = 0;
 			long nextBeforeId = Long.MAX_VALUE;
@@ -222,48 +249,40 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				pageStartId = Long.max(pageStartId, post.getId());
 			}
 
-			if (!mustHaveRatings.isEmpty()) {
-				response.removeIf((p) -> !mustHaveRatings.contains(p.getRating()));
-			}
-
-			response.removeIf((p) -> !extensionsWhitelist.contains(p.getFileExt().toLowerCase()));
-			if (!mustNotHaveTags.isEmpty()) {
-				response.removeIf((p) -> {
-					String[] tags = p.getTags().split("\\s+");
-					for (String tag : tags) {
-						tag = tag.toLowerCase().trim();
-						if (mustNotHaveTags.contains(tag)) {
-							return true; // remove post
-						}
-					}
-					return false; // keep post
-				});
-			}
-
-			if (!mustHaveTags.isEmpty()) {
-				response.removeIf((p) -> {
-					String[] tags = p.getTags().split("\\s+");
-					for (String tag : tags) {
-						tag = tag.toLowerCase().trim();
-						if (mustHaveTags.contains(tag)) {
-							return false; // keep post
-						}
-					}
-					return true; // remove post
-				});
-			}
-
 			List<PostPreview> previews = new ArrayList<>();
 			Iterator<E621Post> iter = response.iterator();
 			while (iter.hasNext()) {
 				E621Post next = iter.next();
 				PostPreview preview = new PostPreview(next.getId(), next.getSampleUrl(), next.getFileUrl(),
-						next.getCreatedAt().getS(), next.getTags());
+						next.getCreatedAt().getS(), next.getTags(), next.getRating(), next.getFileExt());
 				previews.add(preview);
 			}
 			// remove previews already in the activeset
 			previews.removeAll(activeSet);
 			activeSet.addAll(previews);
+			
+			//filter the active set
+			if (!mustHaveRatings.isEmpty()) {
+				activeSet.removeIf((p) -> !mustHaveRatings.contains(p.getRating()));
+			}
+
+			activeSet.removeIf((p) -> !extensionsWhitelist.contains(p.getFileExt().toLowerCase()));
+			if (!mustNotHaveTags.isEmpty()) {
+				activeSet.removeIf((p) -> {
+					Set<String> tags = new HashSet<>(Arrays.asList(p.getTags().split("\\s+")));
+					return !Collections.disjoint(tags, mustNotHaveTags);
+				});
+			}
+
+			if (!mustHaveTags.isEmpty()) {
+				GWT.log("must have tags: "+mustHaveTags.toString());
+				activeSet.removeIf((p) -> {
+					Set<String> tags = new HashSet<>(Arrays.asList(p.getTags().split("\\s+")));
+					return !tags.containsAll(mustHaveTags);
+				});
+			}
+			
+			
 			boolean moreAvailable = nextBeforeId > 0 && responseSize > 0;
 			int activePageEnd = (1 + activePage) * Consts.PREVIEWS_TO_SHOW;
 			if ((activeSet.size() < activePageEnd) && moreAvailable) {
@@ -339,17 +358,19 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		TagsCache tagsCache = new TagsCache(limit);
 		List<Tag> tags = tagsCache.get(limit + "");
 		if (tags != null && !tags.isEmpty()) {
-			for (Tag tag : tags) {
-				topAvailableTags.add(tag.getName());
-			}
+			topAvailableTags.addAll(tags);
 			fireEvent(new Event.ShowView(View.BrowseView));
 		} else {
 			E621Api.api().tagList(1, limit, new MethodCallback<List<Tag>>() {
 				@Override
 				public void onSuccess(Method method, List<Tag> response) {
 					topAvailableTags.clear();
-					for (Tag tag : response) {
-						topAvailableTags.add(tag.getName());
+					for (Tag tag: response) {
+						if (tag==null) {
+							GWT.log("tag: null tag?");
+						}
+						GWT.log("tag: "+tag.getName()+", "+tag.toString());
+						topAvailableTags.add(tag);
 					}
 					tagsCache.put(limit + "", response);
 					GWT.log("Have " + topAvailableTags.size() + " top tags loaded.");
@@ -388,7 +409,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	@EventHandler
 	protected void showPreviousSet(Event.PreviousPreviewSet event) {
 		if (activePage > 0) {
+			fireEvent(new Event.Loading(true));
 			activePage--;
+			if (activePage==0) {
+				savedPageStartId=0;
+			}
 			fireEvent(new Event.PreviewsLoaded());
 		}
 	}
@@ -403,12 +428,31 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		activePage++;
 		long beforeId = tmp;
+		if (activePage==0) {
+			savedPageStartId=0;
+		}
 		Scheduler.get().scheduleDeferred(() -> {
 			additionalPreviewsLoad(beforeId);
 		});
 	}
 
 	protected void additionalPreviewsLoad(long beforeId) {
+		String query = buildQuery();
+		// keep beforeId aligned with multiples of CACHED_PAGE_SIZE so the cache works
+		// correctly
+		beforeId = (long) (Math.ceil((double) beforeId / (double) CACHED_PAGE_SIZE) * (double) CACHED_PAGE_SIZE);
+		String cachedPostsKey = query + "," + beforeId;
+		List<E621Post> cached = INDEX_CACHE.get(cachedPostsKey);
+		if (cached == null) {
+			fireEvent(new Event.QuickMessage("Searching E621..."));
+			E621Api.api().postIndex(query, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(cachedPostsKey));
+		} else {
+			fireEvent(new Event.QuickMessage("Searching cache... "+beforeId));
+			Scheduler.get().scheduleDeferred(() -> onPostsLoaded.onSuccess(null, cached));
+		}
+	}
+
+	private String buildQuery() {
 		List<String> tags = new ArrayList<>();
 		if (mustHaveRatings.size() == 1) {
 			// querying E621 with multiple ratings doesn't seem to give correct results
@@ -418,13 +462,66 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				tags.add("rating:" + iRatings.next());
 			}
 		}
+		List<Tag> tmpMustHave = new ArrayList<>();
+		List<Tag> tmpMustNotHave = new ArrayList<>();
 		Iterator<String> iMust = mustHaveTags.iterator();
-		while (iMust.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
-			tags.add(iMust.next());
+		must: while (iMust.hasNext()) {
+			String next = iMust.next();
+			for (Tag tag: topAvailableTags) {
+				if (tag.getName().equals(next)) {
+					tmpMustHave.add(tag);
+					continue must;
+				}
+			}
 		}
 		Iterator<String> iMustNot = mustNotHaveTags.iterator();
-		while (iMustNot.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
-			tags.add("-" + iMustNot.next());
+		mustNot: while (iMustNot.hasNext()) {
+			String next = iMustNot.next();
+			for (Tag tag: topAvailableTags) {
+				if (tag.getName().equals(next)) {
+					tmpMustNotHave.add(tag);
+					continue mustNot;
+				}
+			}
+		}
+		List<Tag> queryTags=new ArrayList<>();
+		queryTags.addAll(tmpMustHave);
+		queryTags.addAll(tmpMustNotHave);
+		/*
+		 * try and sort tags to produce better queries:
+		 * must have should be those with least count of posts
+		 * must not have should be those with the most count of posts
+		 * we seem to perform less queries preferring musthave over mustnothave
+		 */
+		Collections.sort(queryTags, (a,b)->{
+			//sort musthave before mustnothave
+			if (tmpMustHave.contains(a)&&tmpMustNotHave.contains(b)) {
+				return -1;
+			}
+			if (tmpMustNotHave.contains(a)&&tmpMustHave.contains(b)) {
+				return 1;
+			}
+			//sort musthave vs musthave asc
+			if (tmpMustHave.contains(a)&&tmpMustHave.contains(b)) {
+				return Long.compare(a.getCount(), b.getCount());
+			}
+			//musthavenot vs musthavenot desc
+			if (tmpMustNotHave.contains(a)&&tmpMustNotHave.contains(b)) {
+				return Long.compare(b.getCount(), a.getCount());
+			}
+			//sort the rest asc
+			return Long.compare(a.getCount(), b.getCount());
+		});
+		
+		Iterator<Tag> iQuery = queryTags.iterator();
+		while (iQuery.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
+			Tag next = iQuery.next();
+			if (tmpMustHave.contains(next)) {
+				tags.add(next.getName());
+			}
+			if (tmpMustNotHave.contains(next)) {
+				tags.add("-"+next.getName());
+			}
 		}
 		StringBuilder sb = new StringBuilder();
 		Iterator<String> iTags = tags.iterator();
@@ -434,19 +531,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				sb.append(" ");
 			}
 		}
-		// keep beforeId aligned with multiples of CACHED_PAGE_SIZE so the cache works
-		// correctly
-		beforeId = (long) (Math.ceil((double) beforeId / (double) CACHED_PAGE_SIZE) * (double) CACHED_PAGE_SIZE);
-		String queriedTags = sb.toString();
-		String cachedPostsKey = queriedTags + "," + beforeId;
-		List<E621Post> cached = INDEX_CACHE.get(cachedPostsKey);
-		if (cached == null) {
-			fireEvent(new Event.QuickMessage("Searching E621..."));
-			E621Api.api().postIndex(queriedTags, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(cachedPostsKey));
-		} else {
-			fireEvent(new Event.QuickMessage("Searching cache... "+beforeId));
-			Scheduler.get().scheduleDeferred(() -> onPostsLoaded.onSuccess(null, cached));
-		}
+		String query = sb.toString();
+		GWT.log("Weighted Tags: "+queryTags.toString());
+		GWT.log("Query: "+query);
+		GWT.log("Search: "+SavedState.asHistoryToken(getSavedStateHash()).replace("<", " "));
+		return query;
 	}
 
 	private MethodCallback<List<E621Post>> cacheIndexResponse(String cachedPostsKey) {
@@ -454,6 +543,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 			@Override
 			public void onSuccess(Method method, List<E621Post> response) {
+				//do NOT alter response object, it screws up the cache if done!
 				Scheduler.get().scheduleDeferred(() -> INDEX_CACHE.put(cachedPostsKey, response));
 				onPostsLoaded.onSuccess(method, response);
 			}
@@ -479,30 +569,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		updateActiveTagFilters();
 		activePage = 0;
 		activeSet.clear();
-		List<String> tags = new ArrayList<>();
-		if (mustHaveRatings.size() == 1) {
-			Iterator<String> iRatings = mustHaveRatings.iterator();
-			while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
-				tags.add("rating:" + iRatings.next());
-			}
-		}
-		Iterator<String> iMust = mustHaveTags.iterator();
-		while (iMust.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
-			tags.add(iMust.next());
-		}
-		Iterator<String> iMustNot = mustNotHaveTags.iterator();
-		while (iMustNot.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
-			tags.add("-" + iMustNot.next());
-		}
-		StringBuilder sb = new StringBuilder();
-		Iterator<String> iTags = tags.iterator();
-		while (iTags.hasNext()) {
-			sb.append(iTags.next());
-			if (iTags.hasNext()) {
-				sb.append(" ");
-			}
-		}
-		E621Api.api().postIndex(sb.toString(), CACHED_PAGE_SIZE, onPostsLoaded);
+		String query = buildQuery();
+		E621Api.api().postIndex(query, CACHED_PAGE_SIZE, onPostsLoaded);
 	}
 
 	@Override
@@ -542,21 +610,38 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				/*
 				 * add all to the in memory available tags then remove any invalid ones
 				 */
-				for (String tag : response.keySet()) {
-					topAvailableTags.add(tag);
+				for (String tagName : response.keySet()) {
+					Tag tag = new Tag();
+					tag.setName(tagName);
+					if (!topAvailableTags.contains(tag)) {
+						topAvailableTags.add(tag);
+					}
 				}
+				/*
+				 * build up quick lookup set for valid tag names
+				 */
+				Set<String> validTagNames = new HashSet<>();
+				for (Tag tag: topAvailableTags) {
+					validTagNames.add(tag.getName());
+				}
+				/*
+				 * remove tags not in the valid tag names set
+				 */
 				Iterator<String> iter = mustHaveTags.iterator();
 				while (iter.hasNext()) {
 					String next = iter.next();
-					if (!topAvailableTags.contains(next)) {
+					if (!validTagNames.contains(next)) {
 						DomGlobal.console.log("Removing invalid tag: " + next);
 						iter.remove();
 					}
 				}
+				/*
+				 * remove tags not in the valid tag names set
+				 */
 				iter = mustNotHaveTags.iterator();
 				while (iter.hasNext()) {
 					String next = iter.next();
-					if (!topAvailableTags.contains(next)) {
+					if (!validTagNames.contains(next)) {
 						DomGlobal.console.log("Removing invalid tag: " + next);
 						iter.remove();
 					}
@@ -573,7 +658,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
 				DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
 				DomGlobal.console.log(exception);
-				DomGlobal.console.log("Method", method);
+				DomGlobal.console.log(method);
 			}
 		};
 		E621Api.api().tagRelated(tags, validated);

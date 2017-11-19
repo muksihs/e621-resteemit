@@ -7,6 +7,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.binder.EventBinder;
 import com.google.web.bindery.event.shared.binder.EventHandler;
 
+import gwt.material.design.client.ui.MaterialButton;
 import gwt.material.design.client.ui.MaterialLabel;
 import muksihs.e621.resteemit.client.Event;
 
@@ -24,14 +25,17 @@ public class HeaderBlock extends EventBusComposite {
 
 	@UiField
 	protected MaterialLabel version;
-//	@UiField
-//	protected MaterialTitle title;
+	@UiField
+	protected MaterialButton refresh;
+	@UiField
+	protected MaterialButton account;
 
 	public HeaderBlock() {
 		super();
 		initWidget(uiBinder.createAndBindUi(this));
 		version.setText(versionTxt);
-//		title.getElement().getStyle().setMarginTop(-50, Unit.PX);
+		refresh.addClickHandler((e)->fireEvent(new Event.RefreshView()));
+		account.addClickHandler((e)->fireEvent(new Event.ShowAccountDialog()));
 	}
 
 	@Override

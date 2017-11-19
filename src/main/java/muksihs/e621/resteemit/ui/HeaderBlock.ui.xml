@@ -7,8 +7,8 @@
 	<m:MaterialPanel>
 		<m:MaterialNavBar>
 			<m:MaterialNavSection float="LEFT">
-				<m:MaterialNavBrand text="Muksihs' E621 Browser" />
-				<m:MaterialNavContent>
+				<m:MaterialNavBrand style="margin: 6px;" text="Muksihs' E621 Browser" />
+				<m:MaterialNavContent style="margin: 4px;">
 					<m:MaterialLabel text="for steemit - version: "></m:MaterialLabel>
 					<m:MaterialLabel text="0000000" ui:field="version"></m:MaterialLabel>
 					<m:MaterialLabel text=" - created by "></m:MaterialLabel>
@@ -17,10 +17,10 @@
 				</m:MaterialNavContent>
 			</m:MaterialNavSection>
 			<m:MaterialNavSection float="RIGHT">
-				<m:MaterialLink iconType="AUTORENEW" iconPosition="LEFT"
-					text="Refresh" textColor="WHITE" waves="LIGHT" />
-				<m:MaterialLink iconType="ACCOUNT_CIRCLE"
-					iconPosition="LEFT" text="Account" textColor="WHITE" waves="LIGHT" />
+				<m:MaterialButton style="margin: 4px;" ui:field="refresh" iconType="AUTORENEW" iconPosition="LEFT"
+					text="Refresh"/>
+				<m:MaterialButton style="margin: 4px; margin-right: 8px;" ui:field="account" iconType="ACCOUNT_CIRCLE"
+					iconPosition="LEFT" text="Account"/>
 			</m:MaterialNavSection>
 		</m:MaterialNavBar>
 		<m:MaterialDivider></m:MaterialDivider>

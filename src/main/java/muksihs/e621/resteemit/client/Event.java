@@ -10,6 +10,18 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class ShowAccountDialog extends GenericEvent {
+
+	}
+
+	public class RefreshView extends GenericEvent {
+
+	}
+
+	public class MostRecentSet extends GenericEvent {
+
+	}
+
 	public class QuickMessage extends GenericEvent {
 		private final String message;
 		public QuickMessage(String message) {

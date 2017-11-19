@@ -6,6 +6,8 @@ public class PostPreview {
 	private final String fileUrl;
 	private final long created;
 	private String tags;
+	private String rating;
+	private String fileExt;
 
 	@Override
 	public int hashCode() {
@@ -52,12 +54,14 @@ public class PostPreview {
 		return created;
 	}
 
-	public PostPreview(long id, String sampleUrl, String fileUrl, long created, String tags) {
+	public PostPreview(long id, String sampleUrl, String fileUrl, long created, String tags, String rating, String fileExt) {
 		this.id = id;
 		this.sampleUrl = sampleUrl;
 		this.fileUrl = fileUrl;
 		this.created = created;
 		this.tags = tags;
+		this.setRating(rating);
+		this.setFileExt(fileExt);
 	}
 
 	public String getTags() {
@@ -66,5 +70,21 @@ public class PostPreview {
 
 	public void setTags(String tags) {
 		this.tags = tags;
+	}
+
+	public String getRating() {
+		return rating;
+	}
+
+	public void setRating(String rating) {
+		this.rating = rating;
+	}
+
+	public String getFileExt() {
+		return fileExt;
+	}
+
+	public void setFileExt(String fileExt) {
+		this.fileExt = fileExt;
 	}
 }

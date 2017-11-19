@@ -49,6 +49,8 @@ public class BrowseView extends EventBusComposite {
 	@UiField
 	MaterialPanel posts;
 	@UiField
+	MaterialButton mostRecent;
+	@UiField
 	MaterialButton previous;
 	@UiField
 	MaterialButton next;
@@ -93,7 +95,7 @@ public class BrowseView extends EventBusComposite {
 		initWidget(uiBinder.createAndBindUi(this));
 		previous.addClickHandler(this::getPrevious);
 		next.addClickHandler(this::getNext);
-
+		mostRecent.addClickHandler((e) -> fireEvent(new Event.MostRecentSet()));
 		ratingSafe.addClickHandler((e) -> updateRatings(ratingSafe));
 		ratingQuestionable.addClickHandler((e) -> updateRatings(ratingQuestionable));
 		ratingExplicit.addClickHandler((e) -> updateRatings(ratingExplicit));
@@ -110,12 +112,12 @@ public class BrowseView extends EventBusComposite {
 	@Override
 	protected void onLoad() {
 		super.onLoad();
-//		if (History.getToken().trim().isEmpty()) {
-//			ratingSafe.setValue(true);
-//			ratingQuestionable.setValue(false);
-//			ratingExplicit.setValue(false);
-//			updateRatings(ratingSafe);
-//		}
+		// if (History.getToken().trim().isEmpty()) {
+		// ratingSafe.setValue(true);
+		// ratingQuestionable.setValue(false);
+		// ratingExplicit.setValue(false);
+		// updateRatings(ratingSafe);
+		// }
 		fireEvent(new Event.BrowseViewLoaded());
 	}
 
@@ -124,8 +126,8 @@ public class BrowseView extends EventBusComposite {
 
 	@EventHandler
 	protected void setRatingsBoxes(Event.SetRatingsBoxes event) {
-		GWT.log("setRatingsBoxes: "+event.getMustHaveRatings());
-		if (event.getMustHaveRatings()==null||event.getMustHaveRatings().isEmpty()) {
+		GWT.log("setRatingsBoxes: " + event.getMustHaveRatings());
+		if (event.getMustHaveRatings() == null || event.getMustHaveRatings().isEmpty()) {
 			ratingExplicit.setValue(true);
 			ratingQuestionable.setValue(true);
 			ratingSafe.setValue(true);
@@ -135,10 +137,11 @@ public class BrowseView extends EventBusComposite {
 		ratingQuestionable.setValue(event.getMustHaveRatings().contains("q"));
 		ratingSafe.setValue(event.getMustHaveRatings().contains("s"));
 	}
-	
+
 	@EventHandler
 	protected void enablePreviousButton(Event.EnablePreviousButton event) {
 		this.previous.setEnabled(event.isEnable());
+		this.mostRecent.setEnabled(event.isEnable());
 	}
 
 	@EventHandler
@@ -158,6 +161,7 @@ public class BrowseView extends EventBusComposite {
 	}
 
 	private final Set<String> activeFilterTags = new TreeSet<>();
+
 	@EventHandler
 	protected void showFilterTags(Event.ShowFilterTags event) {
 		filterTags.clear();
@@ -282,7 +286,7 @@ public class BrowseView extends EventBusComposite {
 			tagLabel.addClickHandler((e) -> showAddToFilterDialog(tag));
 			tagLabel.addClickHandler((e) -> modal.close());
 			tagLabel.setMargin(1);
-			if (activeFilterTags.contains("+"+tag)) {
+			if (activeFilterTags.contains("+" + tag)) {
 				tagLabel.setEnabled(false);
 				tagLabel.setBackgroundColor(Color.LIGHT_GREEN);
 			}
@@ -292,7 +296,7 @@ public class BrowseView extends EventBusComposite {
 		cancel.setBackgroundColor(Color.GREEN_LIGHTEN_1);
 		cancel.setTextColor(Color.WHITE);
 		cancel.setMargin(1);
-		cancel.addClickHandler((e)->modal.close());
+		cancel.addClickHandler((e) -> modal.close());
 		panel.add(cancel);
 		modal.add(panel);
 		RootPanel.get().add(modal);
