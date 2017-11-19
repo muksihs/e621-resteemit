@@ -203,7 +203,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			StringBuilder sb = new StringBuilder();
 			Iterator<String> iTags = availableTags.iterator();
 			while (iTags.hasNext()) {
-				sb.append(iTags.next());
+				String next = iTags.next();
+				Tag tmp = new Tag();
+				tmp.setName(next);
+				if (topAvailableTags.contains(tmp)) {
+					continue;
+				}
+				sb.append(next);
 				if (iTags.hasNext()) {
 					sb.append(" ");
 				}
@@ -211,6 +217,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			MethodCallback<Map<String, List<List<String>>>> finishShowPreviews=new MethodCallback<Map<String, List<List<String>>>>() {
 				@Override
 				public void onFailure(Method method, Throwable exception) {
+					DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
+					DomGlobal.console.log(exception);
+					DomGlobal.console.log(method);
 					onSuccess(method, new HashMap<>());
 				}
 
@@ -241,7 +250,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					updateHash();
 				}
 			};
-			E621Api.api().tagRelated(sb.toString(), finishShowPreviews);
+			if (sb.length()==0) {
+				finishShowPreviews.onSuccess(null, new HashMap<>());
+			} else {
+				E621Api.api().tagRelated(sb.toString(), finishShowPreviews);
+			}
 		});
 	}
 
