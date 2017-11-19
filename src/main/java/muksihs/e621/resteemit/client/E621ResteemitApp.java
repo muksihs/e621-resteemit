@@ -3,6 +3,7 @@ package muksihs.e621.resteemit.client;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -18,7 +19,6 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window.Location;
@@ -199,19 +199,49 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		Scheduler.get().scheduleDeferred(() -> {
 			List<PostPreview> previewsToShow = activeSetForPage(activePage);
 			Set<String> availableTags = tagsForActiveSet();
-			for (Tag topTag: topAvailableTags) {
-				availableTags.add(topTag.getName());
+			
+			StringBuilder sb = new StringBuilder();
+			Iterator<String> iTags = availableTags.iterator();
+			while (iTags.hasNext()) {
+				sb.append(iTags.next());
+				if (iTags.hasNext()) {
+					sb.append(" ");
+				}
 			}
-			availableTags.removeAll(mustHaveTags);
-			availableTags.removeAll(mustNotHaveTags);
+			MethodCallback<Map<String, List<List<String>>>> finishShowPreviews=new MethodCallback<Map<String, List<List<String>>>>() {
+				@Override
+				public void onFailure(Method method, Throwable exception) {
+					onSuccess(method, new HashMap<>());
+				}
 
-			reloadingOnFilterChange = false;
-			savedPageStartId = previewsToShow.stream().mapToLong((p) -> p.getId()).max().getAsLong();
-			GWT.log("new savedPageStartId: " + savedPageStartId);
-			fireEvent(new Event.ShowAvailableTags(availableTags));
-			fireEvent(new Event.ShowPreviews(previewsToShow));
-			fireEvent(new Event.Loading(false));
-			updateHash();
+				@Override
+				public void onSuccess(Method method, Map<String, List<List<String>>> response) {
+					for (String tagName: response.keySet()) {
+						Tag tag = new Tag();
+						tag.setName(tagName);
+						List<List<String>> list = response.get(tagName);
+						if (list!=null) {
+							//use related tag count for query weighting purposes
+							tag.setCount(list.size());
+						}
+						topAvailableTags.add(tag);
+					}
+					for (Tag topTag: topAvailableTags) {
+						availableTags.add(topTag.getName());
+					}
+					availableTags.removeAll(mustHaveTags);
+					availableTags.removeAll(mustNotHaveTags);
+
+					reloadingOnFilterChange = false;
+					savedPageStartId = previewsToShow.stream().mapToLong((p) -> p.getId()).max().getAsLong();
+					GWT.log("new savedPageStartId: " + savedPageStartId);
+					fireEvent(new Event.ShowAvailableTags(availableTags));
+					fireEvent(new Event.ShowPreviews(previewsToShow));
+					fireEvent(new Event.Loading(false));
+					updateHash();
+				}
+			};
+			E621Api.api().tagRelated(sb.toString(), finishShowPreviews);
 		});
 	}
 
@@ -532,9 +562,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			}
 		}
 		String query = sb.toString();
-		GWT.log("Weighted Tags: "+queryTags.toString());
-		GWT.log("Query: "+query);
-		GWT.log("Search: "+SavedState.asHistoryToken(getSavedStateHash()).replace("<", " "));
+		DomGlobal.console.log("Weighted Tags: "+queryTags.toString());
 		return query;
 	}
 
@@ -596,7 +624,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	private void validateTags() {
-		String tags = String.join(" ", mustHaveTags) + String.join(" ", mustNotHaveTags);
+		String tags = String.join(" ", mustHaveTags) + " " + String.join(" ", mustNotHaveTags);
+		tags = tags.trim();
 		MethodCallback<Map<String, List<List<String>>>> validated = new MethodCallback<Map<String, List<List<String>>>>() {
 			@Override
 			public void onSuccess(Method method, Map<String, List<List<String>>> response) {
