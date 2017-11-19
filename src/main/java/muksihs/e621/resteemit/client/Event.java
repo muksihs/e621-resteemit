@@ -10,6 +10,17 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class AlertMessage extends GenericEvent {
+		private final String message;
+		public AlertMessage(String message) {
+			this.message=message;
+		}
+		public String getMessage() {
+			return message;
+		}
+
+	}
+
 	public class ShowAccountDialog extends GenericEvent {
 
 	}

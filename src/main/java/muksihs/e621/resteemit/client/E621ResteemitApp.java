@@ -112,7 +112,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void browseViewLoaded(Event.BrowseViewLoaded event) {
-		DomGlobal.console.log("History.getToken()=" + History.getToken());
 		if (History.getToken().trim().isEmpty()) {
 			Set<String> boxes = new HashSet<>();
 			boxes.add(Rating.SAFE.getTag());
@@ -242,12 +241,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					availableTags.removeAll(mustNotHaveTags);
 
 					reloadingOnFilterChange = false;
-					savedPageStartId = previewsToShow.stream().mapToLong((p) -> p.getId()).max().getAsLong();
-					GWT.log("new savedPageStartId: " + savedPageStartId);
+					savedPageStartId = previewsToShow.stream().mapToLong((p) -> p.getId()).max().orElse(0);
 					fireEvent(new Event.ShowAvailableTags(availableTags));
 					fireEvent(new Event.ShowPreviews(previewsToShow));
 					fireEvent(new Event.Loading(false));
 					updateHash();
+					if (previewsToShow.isEmpty()) {
+						fireEvent(new Event.AlertMessage("No Posts Match Your Filter Settings!"));
+					}
 				}
 			};
 			if (sb.length()==0) {
@@ -321,7 +322,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			}
 
 			if (!mustHaveTags.isEmpty()) {
-				GWT.log("must have tags: "+mustHaveTags.toString());
 				activeSet.removeIf((p) -> {
 					Set<String> tags = new HashSet<>(Arrays.asList(p.getTags().split("\\s+")));
 					return !tags.containsAll(mustHaveTags);
@@ -334,11 +334,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			if ((activeSet.size() < activePageEnd) && moreAvailable) {
 				final long beforeId;
 				if (nextBeforeId == pageStartId) {
-					GWT.log("Small cache block work around...");
 					beforeId = nextBeforeId - CACHED_PAGE_SIZE;
 				} else {
 					if (prevBeforeId==nextBeforeId) {
-						GWT.log("Dont' get stuck in a search loop!");
 						beforeId = nextBeforeId - CACHED_PAGE_SIZE;
 					} else {
 						beforeId = nextBeforeId;
@@ -349,7 +347,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				return;
 			}
 			List<PostPreview> previewsToShow = activeSetForPage(activePage);
-			long beforeId = previewsToShow.stream().mapToLong((p) -> p.getId()).min().getAsLong();
+			long beforeId = previewsToShow.stream().mapToLong((p) -> p.getId()).min().orElse(0);
 			boolean skipForwards = reloadingOnFilterChange //
 					&& beforeId > savedPageStartId //
 					&& savedPageStartId > 0;
@@ -364,9 +362,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		public void onFailure(Method method, Throwable exception) {
 			// try reloading everything from scratch
 			fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
-			GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
-			DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
-			DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
 			DomGlobal.console.log(exception);
 			DomGlobal.console.log(method);
 			DomGlobal.console.log(method.getResponse());
@@ -413,13 +408,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					topAvailableTags.clear();
 					for (Tag tag: response) {
 						if (tag==null) {
-							GWT.log("tag: null tag?");
+							continue;
 						}
-						GWT.log("tag: "+tag.getName()+", "+tag.toString());
 						topAvailableTags.add(tag);
 					}
 					tagsCache.put(limit + "", response);
-					GWT.log("Have " + topAvailableTags.size() + " top tags loaded.");
 					fireEvent(new Event.ShowView(View.BrowseView));
 				}
 
@@ -427,8 +420,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				public void onFailure(Method method, Throwable exception) {
 					// try reloading everything from scratch
 					fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
-					GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
-					DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
 					DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
 					DomGlobal.console.log(exception);
 					DomGlobal.console.log(method);
@@ -578,7 +569,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			}
 		}
 		String query = sb.toString();
-		DomGlobal.console.log("Weighted Tags: "+queryTags.toString());
 		return query;
 	}
 
@@ -596,7 +586,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			public void onFailure(Method method, Throwable exception) {
 				// try reloading everything from scratch
 				fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
-				GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
 				DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
 				DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
 				DomGlobal.console.log(exception);
@@ -620,7 +609,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	@Override
 	public void onValueChange(ValueChangeEvent<String> event) {
 		String token = event.getValue();
-		DomGlobal.console.log("RECONSTRUCTING VIEW STATE: " + token);
 		SavedState state = SavedState.parseHistoryToken(token);
 		mustHaveTags.clear();
 		mustNotHaveTags.clear();
@@ -699,7 +687,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			public void onFailure(Method method, Throwable exception) {
 				// try reloading everything from scratch
 				fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
-				GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
 				DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
 				DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
 				DomGlobal.console.log(exception);
