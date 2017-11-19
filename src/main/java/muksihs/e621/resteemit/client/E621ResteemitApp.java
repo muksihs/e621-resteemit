@@ -296,7 +296,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			DomGlobal.console.log("EXCEPTION: "+exception.getMessage());
 			DomGlobal.console.log("HISTORY TOKEN: "+SavedState.asHistoryToken(getSavedStateHash()));
 			DomGlobal.console.log(exception);
-		}
+			DomGlobal.console.log("Method", method);		}
 	};
 
 	@EventHandler
@@ -348,9 +348,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 				@Override
 				public void onFailure(Method method, Throwable exception) {
-					GWT.log("Failed loading top tags!", exception);
-					fireEvent(new Event.ShowView(View.BrowseView));
-				}
+					// try reloading everything from scratch
+					fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
+					GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
+					DomGlobal.console.log("EXCEPTION: "+exception.getMessage());
+					DomGlobal.console.log("HISTORY TOKEN: "+SavedState.asHistoryToken(getSavedStateHash()));
+					DomGlobal.console.log(exception);
+					DomGlobal.console.log("Method", method);				}
 			});
 		}
 	}
@@ -437,15 +441,19 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 			@Override
 			public void onSuccess(Method method, List<E621Post> response) {
-				INDEX_CACHE.put(cachedPostsKey, response);
+				Scheduler.get().scheduleDeferred(()->INDEX_CACHE.put(cachedPostsKey, response));
 				onPostsLoaded.onSuccess(method, response);
 			}
 
 			@Override
 			public void onFailure(Method method, Throwable exception) {
-				onPostsLoaded.onFailure(method, exception);
+				// try reloading everything from scratch
 				fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
-				GWT.log(exception.getMessage(), exception);
+				GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
+				DomGlobal.console.log("EXCEPTION: "+exception.getMessage());
+				DomGlobal.console.log("HISTORY TOKEN: "+SavedState.asHistoryToken(getSavedStateHash()));
+				DomGlobal.console.log(exception);
+				DomGlobal.console.log("Method", method);
 			}
 		};
 	}
@@ -544,11 +552,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 			@Override
 			public void onFailure(Method method, Throwable exception) {
-				/*
-				 * something went horribly wrong, start over...
-				 */
-				fireEvent(new Event.FatalError(exception.getMessage()));
-			}
+				// try reloading everything from scratch
+				fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
+				GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
+				DomGlobal.console.log("EXCEPTION: "+exception.getMessage());
+				DomGlobal.console.log("HISTORY TOKEN: "+SavedState.asHistoryToken(getSavedStateHash()));
+				DomGlobal.console.log(exception);
+				DomGlobal.console.log("Method", method);			}
 		};
 		E621Api.api().tagRelated(tags, validated);
 	}
