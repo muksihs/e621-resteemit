@@ -21,8 +21,8 @@ public class E621Post {
 	private long id;
 	@JsonProperty("tags")
 	private String tags;
-	@JsonProperty("locked_tags")
-	private String lockedTags;
+//	@JsonProperty("locked_tags")
+//	private String lockedTags;
 	@JsonProperty("description")
 	private String description;
 	@JsonProperty("created_at")
@@ -108,15 +108,15 @@ public class E621Post {
 	 * 
 	 * @return
 	 */
-	@JsonProperty("locked_tags")
-	public String getLockedTags() {
-		return lockedTags;
-	}
-
-	@JsonProperty("locked_tags")
-	public void setLockedTags(String lockedTags) {
-		this.lockedTags = lockedTags;
-	}
+//	@JsonProperty("locked_tags")
+//	public String getLockedTags() {
+//		return lockedTags;
+//	}
+//
+//	@JsonProperty("locked_tags")
+//	public void setLockedTags(String lockedTags) {
+//		this.lockedTags = lockedTags;
+//	}
 
 	@JsonProperty("description")
 	public String getDescription() {

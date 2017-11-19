@@ -293,10 +293,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			// try reloading everything from scratch
 			fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
 			GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
-			DomGlobal.console.log("EXCEPTION: "+exception.getMessage());
-			DomGlobal.console.log("HISTORY TOKEN: "+SavedState.asHistoryToken(getSavedStateHash()));
+			DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
+			DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
 			DomGlobal.console.log(exception);
-			DomGlobal.console.log("Method", method);		}
+			DomGlobal.console.log(method);
+			DomGlobal.console.log(method.getResponse());
+			DomGlobal.console.log(method.getResponse().getText());
+		}
 	};
 
 	@EventHandler
@@ -351,10 +354,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					// try reloading everything from scratch
 					fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
 					GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
-					DomGlobal.console.log("EXCEPTION: "+exception.getMessage());
-					DomGlobal.console.log("HISTORY TOKEN: "+SavedState.asHistoryToken(getSavedStateHash()));
+					DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
+					DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
 					DomGlobal.console.log(exception);
-					DomGlobal.console.log("Method", method);				}
+					DomGlobal.console.log(method);
+					DomGlobal.console.log(method.getResponse());
+					DomGlobal.console.log(method.getResponse().getText());
+				}
 			});
 		}
 	}
@@ -397,9 +403,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	protected void additionalPreviewsLoad(long beforeId) {
 		List<String> tags = new ArrayList<>();
-		if (mustHaveRatings.size()==1) {
-			//querying E621 with multiple ratings doesn't seem to give correct results
-			//so rely strictly on client side filtering if more than one rating provided
+		if (mustHaveRatings.size() == 1) {
+			// querying E621 with multiple ratings doesn't seem to give correct results
+			// so rely strictly on client side filtering if more than one rating provided
 			Iterator<String> iRatings = mustHaveRatings.iterator();
 			while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
 				tags.add("rating:" + iRatings.next());
@@ -441,7 +447,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 			@Override
 			public void onSuccess(Method method, List<E621Post> response) {
-				Scheduler.get().scheduleDeferred(()->INDEX_CACHE.put(cachedPostsKey, response));
+				Scheduler.get().scheduleDeferred(() -> INDEX_CACHE.put(cachedPostsKey, response));
 				onPostsLoaded.onSuccess(method, response);
 			}
 
@@ -450,10 +456,12 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				// try reloading everything from scratch
 				fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
 				GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
-				DomGlobal.console.log("EXCEPTION: "+exception.getMessage());
-				DomGlobal.console.log("HISTORY TOKEN: "+SavedState.asHistoryToken(getSavedStateHash()));
+				DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
+				DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
 				DomGlobal.console.log(exception);
-				DomGlobal.console.log("Method", method);
+				DomGlobal.console.log(method);
+				DomGlobal.console.log(method.getResponse());
+				DomGlobal.console.log(method.getResponse().getText());
 			}
 		};
 	}
@@ -465,7 +473,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		activePage = 0;
 		activeSet.clear();
 		List<String> tags = new ArrayList<>();
-		if (mustHaveRatings.size()==1) {
+		if (mustHaveRatings.size() == 1) {
 			Iterator<String> iRatings = mustHaveRatings.iterator();
 			while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
 				tags.add("rating:" + iRatings.next());
@@ -555,10 +563,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				// try reloading everything from scratch
 				fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
 				GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
-				DomGlobal.console.log("EXCEPTION: "+exception.getMessage());
-				DomGlobal.console.log("HISTORY TOKEN: "+SavedState.asHistoryToken(getSavedStateHash()));
+				DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
+				DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
 				DomGlobal.console.log(exception);
-				DomGlobal.console.log("Method", method);			}
+				DomGlobal.console.log("Method", method);
+			}
 		};
 		E621Api.api().tagRelated(tags, validated);
 	}
