@@ -75,8 +75,8 @@ public class E621Post {
 	private boolean hasChildren;
 	@JsonProperty("children")
 	private String children;
-	@JsonProperty("parent_id")
-	private Long parentId;
+//	@JsonProperty("parent_id")
+//	private Long parentId;
 	@JsonProperty("artist")
 	private List<String> artist = new ArrayList<String>();
 	@JsonProperty("sources")
@@ -383,15 +383,15 @@ public class E621Post {
 	 * 
 	 * @return
 	 */
-	@JsonProperty("parent_id")
-	public Long getParentId() {
-		return parentId;
-	}
-
-	@JsonProperty("parent_id")
-	public void setParentId(Long parentId) {
-		this.parentId = parentId;
-	}
+//	@JsonProperty("parent_id")
+//	public Long getParentId() {
+//		return parentId;
+//	}
+//
+//	@JsonProperty("parent_id")
+//	public void setParentId(Long parentId) {
+//		this.parentId = parentId;
+//	}
 
 	@JsonProperty("artist")
 	public List<String> getArtist() {
