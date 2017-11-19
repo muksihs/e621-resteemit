@@ -52,7 +52,7 @@ public class E621Post {
     @JsonProperty("tags")
     private String tags;
     @JsonProperty("locked_tags")
-    private String lockedTags;
+    private Object lockedTags;
     @JsonProperty("description")
     private String description;
     @JsonProperty("created_at")
@@ -106,7 +106,7 @@ public class E621Post {
     @JsonProperty("children")
     private String children;
     @JsonProperty("parent_id")
-    private long parentId;
+    private Long parentId;
     @JsonProperty("artist")
     private List<String> artist = new ArrayList<String>();
     @JsonProperty("sources")
@@ -133,12 +133,12 @@ public class E621Post {
     }
 
     @JsonProperty("locked_tags")
-    public String getLockedTags() {
+    public Object getLockedTags() {
         return lockedTags;
     }
 
     @JsonProperty("locked_tags")
-    public void setLockedTags(String lockedTags) {
+    public void setLockedTags(Object lockedTags) {
         this.lockedTags = lockedTags;
     }
 
@@ -403,12 +403,12 @@ public class E621Post {
     }
 
     @JsonProperty("parent_id")
-    public long getParentId() {
+    public Long getParentId() {
         return parentId;
     }
 
     @JsonProperty("parent_id")
-    public void setParentId(long parentId) {
+    public void setParentId(Long parentId) {
         this.parentId = parentId;
     }
 
