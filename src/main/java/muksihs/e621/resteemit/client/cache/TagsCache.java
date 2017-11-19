@@ -37,36 +37,38 @@ public class TagsCache {
 		CachedTags value = new CachedTags(tags);
 		String jsonString = codec.encode(value).toString();
 		jsonString = LZSEncoding.compressToBase64(jsonString);
+		String prefixedKey = prefix + key;
 		try {
-			cache.put(prefix + key, jsonString);
+			cache.put(prefixedKey, jsonString);
 		} catch (Exception e) {
 			clear();
 			try {
-				cache.put(prefix + key, jsonString);
+				cache.put(prefixedKey, jsonString);
 			} catch (Exception e1) {
 				// panic clear the whole mess
 				cache.clear();
-				cache.put(prefix + key, jsonString);
+				cache.put(prefixedKey, jsonString);
 			}
 		}
 	}
 
 	public List<Tag> get(String key) {
 		expiresCheck();
-		String jsonString = cache.get(prefix + key);
+		String prefixedKey = prefix + key;
+		String jsonString = cache.get(prefixedKey);
 		if (jsonString == null) {
 			return null;
 		}
 		// remove legacy data
 		if (jsonString.contains("\"expires\"")) {
-			cache.remove(prefix + key);
+			cache.remove(prefixedKey);
 			return null;
 		}
 		try {
 			try {
-				jsonString = LZSEncoding.decompressFromUTF16(jsonString);
+				jsonString = LZSEncoding.decompressFromBase64(jsonString);
 			} catch (Exception e) {
-				cache.remove(prefix + key);
+				cache.remove(prefixedKey);
 				return null;
 			}
 			List<Tag> tags = codec.decode(jsonString).getTags();
@@ -79,23 +81,23 @@ public class TagsCache {
 	}
 
 	private void expiresCheck() {
-		for (String key : cache.keySet()) {
-			if (key.startsWith(LIST_E621TAGS)) {
-				String jsonString = cache.get(key);
+		for (String prefixedKey : cache.keySet()) {
+			if (prefixedKey.startsWith(LIST_E621TAGS)) {
+				String jsonString = cache.get(prefixedKey);
 				if (jsonString == null) {
 					continue;
 				}
 				// remove legacy data
 				if (jsonString.contains("\"expires\"")) {
-					cache.remove(prefix + key);
+					cache.remove(prefixedKey);
 					continue;
 				}
 
 				CachedExpiration cached;
 				try {
-					jsonString = LZSEncoding.decompressFromUTF16(jsonString);
+					jsonString = LZSEncoding.decompressFromBase64(jsonString);
 				} catch (Exception e) {
-					cache.remove(key);
+					cache.remove(prefixedKey);
 					continue;
 				}
 				try {
@@ -104,7 +106,7 @@ public class TagsCache {
 					continue;
 				}
 				if (cached.isExpired()) {
-					cache.remove(key);
+					cache.remove(prefixedKey);
 				}
 			}
 		}

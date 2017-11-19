@@ -263,6 +263,11 @@ public class BrowseView extends EventBusComposite {
 			viewPostLink.setHref(href);
 			viewPostLink.setText("VIEW POST");
 			viewPostLink.setType(ButtonType.RAISED);
+			MaterialButton steemPost = new MaterialButton();
+			steemPost.setMargin(2);
+			steemPost.setText("STEEM POST");
+			steemPost.addClickHandler((e) -> fireEvent(new Event.SteemPost(preview)));
+			panel.add(steemPost);
 			panel.add(viewPostLink);
 			posts.add(panel);
 		}

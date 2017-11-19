@@ -23,12 +23,14 @@ import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.web.bindery.event.shared.binder.EventBinder;
 import com.google.web.bindery.event.shared.binder.EventHandler;
+import com.google.web.bindery.event.shared.binder.GenericEvent;
 
 import e621.E621Api;
 import e621.models.post.index.E621Post;
 import e621.models.tag.index.Tag;
 import elemental2.dom.DomGlobal;
 import muksihs.e621.resteemit.client.Event.Rating;
+import muksihs.e621.resteemit.client.Event.SteemPost;
 import muksihs.e621.resteemit.client.cache.IndexCache;
 import muksihs.e621.resteemit.client.cache.TagsCache;
 import muksihs.e621.resteemit.shared.Consts;
@@ -64,20 +66,41 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private int activePage;
 
 	@EventHandler
+	protected void steemPost(Event.SteemPost event) {
+		if (!isLoggedIn()) {
+			fireEvent(new Event.Login<SteemPost>(event));
+		} else {
+			// TODO
+		}
+
+	}
+
+	private boolean loggedIn;
+
+	private boolean isLoggedIn() {
+		return loggedIn;
+	}
+
+	@EventHandler
+	protected <T extends GenericEvent> void login(Event.Login<T> event) {
+		// fireEvent(new Event.ShowLoginUi());
+	}
+
+	@EventHandler
 	protected void browseViewLoaded(Event.BrowseViewLoaded event) {
-		DomGlobal.console.log("History.getToken()="+History.getToken());
+		DomGlobal.console.log("History.getToken()=" + History.getToken());
 		if (History.getToken().trim().isEmpty()) {
-			Set<String> boxes=new HashSet<>();
+			Set<String> boxes = new HashSet<>();
 			boxes.add(Rating.SAFE.getTag());
 			fireEvent(new Event.SetRatingsBoxes(boxes));
-			Set<Rating> safe=new HashSet<>();
+			Set<Rating> safe = new HashSet<>();
 			safe.add(Rating.SAFE);
 			fireEvent(new Event.SetRating(safe));
 		} else {
 			History.fireCurrentHistoryState();
 		}
 	}
-	
+
 	@EventHandler
 	protected void removeFromFilter(Event.RemoveFromFilter event) {
 		reloadingOnFilterChange = true;
@@ -185,6 +208,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 		@Override
 		public void onSuccess(Method method, List<E621Post> response) {
+			GWT.log("onPostsLoaded.response.size=" + response.size());
+			final int responseSize = response.size();
 			long pageStartId = 0;
 			long nextBeforeId = Long.MAX_VALUE;
 			for (E621Post post : response) {
@@ -234,10 +259,17 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			// remove previews already in the activeset
 			previews.removeAll(activeSet);
 			activeSet.addAll(previews);
-			boolean moreAvailable = nextBeforeId > 0;
+			boolean moreAvailable = nextBeforeId > 0 && responseSize > 0;
 			int activePageEnd = (1 + activePage) * Consts.PREVIEWS_TO_SHOW;
 			if ((activeSet.size() < activePageEnd) && moreAvailable) {
-				final long beforeId = nextBeforeId;
+				final long beforeId;
+				if (nextBeforeId == pageStartId) {
+					GWT.log("Small cache block work around...");
+					beforeId = nextBeforeId - CACHED_PAGE_SIZE;
+				} else {
+					beforeId = nextBeforeId;
+				}
+				fireEvent(new Event.QuickMessage("Scanning for additional matching posts."));
 				Scheduler.get().scheduleDeferred(() -> additionalPreviewsLoad(beforeId));
 				return;
 			}
@@ -246,8 +278,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			boolean skipForwards = reloadingOnFilterChange //
 					&& beforeId > savedPageStartId //
 					&& savedPageStartId > 0;
-			GWT.log("skip forwards to savedPageStartId: " + savedPageStartId + " [" + skipForwards + "]");
 			if (skipForwards && moreAvailable) {
+				fireEvent(new Event.QuickMessage("Skipping forwards to post: " + savedPageStartId));
 				fireEvent(new Event.NextPreviewSet());
 				return;
 			}
@@ -257,11 +289,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		@Override
 		public void onFailure(Method method, Throwable exception) {
 			GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
-			//try reloading everything from scratch
+			// try reloading everything from scratch
 			fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
 		}
 	};
-	
+
 	@EventHandler
 	protected void fatalError(Event.FatalError event) {
 		new Timer() {
@@ -356,9 +388,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	protected void additionalPreviewsLoad(long beforeId) {
 		List<String> tags = new ArrayList<>();
-		Iterator<String> iRatings = mustHaveRatings.iterator();
-		while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
-			tags.add("rating:" + iRatings.next());
+		if (mustHaveRatings.size()==1) {
+			//querying E621 with multiple ratings doesn't seem to give correct results
+			//so rely strictly on client side filtering if more than one rating provided
+			Iterator<String> iRatings = mustHaveRatings.iterator();
+			while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
+				tags.add("rating:" + iRatings.next());
+			}
 		}
 		Iterator<String> iMust = mustHaveTags.iterator();
 		while (iMust.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
@@ -379,25 +415,25 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		// keep beforeId aligned with multiples of CACHED_PAGE_SIZE so the cache works
 		// correctly
 		beforeId = (long) (Math.ceil((double) beforeId / (double) CACHED_PAGE_SIZE) * (double) CACHED_PAGE_SIZE);
-		String key = sb.toString()+","+beforeId;
-		List<E621Post> cached = INDEX_CACHE.get(key);
+		String queriedTags = sb.toString();
+		String cachedPostsKey = queriedTags + "," + beforeId;
+		List<E621Post> cached = INDEX_CACHE.get(cachedPostsKey);
 		if (cached == null) {
-			GWT.log("Cache miss: "+key);
-			E621Api.api().postIndex(sb.toString(), (int) beforeId, CACHED_PAGE_SIZE,
-					cacheIndexResponse(sb.toString(), beforeId));
+			GWT.log("Cache miss: " + cachedPostsKey);
+			E621Api.api().postIndex(queriedTags, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(cachedPostsKey));
 		} else {
+			GWT.log("Cache hit: " + cachedPostsKey);
 			Scheduler.get().scheduleDeferred(() -> onPostsLoaded.onSuccess(null, cached));
 		}
 	}
 
-	private MethodCallback<List<E621Post>> cacheIndexResponse(String tags, long minId) {
+	private MethodCallback<List<E621Post>> cacheIndexResponse(String cachedPostsKey) {
 		return new MethodCallback<List<E621Post>>() {
 
 			@Override
 			public void onSuccess(Method method, List<E621Post> response) {
-				String key = tags + "," + minId;
-				GWT.log("index cache put: "+key);
-				INDEX_CACHE.put(key, response);
+				GWT.log("Cache put: " + cachedPostsKey);
+				INDEX_CACHE.put(cachedPostsKey, response);
 				onPostsLoaded.onSuccess(method, response);
 			}
 
@@ -417,9 +453,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		activePage = 0;
 		activeSet.clear();
 		List<String> tags = new ArrayList<>();
-		Iterator<String> iRatings = mustHaveRatings.iterator();
-		while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
-			tags.add("rating:" + iRatings.next());
+		if (mustHaveRatings.size()==1) {
+			Iterator<String> iRatings = mustHaveRatings.iterator();
+			while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
+				tags.add("rating:" + iRatings.next());
+			}
 		}
 		Iterator<String> iMust = mustHaveTags.iterator();
 		while (iMust.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
@@ -467,7 +505,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		MethodCallback<Map<String, List<List<String>>>> validated = new MethodCallback<Map<String, List<List<String>>>>() {
 			@Override
 			public void onSuccess(Method method, Map<String, List<List<String>>> response) {
-				if (response.size()==0) {
+				if (response.size() == 0) {
 					mustHaveTags.clear();
 					mustNotHaveTags.clear();
 					reloadingOnFilterChange = true;
@@ -477,14 +515,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				/*
 				 * add all to the in memory available tags then remove any invalid ones
 				 */
-				for (String tag: response.keySet()) {
+				for (String tag : response.keySet()) {
 					topAvailableTags.add(tag);
 				}
 				Iterator<String> iter = mustHaveTags.iterator();
 				while (iter.hasNext()) {
 					String next = iter.next();
 					if (!topAvailableTags.contains(next)) {
-						DomGlobal.console.log("Removing invalid tag: "+next);
+						DomGlobal.console.log("Removing invalid tag: " + next);
 						iter.remove();
 					}
 				}
@@ -492,7 +530,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				while (iter.hasNext()) {
 					String next = iter.next();
 					if (!topAvailableTags.contains(next)) {
-						DomGlobal.console.log("Removing invalid tag: "+next);
+						DomGlobal.console.log("Removing invalid tag: " + next);
 						iter.remove();
 					}
 				}

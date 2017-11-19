@@ -10,6 +10,38 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class QuickMessage extends GenericEvent {
+		private final String message;
+		public QuickMessage(String message) {
+			this.message=message;
+		}
+		public String getMessage() {
+			return message;
+		}
+
+	}
+
+	public class Login<T extends GenericEvent> extends GenericEvent {
+		private final T refireEvent; 
+		public Login(T event) {
+			this.refireEvent=event;
+		}
+		public T getRefireEvent() {
+			return refireEvent;
+		}
+	}
+
+	public class SteemPost extends GenericEvent {
+		private final PostPreview preview;
+		public SteemPost(PostPreview preview) {
+			this.preview=preview;
+		}
+		public PostPreview getPreview() {
+			return preview;
+		}
+
+	}
+
 	public class FatalError extends GenericEvent {
 
 		private final String message;

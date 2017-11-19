@@ -5,17 +5,24 @@
 	
 	</ui:style>
 	<m:MaterialPanel>
-		<m:MaterialTitle ui:field="title" title="Muksihs' E621 Browser"></m:MaterialTitle>
-		<m:MaterialPanel>
-			<m:MaterialLabel style="display: inline; margin: 0.2em;"
-				text="for steemit - version: "></m:MaterialLabel>
-			<m:MaterialLabel style="display: inline; margin: 0.2em;"
-				text="0000000" ui:field="version"></m:MaterialLabel>
-			<m:MaterialLabel style="display: inline; margin: 0.2em;"
-				text=" - created by "></m:MaterialLabel>
-			<m:MaterialLink target="_blank" style="margin: 0.2em;"
-				href="https://www.steemit.com/@muksihs" text="@muksihs"></m:MaterialLink>
-		</m:MaterialPanel>
+		<m:MaterialNavBar>
+			<m:MaterialNavSection float="LEFT">
+				<m:MaterialNavBrand text="Muksihs' E621 Browser" />
+				<m:MaterialNavContent>
+					<m:MaterialLabel text="for steemit - version: "></m:MaterialLabel>
+					<m:MaterialLabel text="0000000" ui:field="version"></m:MaterialLabel>
+					<m:MaterialLabel text=" - created by "></m:MaterialLabel>
+					<m:MaterialLink target="_blank"
+						href="https://www.steemit.com/@muksihs" text="@muksihs"></m:MaterialLink>
+				</m:MaterialNavContent>
+			</m:MaterialNavSection>
+			<m:MaterialNavSection float="RIGHT">
+				<m:MaterialLink iconType="AUTORENEW" iconPosition="LEFT"
+					text="Refresh" textColor="WHITE" waves="LIGHT" />
+				<m:MaterialLink iconType="ACCOUNT_CIRCLE"
+					iconPosition="LEFT" text="Account" textColor="WHITE" waves="LIGHT" />
+			</m:MaterialNavSection>
+		</m:MaterialNavBar>
 		<m:MaterialDivider></m:MaterialDivider>
 	</m:MaterialPanel>
 </ui:UiBinder> 

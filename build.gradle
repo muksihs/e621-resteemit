@@ -36,15 +36,15 @@ buildscript {
 war {
 	archiveName (baseName+"."+extension)
 	rootSpec.exclude('**/*.class')
-	rootSpec.exclude('**/*.gwt.xml')
+	//rootSpec.exclude('**/*.gwt.xml')
 }
 
-jar {
+/*jar {
 	sourceSets.main.output.classesDir = new File(buildDir, "classes/main")
 	from project.sourceSets.main.allSource
   	from project.sourceSets.main.output
   	from ('src/main/resources')  
-}
+}*/
 
 gretty {
 	httpPort = 8080;
@@ -71,14 +71,14 @@ gwt {
 	compiler {
 		ea = false //enable assert statements for testing result conditions
 		strict = true;
-		style = "OBF";
-		//style = "PRETTY";
+		//style = "OBF";
+		style = "PRETTY";
 		//style = "DETAILED";
-		localWorkers = 1;
+		localWorkers = 4;
 	}
 	
 	superDev {
-		noPrecompile = false;
+		noPrecompile = true;
 		failOnError = false;
 		bindAddress = "0.0.0.0";
 	}

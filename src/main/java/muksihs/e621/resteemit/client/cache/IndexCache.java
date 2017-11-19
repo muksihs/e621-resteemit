@@ -11,6 +11,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.storage.client.StorageMap;
+import com.google.gwt.user.datepicker.client.CalendarUtil;
 
 import blazing.chain.LZSEncoding;
 import e621.models.post.index.E621Post;
@@ -40,10 +41,32 @@ public class IndexCache {
 	public void put(String key, List<E621Post> posts) {
 		expiresCheck();
 		Cached value = new Cached(posts);
+		// cache older data longer than newer data...
+		long pastDateSec = 0l;
+		for (E621Post post : posts) {
+			if (post.getCreatedAt() == null) {
+				continue;
+			}
+			long createdSec = post.getCreatedAt().getS();
+			pastDateSec = Long.max(createdSec, pastDateSec);
+		}
+		long dateDiffMs = System.currentTimeMillis() - pastDateSec * 1000l;
+		if (dateDiffMs > 0l) {
+			long expiresDateMs = System.currentTimeMillis() + dateDiffMs;
+			Date futureDate = new Date(expiresDateMs);
+			// max cache time is restricted to 1 month
+			int daysBetween = CalendarUtil.getDaysBetween(new Date(), futureDate);
+			if (Math.abs(daysBetween) > 31) {
+				CalendarUtil.addMonthsToDate(futureDate = new Date(), 1);
+			}
+			GWT.log("Cache put expire date: " + new java.sql.Date(futureDate.getTime()));
+			value.setExpires(futureDate);
+		}
 		String jsonString = codec.encode(value).toString();
+		String prefixedKey = prefix + key;
 		try {
 			jsonString = LZSEncoding.compressToBase64(jsonString);
-			cache.put(prefix + key, jsonString);
+			cache.put(prefixedKey, jsonString);
 		} catch (JavaScriptException e) {
 			GWT.log("=== Javascript Exception");
 			GWT.log(e.getMessage(), e);
@@ -51,12 +74,12 @@ public class IndexCache {
 			GWT.log(e.getMessage(), e);
 			clearOldest();
 			try {
-				cache.put(prefix + key, jsonString);
+				cache.put(prefixedKey, jsonString);
 			} catch (Exception e1) {
 				GWT.log(e1.getMessage(), e1);
 				// panic clear the whole mess
 				cache.clear();
-				cache.put(prefix + key, jsonString);
+				cache.put(prefixedKey, jsonString);
 			}
 		}
 	}
@@ -79,7 +102,7 @@ public class IndexCache {
 				continue;
 			}
 			try {
-				jsonString = LZSEncoding.decompressFromUTF16(jsonString);
+				jsonString = LZSEncoding.decompressFromBase64(jsonString);
 			} catch (Exception e) {
 				cache.remove(prefixedKey);
 				continue;
@@ -111,20 +134,21 @@ public class IndexCache {
 
 	public List<E621Post> get(String key) {
 		expiresCheck();
-		String jsonString = cache.get(prefix + key);
+		String prefixedKey = prefix + key;
+		String jsonString = cache.get(prefixedKey);
 		if (jsonString == null) {
 			return null;
 		}
 		// remove legacy data
 		if (jsonString.contains("\"expires\"")) {
-			cache.remove(prefix + key);
+			cache.remove(prefixedKey);
 			return null;
 		}
 
 		try {
-			jsonString = LZSEncoding.decompressFromUTF16(jsonString);
+			jsonString = LZSEncoding.decompressFromBase64(jsonString);
 		} catch (Exception e) {
-			cache.remove(prefix + key);
+			cache.remove(prefixedKey);
 			return null;
 		}
 		try {
@@ -152,7 +176,7 @@ public class IndexCache {
 			}
 
 			try {
-				jsonString = LZSEncoding.decompressFromUTF16(jsonString);
+				jsonString = LZSEncoding.decompressFromBase64(jsonString);
 			} catch (Exception e) {
 				cache.remove(prefixedKey);
 				continue;
@@ -185,5 +209,10 @@ public class IndexCache {
 				cache.remove(key);
 			}
 		}
+	}
+
+	public String remove(String key) {
+		String prefixedKey = prefix + key;
+		return cache.remove(prefixedKey);
 	}
 }

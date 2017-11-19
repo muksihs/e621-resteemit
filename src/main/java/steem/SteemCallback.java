@@ -1,8 +1,10 @@
 package steem;
 
+import java.util.Map;
+
 import jsinterop.annotations.JsFunction;
 
 @JsFunction
 public interface SteemCallback<T> {
-	void onResult(SteemError error, T result);
+	void onResult(Map<String, String> error, T result);
 }

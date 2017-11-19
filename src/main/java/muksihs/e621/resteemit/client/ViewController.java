@@ -12,6 +12,7 @@ import gwt.material.design.client.ui.MaterialLabel;
 import gwt.material.design.client.ui.MaterialLoader;
 import gwt.material.design.client.ui.MaterialModal;
 import gwt.material.design.client.ui.MaterialTitle;
+import gwt.material.design.client.ui.MaterialToast;
 import muksihs.e621.resteemit.ui.BrowseView;
 
 public class ViewController implements GlobalEventBus {
@@ -24,6 +25,11 @@ public class ViewController implements GlobalEventBus {
 	public ViewController(Panel view) {
 		this.view=view;
 		eventBinder.bindEventHandlers(this, eventBus);
+	}
+	
+	@EventHandler
+	protected void quickMessage(Event.QuickMessage event) {
+		MaterialToast.fireToast(event.getMessage(), 2000);
 	}
 	
 	@EventHandler
