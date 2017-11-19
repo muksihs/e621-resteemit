@@ -208,6 +208,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	private boolean reloadingOnFilterChange = false;
 	private long savedPageStartId = 0;
+	private long prevBeforeId = 0;
 
 	private MethodCallback<List<E621Post>> onPostsLoaded = new MethodCallback<List<E621Post>>() {
 
@@ -271,8 +272,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					GWT.log("Small cache block work around...");
 					beforeId = nextBeforeId - CACHED_PAGE_SIZE;
 				} else {
-					beforeId = nextBeforeId;
+					if (prevBeforeId==nextBeforeId) {
+						GWT.log("Dont' get stuck in a search loop!");
+						beforeId = nextBeforeId - CACHED_PAGE_SIZE;
+					} else {
+						beforeId = nextBeforeId;
+					}
 				}
+				prevBeforeId=beforeId;
 				Scheduler.get().scheduleDeferred(() -> additionalPreviewsLoad(beforeId));
 				return;
 			}
@@ -437,7 +444,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			fireEvent(new Event.QuickMessage("Searching E621..."));
 			E621Api.api().postIndex(queriedTags, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(cachedPostsKey));
 		} else {
-			fireEvent(new Event.QuickMessage("Searching cache..."));
+			fireEvent(new Event.QuickMessage("Searching cache... "+beforeId));
 			Scheduler.get().scheduleDeferred(() -> onPostsLoaded.onSuccess(null, cached));
 		}
 	}
