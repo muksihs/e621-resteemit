@@ -262,6 +262,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	private List<PostPreview> activeSetForPage(int activePage) {
 		int start = activePage * Consts.PREVIEWS_TO_SHOW;
+		if (activeSet.size()<Consts.PREVIEWS_TO_SHOW) {
+			return activeSet;
+		}
 		List<PostPreview> previewsToShow = activeSet.subList(Math.min(start, activeSet.size() - 1),
 				Math.min(start + Consts.PREVIEWS_TO_SHOW, activeSet.size()));
 		return previewsToShow;
