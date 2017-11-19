@@ -17,23 +17,23 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class E621Tag {
 
     @JsonProperty("id")
-    private long id;
+    private Long id;
     @JsonProperty("name")
     private String name;
     @JsonProperty("count")
-    private long count;
+    private Long count;
     @JsonProperty("type")
-    private long type;
+    private Long type;
     @JsonProperty("type_locked")
     private Object typeLocked;
 
     @JsonProperty("id")
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
     @JsonProperty("id")
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -48,22 +48,22 @@ public class E621Tag {
     }
 
     @JsonProperty("count")
-    public long getCount() {
+    public Long getCount() {
         return count;
     }
 
     @JsonProperty("count")
-    public void setCount(long count) {
+    public void setCount(Long count) {
         this.count = count;
     }
 
     @JsonProperty("type")
-    public long getType() {
+    public Long getType() {
         return type;
     }
 
     @JsonProperty("type")
-    public void setType(long type) {
+    public void setType(Long type) {
         this.type = type;
     }
 

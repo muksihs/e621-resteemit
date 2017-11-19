@@ -27,7 +27,7 @@ rm -rf "$WAR"/META-INF
 rm -rf "$WAR"/WEB-INF
 
 #publish
-rsync -arv --human-readable --progress --delete-after "$WAR/" "muksihs@muksihs.com:/var/www/html/$WAR/"
+rsync -arzv --human-readable --progress --delete-after "$WAR/" "muksihs@muksihs.com:/var/www/html/$WAR/"
 
 xdg-open "http://muksihs.com/$WAR/"
 

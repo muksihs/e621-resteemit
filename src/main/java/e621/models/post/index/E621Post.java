@@ -18,31 +18,31 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class E621Post {
 
 	@JsonProperty("id")
-	private long id;
+	private Long id;
 	@JsonProperty("tags")
 	private String tags;
-//	@JsonProperty("locked_tags")
-//	private String lockedTags;
+	@JsonProperty("locked_tags")
+	private String lockedTags;
 	@JsonProperty("description")
 	private String description;
 	@JsonProperty("created_at")
 	private CreatedAt createdAt;
 	@JsonProperty("creator_id")
-	private long creatorId;
+	private Long creatorId;
 	@JsonProperty("author")
 	private String author;
 	@JsonProperty("change")
-	private long change;
+	private Long change;
 	@JsonProperty("source")
 	private String source;
 	@JsonProperty("score")
-	private long score;
+	private Long score;
 	@JsonProperty("fav_count")
-	private long favCount;
+	private Long favCount;
 	@JsonProperty("md5")
 	private String md5;
 	@JsonProperty("file_size")
-	private long fileSize;
+	private Long fileSize;
 	@JsonProperty("file_url")
 	private String fileUrl;
 	@JsonProperty("file_ext")
@@ -50,23 +50,23 @@ public class E621Post {
 	@JsonProperty("preview_url")
 	private String previewUrl;
 	@JsonProperty("preview_width")
-	private long previewWidth;
+	private Long previewWidth;
 	@JsonProperty("preview_height")
-	private long previewHeight;
+	private Long previewHeight;
 	@JsonProperty("sample_url")
 	private String sampleUrl;
 	@JsonProperty("sample_width")
-	private long sampleWidth;
+	private Long sampleWidth;
 	@JsonProperty("sample_height")
-	private long sampleHeight;
+	private Long sampleHeight;
 	@JsonProperty("rating")
 	private String rating;
 	@JsonProperty("status")
 	private String status;
 	@JsonProperty("width")
-	private long width;
+	private Long width;
 	@JsonProperty("height")
-	private long height;
+	private Long height;
 	@JsonProperty("has_comments")
 	private boolean hasComments;
 	@JsonProperty("has_notes")
@@ -75,20 +75,20 @@ public class E621Post {
 	private boolean hasChildren;
 	@JsonProperty("children")
 	private String children;
-//	@JsonProperty("parent_id")
-//	private Long parentId;
+	@JsonProperty("parent_id")
+	private Long parentId;
 	@JsonProperty("artist")
 	private List<String> artist = new ArrayList<String>();
 	@JsonProperty("sources")
 	private List<String> sources = new ArrayList<String>();
 
 	@JsonProperty("id")
-	public long getId() {
+	public Long getId() {
 		return id;
 	}
 
 	@JsonProperty("id")
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 
@@ -108,15 +108,15 @@ public class E621Post {
 	 * 
 	 * @return
 	 */
-//	@JsonProperty("locked_tags")
-//	public String getLockedTags() {
-//		return lockedTags;
-//	}
-//
-//	@JsonProperty("locked_tags")
-//	public void setLockedTags(String lockedTags) {
-//		this.lockedTags = lockedTags;
-//	}
+	@JsonProperty("locked_tags")
+	public String getLockedTags() {
+		return lockedTags;
+	}
+
+	@JsonProperty("locked_tags")
+	public void setLockedTags(String lockedTags) {
+		this.lockedTags = lockedTags;
+	}
 
 	@JsonProperty("description")
 	public String getDescription() {
@@ -139,12 +139,12 @@ public class E621Post {
 	}
 
 	@JsonProperty("creator_id")
-	public long getCreatorId() {
+	public Long getCreatorId() {
 		return creatorId;
 	}
 
 	@JsonProperty("creator_id")
-	public void setCreatorId(long creatorId) {
+	public void setCreatorId(Long creatorId) {
 		this.creatorId = creatorId;
 	}
 
@@ -159,12 +159,12 @@ public class E621Post {
 	}
 
 	@JsonProperty("change")
-	public long getChange() {
+	public Long getChange() {
 		return change;
 	}
 
 	@JsonProperty("change")
-	public void setChange(long change) {
+	public void setChange(Long change) {
 		this.change = change;
 	}
 
@@ -179,22 +179,22 @@ public class E621Post {
 	}
 
 	@JsonProperty("score")
-	public long getScore() {
+	public Long getScore() {
 		return score;
 	}
 
 	@JsonProperty("score")
-	public void setScore(long score) {
+	public void setScore(Long score) {
 		this.score = score;
 	}
 
 	@JsonProperty("fav_count")
-	public long getFavCount() {
+	public Long getFavCount() {
 		return favCount;
 	}
 
 	@JsonProperty("fav_count")
-	public void setFavCount(long favCount) {
+	public void setFavCount(Long favCount) {
 		this.favCount = favCount;
 	}
 
@@ -209,12 +209,12 @@ public class E621Post {
 	}
 
 	@JsonProperty("file_size")
-	public long getFileSize() {
+	public Long getFileSize() {
 		return fileSize;
 	}
 
 	@JsonProperty("file_size")
-	public void setFileSize(long fileSize) {
+	public void setFileSize(Long fileSize) {
 		this.fileSize = fileSize;
 	}
 
@@ -249,22 +249,22 @@ public class E621Post {
 	}
 
 	@JsonProperty("preview_width")
-	public long getPreviewWidth() {
+	public Long getPreviewWidth() {
 		return previewWidth;
 	}
 
 	@JsonProperty("preview_width")
-	public void setPreviewWidth(long previewWidth) {
+	public void setPreviewWidth(Long previewWidth) {
 		this.previewWidth = previewWidth;
 	}
 
 	@JsonProperty("preview_height")
-	public long getPreviewHeight() {
+	public Long getPreviewHeight() {
 		return previewHeight;
 	}
 
 	@JsonProperty("preview_height")
-	public void setPreviewHeight(long previewHeight) {
+	public void setPreviewHeight(Long previewHeight) {
 		this.previewHeight = previewHeight;
 	}
 
@@ -279,22 +279,22 @@ public class E621Post {
 	}
 
 	@JsonProperty("sample_width")
-	public long getSampleWidth() {
+	public Long getSampleWidth() {
 		return sampleWidth;
 	}
 
 	@JsonProperty("sample_width")
-	public void setSampleWidth(long sampleWidth) {
+	public void setSampleWidth(Long sampleWidth) {
 		this.sampleWidth = sampleWidth;
 	}
 
 	@JsonProperty("sample_height")
-	public long getSampleHeight() {
+	public Long getSampleHeight() {
 		return sampleHeight;
 	}
 
 	@JsonProperty("sample_height")
-	public void setSampleHeight(long sampleHeight) {
+	public void setSampleHeight(Long sampleHeight) {
 		this.sampleHeight = sampleHeight;
 	}
 
@@ -319,22 +319,22 @@ public class E621Post {
 	}
 
 	@JsonProperty("width")
-	public long getWidth() {
+	public Long getWidth() {
 		return width;
 	}
 
 	@JsonProperty("width")
-	public void setWidth(long width) {
+	public void setWidth(Long width) {
 		this.width = width;
 	}
 
 	@JsonProperty("height")
-	public long getHeight() {
+	public Long getHeight() {
 		return height;
 	}
 
 	@JsonProperty("height")
-	public void setHeight(long height) {
+	public void setHeight(Long height) {
 		this.height = height;
 	}
 
@@ -383,15 +383,15 @@ public class E621Post {
 	 * 
 	 * @return
 	 */
-//	@JsonProperty("parent_id")
-//	public Long getParentId() {
-//		return parentId;
-//	}
-//
-//	@JsonProperty("parent_id")
-//	public void setParentId(Long parentId) {
-//		this.parentId = parentId;
-//	}
+	@JsonProperty("parent_id")
+	public Long getParentId() {
+		return parentId;
+	}
+
+	@JsonProperty("parent_id")
+	public void setParentId(Long parentId) {
+		this.parentId = parentId;
+	}
 
 	@JsonProperty("artist")
 	public List<String> getArtist() {

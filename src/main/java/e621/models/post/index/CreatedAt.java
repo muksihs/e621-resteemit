@@ -18,9 +18,9 @@ public class CreatedAt {
     @JsonProperty("json_class")
     private String jsonClass;
     @JsonProperty("s")
-    private long s;
+    private Long s;
     @JsonProperty("n")
-    private long n;
+    private Long n;
 
     @JsonProperty("json_class")
     public String getJsonClass() {
@@ -33,22 +33,22 @@ public class CreatedAt {
     }
 
     @JsonProperty("s")
-    public long getS() {
+    public Long getS() {
         return s;
     }
 
     @JsonProperty("s")
-    public void setS(long s) {
+    public void setS(Long s) {
         this.s = s;
     }
 
     @JsonProperty("n")
-    public long getN() {
+    public Long getN() {
         return n;
     }
 
     @JsonProperty("n")
-    public void setN(long n) {
+    public void setN(Long n) {
         this.n = n;
     }
 
