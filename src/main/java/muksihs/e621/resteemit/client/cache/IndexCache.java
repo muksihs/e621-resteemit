@@ -65,7 +65,7 @@ public class IndexCache {
 		String jsonString = codec.encode(value).toString();
 		String prefixedKey = prefix + key;
 		try {
-			jsonString = LZSEncoding.compressToBase64(jsonString);
+			jsonString = LZSEncoding.compressToUTF16(jsonString);
 			cache.put(prefixedKey, jsonString);
 		} catch (Exception e) {
 			DomGlobal.console.log(e.getMessage());
@@ -102,7 +102,7 @@ public class IndexCache {
 				continue;
 			}
 			try {
-				jsonString = LZSEncoding.decompressFromBase64(jsonString);
+				jsonString = LZSEncoding.decompressFromUTF16(jsonString);
 			} catch (Exception e) {
 				cache.remove(prefixedKey);
 				continue;
@@ -153,7 +153,7 @@ public class IndexCache {
 		}
 
 		try {
-			jsonString = LZSEncoding.decompressFromBase64(jsonString);
+			jsonString = LZSEncoding.decompressFromUTF16(jsonString);
 			Cached decoded = codec.decode(jsonString);
 			if (decoded.isExpired()) {
 				cache.remove(prefixedKey);
@@ -187,7 +187,7 @@ public class IndexCache {
 			}
 
 			try {
-				jsonString = LZSEncoding.decompressFromBase64(jsonString);
+				jsonString = LZSEncoding.decompressFromUTF16(jsonString);
 			} catch (Exception e) {
 				cache.remove(prefixedKey);
 				continue;

@@ -36,7 +36,7 @@ public class TagsCache {
 		expiresCheck();
 		CachedTags value = new CachedTags(tags);
 		String jsonString = codec.encode(value).toString();
-		jsonString = LZSEncoding.compressToBase64(jsonString);
+		jsonString = LZSEncoding.compressToUTF16(jsonString);
 		String prefixedKey = prefix + key;
 		try {
 			cache.put(prefixedKey, jsonString);
@@ -66,7 +66,7 @@ public class TagsCache {
 		}
 		try {
 			try {
-				jsonString = LZSEncoding.decompressFromBase64(jsonString);
+				jsonString = LZSEncoding.decompressFromUTF16(jsonString);
 			} catch (Exception e) {
 				cache.remove(prefixedKey);
 				return null;
@@ -95,7 +95,7 @@ public class TagsCache {
 
 				CachedExpiration cached;
 				try {
-					jsonString = LZSEncoding.decompressFromBase64(jsonString);
+					jsonString = LZSEncoding.decompressFromUTF16(jsonString);
 				} catch (Exception e) {
 					cache.remove(prefixedKey);
 					continue;
