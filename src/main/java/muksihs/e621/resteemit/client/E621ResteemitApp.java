@@ -43,7 +43,7 @@ import muksihs.e621.resteemit.ui.MainView;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
-	private static final int CACHED_PAGE_SIZE = 35;
+	private static final int CACHED_PAGE_SIZE = 20;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
 	public E621ResteemitApp() {
