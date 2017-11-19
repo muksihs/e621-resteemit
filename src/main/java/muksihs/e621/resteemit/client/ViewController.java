@@ -29,7 +29,7 @@ public class ViewController implements GlobalEventBus {
 	
 	@EventHandler
 	protected void quickMessage(Event.QuickMessage event) {
-		MaterialToast.fireToast(event.getMessage(), 2000);
+		MaterialToast.fireToast(event.getMessage(), 1000);
 	}
 	
 	@EventHandler

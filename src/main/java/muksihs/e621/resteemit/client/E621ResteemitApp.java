@@ -126,12 +126,17 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	private void updateHash() {
+		SavedState hash = getSavedStateHash();
+		History.newItem(SavedState.asHistoryToken(hash), false);
+	}
+
+	private SavedState getSavedStateHash() {
 		SavedState hash = new SavedState();
 		hash.setMustHave(mustHaveTags);
 		hash.setMustNotHave(mustNotHaveTags);
 		hash.setPostId(savedPageStartId);
 		hash.setRatings(mustHaveRatings);
-		History.newItem(SavedState.asHistoryToken(hash), false);
+		return hash;
 	}
 
 	@EventHandler
@@ -208,7 +213,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 		@Override
 		public void onSuccess(Method method, List<E621Post> response) {
-			GWT.log("onPostsLoaded.response.size=" + response.size());
 			final int responseSize = response.size();
 			long pageStartId = 0;
 			long nextBeforeId = Long.MAX_VALUE;
@@ -269,7 +273,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				} else {
 					beforeId = nextBeforeId;
 				}
-				fireEvent(new Event.QuickMessage("Scanning for additional matching posts."));
 				Scheduler.get().scheduleDeferred(() -> additionalPreviewsLoad(beforeId));
 				return;
 			}
@@ -279,7 +282,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					&& beforeId > savedPageStartId //
 					&& savedPageStartId > 0;
 			if (skipForwards && moreAvailable) {
-				fireEvent(new Event.QuickMessage("Skipping forwards to post: " + savedPageStartId));
 				fireEvent(new Event.NextPreviewSet());
 				return;
 			}
@@ -288,9 +290,12 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 		@Override
 		public void onFailure(Method method, Throwable exception) {
-			GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
 			// try reloading everything from scratch
 			fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
+			GWT.log("EXCEPTION: " + String.valueOf(exception.getMessage()), exception);
+			DomGlobal.console.log("EXCEPTION: "+exception.getMessage());
+			DomGlobal.console.log("HISTORY TOKEN: "+SavedState.asHistoryToken(getSavedStateHash()));
+			DomGlobal.console.log(exception);
 		}
 	};
 
@@ -419,10 +424,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		String cachedPostsKey = queriedTags + "," + beforeId;
 		List<E621Post> cached = INDEX_CACHE.get(cachedPostsKey);
 		if (cached == null) {
-			GWT.log("Cache miss: " + cachedPostsKey);
+			fireEvent(new Event.QuickMessage("Searching E621..."));
 			E621Api.api().postIndex(queriedTags, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(cachedPostsKey));
 		} else {
-			GWT.log("Cache hit: " + cachedPostsKey);
+			fireEvent(new Event.QuickMessage("Searching cache..."));
 			Scheduler.get().scheduleDeferred(() -> onPostsLoaded.onSuccess(null, cached));
 		}
 	}
@@ -432,7 +437,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 			@Override
 			public void onSuccess(Method method, List<E621Post> response) {
-				GWT.log("Cache put: " + cachedPostsKey);
 				INDEX_CACHE.put(cachedPostsKey, response);
 				onPostsLoaded.onSuccess(method, response);
 			}
@@ -541,12 +545,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			@Override
 			public void onFailure(Method method, Throwable exception) {
 				/*
-				 * something went horribly wrong, dump all must have tags, thse are the only
-				 * ones which if they are invalid will make things break in a horrible way.
+				 * something went horribly wrong, start over...
 				 */
-				mustHaveTags.clear();
-				reloadingOnFilterChange = true;
-				fireEvent(new Event.LoadInitialPreviews());
+				fireEvent(new Event.FatalError(exception.getMessage()));
 			}
 		};
 		E621Api.api().tagRelated(tags, validated);
