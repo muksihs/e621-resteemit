@@ -201,7 +201,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			
 			StringBuilder sb = new StringBuilder();
 			Iterator<String> iTags = availableTags.iterator();
-			while (iTags.hasNext()) {
+			while (iTags.hasNext() && sb.length()<128) {
 				String next = iTags.next();
 				Tag tmp = new Tag();
 				tmp.setName(next);
