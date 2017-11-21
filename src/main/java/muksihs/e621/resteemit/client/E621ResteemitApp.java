@@ -157,7 +157,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		SavedState hash = new SavedState();
 		hash.setMustHave(mustHaveTags);
 		hash.setMustNotHave(mustNotHaveTags);
-		hash.setPostId(savedPageStartId);
+		//don't lock view at a specific post when on first page
+		if (activePage>0) {
+			hash.setPostId(savedPageStartId);
+		}
 		hash.setRatings(mustHaveRatings);
 		return hash;
 	}
