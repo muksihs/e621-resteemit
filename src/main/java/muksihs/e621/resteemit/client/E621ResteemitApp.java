@@ -172,7 +172,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		mustHaveTags.clear();
 		mustNotHaveTags.clear();
 		mustHaveRatings.add(Rating.SAFE.getTag());
+		activePage=0;
+		savedPageStartId=0;
 		fireEvent(new Event.SetRatingsBoxes(mustHaveRatings));
+		fireEvent(new Event.LoadInitialPreviews());
 	}
 
 	@EventHandler
