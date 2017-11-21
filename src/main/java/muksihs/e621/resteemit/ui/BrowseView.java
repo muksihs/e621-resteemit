@@ -245,6 +245,8 @@ public class BrowseView extends EventBusComposite {
 		posts.clear();
 		for (PostPreview preview : event.getPreviews()) {
 			MaterialImage img = new MaterialImage(preview.getSampleUrl());
+			img.setWidth("100%");
+			img.setMaxWidth("100%");
 			img.setMargin(2);
 			img.setHoverable(true);
 			img.setTitle("#" + preview.getId() + " " + preview.getTags());
@@ -255,13 +257,13 @@ public class BrowseView extends EventBusComposite {
 			a.add(img);
 			MaterialPanel panel = new MaterialPanel();
 			panel.getElement().getStyle().setDisplay(Style.Display.INLINE_BLOCK);
-			panel.getElement().getStyle().setPadding(1, Style.Unit.PCT);
-			panel.getElement().getStyle().setMargin(0, Style.Unit.PCT);
+			panel.getElement().getStyle().setPadding(0, Style.Unit.PCT);
+			panel.getElement().getStyle().setMargin(4, Style.Unit.PX);
 			String style = panel.getElement().getAttribute("style");
 			if (!style.endsWith(";") && !style.trim().isEmpty()) {
 				style += ";";
 			}
-			style += "max-width: 400px; max-height: 400px; margin: 6px;";
+			style += "max-width: 400px; max-height: 400px;";
 			panel.getElement().setAttribute("style", style);
 			panel.add(a);
 			panel.add(new Br());
