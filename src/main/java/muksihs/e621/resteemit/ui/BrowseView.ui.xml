@@ -22,6 +22,8 @@
 				<m:MaterialCheckBox ui:field="ratingExplicit"
 					text="Show Explicit" type="FILLED" />
 			</m:MaterialPanel>
+			<m:MaterialButton ui:field="clearSearch" style='margin: 2px;'
+				text="Clear Search"></m:MaterialButton>
 			<m:MaterialButton ui:field="mostRecent" style='margin: 2px;'
 				text="Most Recent"></m:MaterialButton>
 			<m:MaterialButton ui:field="previous" style='margin: 2px;'

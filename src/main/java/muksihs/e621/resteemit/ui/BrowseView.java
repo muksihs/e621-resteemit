@@ -43,6 +43,8 @@ public class BrowseView extends EventBusComposite {
 	protected MaterialCheckBox ratingExplicit;
 
 	@UiField
+	MaterialButton clearSearch;
+	@UiField
 	MaterialPanel filterTags;
 	@UiField
 	MaterialPanel availableTags;
@@ -99,6 +101,7 @@ public class BrowseView extends EventBusComposite {
 		ratingSafe.addClickHandler((e) -> updateRatings(ratingSafe));
 		ratingQuestionable.addClickHandler((e) -> updateRatings(ratingQuestionable));
 		ratingExplicit.addClickHandler((e) -> updateRatings(ratingExplicit));
+		clearSearch.addClickHandler((e)->fireEvent(new Event.ClearSearch()));
 	}
 
 	interface MyEventBinder extends EventBinder<BrowseView> {

@@ -164,6 +164,16 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		hash.setRatings(mustHaveRatings);
 		return hash;
 	}
+	
+	@EventHandler
+	protected void clearSearch(Event.ClearSearch event) {
+		reloadingOnFilterChange = true;
+		mustHaveRatings.clear();
+		mustHaveTags.clear();
+		mustNotHaveTags.clear();
+		mustHaveRatings.add(Rating.SAFE.getTag());
+		fireEvent(new Event.SetRatingsBoxes(mustHaveRatings));
+	}
 
 	@EventHandler
 	protected void addToIncludeFilter(Event.AddToIncludeFilter event) {
