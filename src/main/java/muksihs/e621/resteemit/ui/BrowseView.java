@@ -175,6 +175,12 @@ public class BrowseView extends EventBusComposite {
 				MaterialAnchorButton tagLabel = new MaterialAnchorButton(tag);
 				tagLabel.addClickHandler((e) -> showRemoveFromFilterDialog(tag));
 				tagLabel.setMargin(1);
+				if (tag.startsWith("-")) {
+					tagLabel.setBackgroundColor(Color.RED);
+				}
+				if (tag.startsWith("+")) {
+					tagLabel.setBackgroundColor(Color.GREEN);
+				}
 				filterTags.add(tagLabel);
 				activeFilterTags.add(tag);
 			}
