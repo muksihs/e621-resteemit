@@ -155,7 +155,11 @@ public class BrowseView extends EventBusComposite {
 			MaterialPanel panel = new MaterialPanel();
 			for (String tag : event.getTags()) {
 				MaterialAnchorButton tagLabel = new MaterialAnchorButton(tag);
-				tagLabel.addClickHandler((e) -> showAddToFilterDialog(tag));
+				if (tag.startsWith("-")||tag.startsWith("+")) {
+					tagLabel.setEnabled(false);
+				} else {
+					tagLabel.addClickHandler((e) -> showAddToFilterDialog(tag));
+				}
 				tagLabel.setMargin(1);
 				panel.add(tagLabel);
 			}

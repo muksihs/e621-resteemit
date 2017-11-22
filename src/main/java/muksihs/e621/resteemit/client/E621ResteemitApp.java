@@ -3,7 +3,6 @@ package muksihs.e621.resteemit.client;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -31,6 +30,7 @@ import e621.E621Api;
 import e621.models.post.index.E621Post;
 import e621.models.tag.index.Tag;
 import elemental2.dom.DomGlobal;
+import gwt.material.design.client.MaterialWithJQuery;
 import muksihs.e621.resteemit.client.Event.Rating;
 import muksihs.e621.resteemit.client.Event.SteemPost;
 import muksihs.e621.resteemit.client.cache.IndexCache;
@@ -113,10 +113,24 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		} else {
 			History.fireCurrentHistoryState();
 		}
+	}
+
+	private void updateAvailableTagsDisplay() {
 		Set<String> availableTags = new TreeSet<>();
-		for (Tag tag: topAvailableTags) {
+		for (Tag tag : topAvailableTags) {
 			availableTags.add(tag.getName());
 		}
+		// remove active tags from list of activatable tags
+		availableTags.removeAll(mustHaveTags);
+		availableTags.removeAll(mustNotHaveTags);
+		// add back active tags as in use tags
+		for (String tag : mustHaveTags) {
+			availableTags.add("+" + tag);
+		}
+		for (String tag : mustNotHaveTags) {
+			availableTags.add("-" + tag);
+		}
+
 		fireEvent(new Event.ShowAvailableTags(availableTags));
 	}
 
@@ -220,7 +234,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			fireEvent(new Event.AlertMessage("No Posts Match Your Filter Settings!"));
 		}
 	}
-	
+
 	private void updateAvailableTags() {
 		Set<String> availableTags = tagsForActiveSet();
 		StringBuilder sb = new StringBuilder();
@@ -237,8 +251,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				sb.append(" ");
 			}
 		}
-		if (sb.length()>0) {
+		if (sb.length() > 0) {
 			E621Api.api().tagRelated(sb.toString(), updateTopTagsCallback);
+		} else {
+			updateAvailableTagsDisplay();
 		}
 	}
 
@@ -262,6 +278,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				}
 				topAvailableTags.add(tag);
 			}
+			updateAvailableTagsDisplay();
 		}
 	};
 
@@ -319,7 +336,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				activeSet.removeIf((p) -> !mustHaveRatings.contains(p.getRating()));
 			}
 
-			activeSet.removeIf((p) -> !extensionsWhitelist.contains(p.getFileExt().toLowerCase()));
+			// activeSet.removeIf((p) ->
+			// !extensionsWhitelist.contains(p.getFileExt().toLowerCase()));
 			if (!mustNotHaveTags.isEmpty()) {
 				activeSet.removeIf((p) -> {
 					Set<String> tags = new HashSet<>(Arrays.asList(p.getTags().split("\\s+")));
@@ -373,6 +391,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			DomGlobal.console.log(method.getResponse().getText());
 		}
 	};
+	private boolean initialPageLoad;
 
 	@EventHandler
 	protected void fatalError(Event.FatalError event) {
@@ -386,6 +405,20 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@Override
 	public void execute() {
+		waitForMaterialLoad();
+	}
+
+	private void waitForMaterialLoad() {
+		if (MaterialWithJQuery.isjQueryLoaded()) {
+			if (MaterialWithJQuery.isMaterializeLoaded()) {
+				onReady();
+				return;
+			}
+		}
+		Scheduler.get().scheduleDeferred(this::waitForMaterialLoad);
+	}
+
+	private void onReady() {
 		rp = RootPanel.get("e621resteemit");
 		rp.clear();
 		MainView mainView = new MainView();
@@ -485,7 +518,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			fireEvent(new Event.QuickMessage("Searching E621..."));
 			E621Api.api().postIndex(q.query, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(q.cachedQueryKey));
 		} else {
-			fireEvent(new Event.QuickMessage("Searching cache... " + beforeId));
+			fireEvent(new Event.QuickMessage("Searching cache... " + q.beforeId));
 			Scheduler.get().scheduleDeferred(() -> onPostsLoaded.onSuccess(null, cached));
 		}
 	}
@@ -618,11 +651,16 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	protected void initialPreviewsLoad(Event.LoadInitialPreviews event) {
 		fireEvent(new Event.Loading(true));
 		updateActiveTagFilters();
-		if (activePage==0) {
-			//if on first view, make sure we stay on first view and don't
-			//try and navigate deep into a reduced filter set because of
-			//a large jump up in available posts with higher numbers
-			savedPageStartId=0;
+		/*
+		 * if on first view, make sure we stay on first view and don't try and navigate
+		 * deep into a reduced filter set because of a large jump up in available posts
+		 * with higher numbers. If this is an initialPageLoad from a restored state,
+		 * activePage is always 0, so don't apply this rule for that particular case as
+		 * an exception.
+		 */
+		if (activePage == 0 && !initialPageLoad) {
+			savedPageStartId = 0;
+			initialPageLoad=false;
 		}
 		activePage = 0;
 		activeSet.clear();
@@ -649,10 +687,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			mustHaveRatings.addAll(state.getRatings());
 		}
 		fireEvent(new Event.SetRatingsBoxes(state.getRatings()));
-		validateTags();
+		initialPageLoad=true;
+		validateTagsThenLoadPreviews();
 	}
 
-	private void validateTags() {
+	private void validateTagsThenLoadPreviews() {
 		String tags = String.join(" ", mustHaveTags) + " " + String.join(" ", mustNotHaveTags);
 		tags = tags.trim();
 		MethodCallback<Map<String, List<List<String>>>> validated = new MethodCallback<Map<String, List<List<String>>>>() {
@@ -719,7 +758,12 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				DomGlobal.console.log(method);
 			}
 		};
-		E621Api.api().tagRelated(tags, validated);
+		if (tags.length() > 0) {
+			E621Api.api().tagRelated(tags, validated);
+		} else {
+			reloadingOnFilterChange = true;
+			fireEvent(new Event.LoadInitialPreviews());
+		}
 	}
 
 }
