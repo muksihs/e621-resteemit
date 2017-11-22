@@ -113,6 +113,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		} else {
 			History.fireCurrentHistoryState();
 		}
+		Set<String> availableTags = new TreeSet<>();
+		for (Tag tag: topAvailableTags) {
+			availableTags.add(tag.getName());
+		}
+		fireEvent(new Event.ShowAvailableTags(availableTags));
 	}
 
 	@EventHandler
@@ -232,7 +237,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				sb.append(" ");
 			}
 		}
-		E621Api.api().tagRelated(sb.toString(), updateTopTagsCallback);
+		if (sb.length()>0) {
+			E621Api.api().tagRelated(sb.toString(), updateTopTagsCallback);
+		}
 	}
 
 	private MethodCallback<Map<String, List<List<String>>>> updateTopTagsCallback = new MethodCallback<Map<String, List<List<String>>>>() {
@@ -611,6 +618,12 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	protected void initialPreviewsLoad(Event.LoadInitialPreviews event) {
 		fireEvent(new Event.Loading(true));
 		updateActiveTagFilters();
+		if (activePage==0) {
+			//if on first view, make sure we stay on first view and don't
+			//try and navigate deep into a reduced filter set because of
+			//a large jump up in available posts with higher numbers
+			savedPageStartId=0;
+		}
 		activePage = 0;
 		activeSet.clear();
 		String query = buildQuery();
