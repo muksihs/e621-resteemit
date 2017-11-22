@@ -3,7 +3,6 @@ package muksihs.e621.resteemit.client;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -66,29 +65,25 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private final List<PostPreview> activeSet = new ArrayList<>();
 	private final Set<String> extensionsWhitelist = new TreeSet<>();
 	private int activePage;
-	
+
 	@EventHandler
 	protected void refreshView(Event.RefreshView event) {
-		if (activePage==0) {
-			savedPageStartId=0;
-		}
 		reloadingOnFilterChange = true;
 		fireEvent(new Event.LoadInitialPreviews());
 	}
-	
+
 	@EventHandler
 	protected void showAccountDialog(Event.ShowAccountDialog event) {
-		
+
 	}
-	
 
 	@EventHandler
 	protected void mostRecent(Event.MostRecentSet event) {
-		savedPageStartId=0;
+		activePage = 0;
 		reloadingOnFilterChange = true;
 		fireEvent(new Event.LoadInitialPreviews());
 	}
-	
+
 	@EventHandler
 	protected void steemPost(Event.SteemPost event) {
 		if (!isLoggedIn()) {
@@ -157,14 +152,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		SavedState hash = new SavedState();
 		hash.setMustHave(mustHaveTags);
 		hash.setMustNotHave(mustNotHaveTags);
-		//don't lock view at a specific post when on first page
-		if (activePage>0) {
+		// don't lock view at a specific post when on first page
+		if (activePage > 0) {
 			hash.setPostId(savedPageStartId);
 		}
 		hash.setRatings(mustHaveRatings);
 		return hash;
 	}
-	
+
 	@EventHandler
 	protected void clearSearch(Event.ClearSearch event) {
 		reloadingOnFilterChange = true;
@@ -172,8 +167,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		mustHaveTags.clear();
 		mustNotHaveTags.clear();
 		mustHaveRatings.add(Rating.SAFE.getTag());
-		activePage=0;
-		savedPageStartId=0;
+		activePage = 0;
+		savedPageStartId = 0;
 		fireEvent(new Event.SetRatingsBoxes(mustHaveRatings));
 		fireEvent(new Event.LoadInitialPreviews());
 	}
@@ -211,75 +206,22 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			fireEvent(new Event.EnablePreviousButton(true));
 		}
 		fireEvent(new Event.Loading(true));
-		Scheduler.get().scheduleDeferred(() -> {
-			List<PostPreview> previewsToShow = activeSetForPage(activePage);
-			Set<String> availableTags = tagsForActiveSet();
-			
-			StringBuilder sb = new StringBuilder();
-			Iterator<String> iTags = availableTags.iterator();
-			while (iTags.hasNext() && sb.length()<128) {
-				String next = iTags.next();
-				Tag tmp = new Tag();
-				tmp.setName(next);
-				if (topAvailableTags.contains(tmp)) {
-					continue;
-				}
-				sb.append(next);
-				if (iTags.hasNext()) {
-					sb.append(" ");
-				}
-			}
-			MethodCallback<Map<String, List<List<String>>>> finishShowPreviews=new MethodCallback<Map<String, List<List<String>>>>() {
-				@Override
-				public void onFailure(Method method, Throwable exception) {
-					DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
-					DomGlobal.console.log(exception);
-					DomGlobal.console.log(method);
-					onSuccess(method, new HashMap<>());
-				}
-
-				@Override
-				public void onSuccess(Method method, Map<String, List<List<String>>> response) {
-					for (String tagName: response.keySet()) {
-						Tag tag = new Tag();
-						tag.setName(tagName);
-						List<List<String>> list = response.get(tagName);
-						if (list!=null) {
-							//use related tag count for query weighting purposes
-							tag.setCount(list.size());
-						}
-						topAvailableTags.add(tag);
-					}
-					for (Tag topTag: topAvailableTags) {
-						availableTags.add(topTag.getName());
-					}
-					availableTags.removeAll(mustHaveTags);
-					availableTags.removeAll(mustNotHaveTags);
-
-					reloadingOnFilterChange = false;
-					savedPageStartId = previewsToShow.stream().mapToLong((p) -> p.getId()).max().orElse(0);
-					fireEvent(new Event.ShowAvailableTags(availableTags));
-					fireEvent(new Event.ShowPreviews(previewsToShow));
-					fireEvent(new Event.Loading(false));
-					updateHash();
-					if (previewsToShow.isEmpty()) {
-						fireEvent(new Event.AlertMessage("No Posts Match Your Filter Settings!"));
-					}
-				}
-			};
-			if (sb.length()==0) {
-				finishShowPreviews.onSuccess(null, new HashMap<>());
-			} else {
-				E621Api.api().tagRelated(sb.toString(), finishShowPreviews);
-			}
-		});
+		List<PostPreview> previewsToShow = activeSetForPage(activePage);
+		reloadingOnFilterChange = false;
+		savedPageStartId = previewsToShow.stream().mapToLong((p) -> p.getId()).max().orElse(0);
+		fireEvent(new Event.ShowPreviews(previewsToShow));
+		fireEvent(new Event.Loading(false));
+		updateHash();
+		if (previewsToShow.isEmpty()) {
+			fireEvent(new Event.AlertMessage("No Posts Match Your Filter Settings!"));
+		}
 	}
 
 	private final Set<Tag> topAvailableTags = new TreeSet<>();
 
 	private List<PostPreview> activeSetForPage(int activePage) {
 		int start = activePage * Consts.PREVIEWS_TO_SHOW;
-		if (activeSet.size()<Consts.PREVIEWS_TO_SHOW) {
+		if (activeSet.size() < Consts.PREVIEWS_TO_SHOW) {
 			return activeSet;
 		}
 		List<PostPreview> previewsToShow = activeSet.subList(Math.min(start, activeSet.size() - 1),
@@ -303,7 +245,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 		@Override
 		public void onSuccess(Method method, List<E621Post> response) {
-			//do NOT alter response object, it screws up the cache if done!
+			// do NOT alter response object, it screws up the cache if done!
 			final int responseSize = response.size();
 			long pageStartId = 0;
 			long nextBeforeId = Long.MAX_VALUE;
@@ -323,8 +265,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			// remove previews already in the activeset
 			previews.removeAll(activeSet);
 			activeSet.addAll(previews);
-			
-			//filter the active set
+
+			// filter the active set
 			if (!mustHaveRatings.isEmpty()) {
 				activeSet.removeIf((p) -> !mustHaveRatings.contains(p.getRating()));
 			}
@@ -343,8 +285,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					return !tags.containsAll(mustHaveTags);
 				});
 			}
-			
-			
+
 			boolean moreAvailable = nextBeforeId > 0 && responseSize > 0;
 			int activePageEnd = (1 + activePage) * Consts.PREVIEWS_TO_SHOW;
 			if ((activeSet.size() < activePageEnd) && moreAvailable) {
@@ -352,13 +293,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				if (nextBeforeId == pageStartId) {
 					beforeId = nextBeforeId - CACHED_PAGE_SIZE;
 				} else {
-					if (prevBeforeId==nextBeforeId) {
+					if (prevBeforeId == nextBeforeId) {
 						beforeId = nextBeforeId - CACHED_PAGE_SIZE;
 					} else {
 						beforeId = nextBeforeId;
 					}
 				}
-				prevBeforeId=beforeId;
+				prevBeforeId = beforeId;
 				Scheduler.get().scheduleDeferred(() -> additionalPreviewsLoad(beforeId));
 				return;
 			}
@@ -422,8 +363,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				@Override
 				public void onSuccess(Method method, List<Tag> response) {
 					topAvailableTags.clear();
-					for (Tag tag: response) {
-						if (tag==null) {
+					for (Tag tag : response) {
+						if (tag == null) {
 							continue;
 						}
 						topAvailableTags.add(tag);
@@ -464,8 +405,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		if (activePage > 0) {
 			fireEvent(new Event.Loading(true));
 			activePage--;
-			if (activePage==0) {
-				savedPageStartId=0;
+			if (activePage == 0) {
+				savedPageStartId = 0;
 			}
 			fireEvent(new Event.PreviewsLoaded());
 		}
@@ -481,8 +422,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		activePage++;
 		long beforeId = tmp;
-		if (activePage==0) {
-			savedPageStartId=0;
+		if (activePage == 0) {
+			savedPageStartId = 0;
 		}
 		Scheduler.get().scheduleDeferred(() -> {
 			additionalPreviewsLoad(beforeId);
@@ -500,7 +441,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			fireEvent(new Event.QuickMessage("Searching E621..."));
 			E621Api.api().postIndex(query, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(cachedPostsKey));
 		} else {
-			fireEvent(new Event.QuickMessage("Searching cache... "+beforeId));
+			fireEvent(new Event.QuickMessage("Searching cache... " + beforeId));
 			Scheduler.get().scheduleDeferred(() -> onPostsLoaded.onSuccess(null, cached));
 		}
 	}
@@ -520,7 +461,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		Iterator<String> iMust = mustHaveTags.iterator();
 		must: while (iMust.hasNext()) {
 			String next = iMust.next();
-			for (Tag tag: topAvailableTags) {
+			for (Tag tag : topAvailableTags) {
 				if (tag.getName().equals(next)) {
 					tmpMustHave.add(tag);
 					continue must;
@@ -530,42 +471,41 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		Iterator<String> iMustNot = mustNotHaveTags.iterator();
 		mustNot: while (iMustNot.hasNext()) {
 			String next = iMustNot.next();
-			for (Tag tag: topAvailableTags) {
+			for (Tag tag : topAvailableTags) {
 				if (tag.getName().equals(next)) {
 					tmpMustNotHave.add(tag);
 					continue mustNot;
 				}
 			}
 		}
-		List<Tag> queryTags=new ArrayList<>();
+		List<Tag> queryTags = new ArrayList<>();
 		queryTags.addAll(tmpMustHave);
 		queryTags.addAll(tmpMustNotHave);
 		/*
-		 * try and sort tags to produce better queries:
-		 * must have should be those with least count of posts
-		 * must not have should be those with the most count of posts
-		 * we seem to perform less queries preferring musthave over mustnothave
+		 * try and sort tags to produce better queries: must have should be those with
+		 * least count of posts must not have should be those with the most count of
+		 * posts we seem to perform less queries preferring musthave over mustnothave
 		 */
-		Collections.sort(queryTags, (a,b)->{
-			//sort musthave before mustnothave
-			if (tmpMustHave.contains(a)&&tmpMustNotHave.contains(b)) {
+		Collections.sort(queryTags, (a, b) -> {
+			// sort musthave before mustnothave
+			if (tmpMustHave.contains(a) && tmpMustNotHave.contains(b)) {
 				return -1;
 			}
-			if (tmpMustNotHave.contains(a)&&tmpMustHave.contains(b)) {
+			if (tmpMustNotHave.contains(a) && tmpMustHave.contains(b)) {
 				return 1;
 			}
-			//sort musthave vs musthave asc
-			if (tmpMustHave.contains(a)&&tmpMustHave.contains(b)) {
+			// sort musthave vs musthave asc
+			if (tmpMustHave.contains(a) && tmpMustHave.contains(b)) {
 				return Long.compare(a.getCount(), b.getCount());
 			}
-			//musthavenot vs musthavenot desc
-			if (tmpMustNotHave.contains(a)&&tmpMustNotHave.contains(b)) {
+			// musthavenot vs musthavenot desc
+			if (tmpMustNotHave.contains(a) && tmpMustNotHave.contains(b)) {
 				return Long.compare(b.getCount(), a.getCount());
 			}
-			//sort the rest asc
+			// sort the rest asc
 			return Long.compare(a.getCount(), b.getCount());
 		});
-		
+
 		Iterator<Tag> iQuery = queryTags.iterator();
 		while (iQuery.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
 			Tag next = iQuery.next();
@@ -573,7 +513,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				tags.add(next.getName());
 			}
 			if (tmpMustNotHave.contains(next)) {
-				tags.add("-"+next.getName());
+				tags.add("-" + next.getName());
 			}
 		}
 		StringBuilder sb = new StringBuilder();
@@ -593,7 +533,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 			@Override
 			public void onSuccess(Method method, List<E621Post> response) {
-				//do NOT alter response object, it screws up the cache if done!
+				// do NOT alter response object, it screws up the cache if done!
 				Scheduler.get().scheduleDeferred(() -> INDEX_CACHE.put(cachedPostsKey, response));
 				onPostsLoaded.onSuccess(method, response);
 			}
@@ -617,6 +557,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		fireEvent(new Event.Loading(true));
 		updateActiveTagFilters();
 		activePage = 0;
+		savedPageStartId = 0;
 		activeSet.clear();
 		String query = buildQuery();
 		E621Api.api().postIndex(query, CACHED_PAGE_SIZE, onPostsLoaded);
@@ -670,7 +611,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				 * build up quick lookup set for valid tag names
 				 */
 				Set<String> validTagNames = new HashSet<>();
-				for (Tag tag: topAvailableTags) {
+				for (Tag tag : topAvailableTags) {
 					validTagNames.add(tag.getName());
 				}
 				/*
