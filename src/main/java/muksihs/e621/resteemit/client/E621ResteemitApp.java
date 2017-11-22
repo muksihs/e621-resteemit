@@ -3,6 +3,7 @@ package muksihs.e621.resteemit.client;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -197,6 +198,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void showPreviews(Event.PreviewsLoaded event) {
+		Scheduler.get().scheduleDeferred(this::updateAvailableTags);
 		if (activePage == 0) {
 			fireEvent(new Event.EnablePreviousButton(false));
 		} else {
@@ -213,6 +215,48 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			fireEvent(new Event.AlertMessage("No Posts Match Your Filter Settings!"));
 		}
 	}
+	
+	private void updateAvailableTags() {
+		Set<String> availableTags = tagsForActiveSet();
+		StringBuilder sb = new StringBuilder();
+		Iterator<String> iTags = availableTags.iterator();
+		while (iTags.hasNext() && sb.length() < 1024) {
+			String next = iTags.next();
+			Tag tmp = new Tag();
+			tmp.setName(next);
+			if (topAvailableTags.contains(tmp)) {
+				continue;
+			}
+			sb.append(next);
+			if (iTags.hasNext()) {
+				sb.append(" ");
+			}
+		}
+		E621Api.api().tagRelated(sb.toString(), updateTopTagsCallback);
+	}
+
+	private MethodCallback<Map<String, List<List<String>>>> updateTopTagsCallback = new MethodCallback<Map<String, List<List<String>>>>() {
+		@Override
+		public void onFailure(Method method, Throwable exception) {
+			DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
+			DomGlobal.console.log(exception);
+			DomGlobal.console.log(method);
+		}
+
+		@Override
+		public void onSuccess(Method method, Map<String, List<List<String>>> response) {
+			for (String tagName : response.keySet()) {
+				Tag tag = new Tag();
+				tag.setName(tagName);
+				List<List<String>> list = response.get(tagName);
+				if (list != null) {
+					// use related tag count for query weighting purposes
+					tag.setCount(list.size());
+				}
+				topAvailableTags.add(tag);
+			}
+		}
+	};
 
 	private final Set<Tag> topAvailableTags = new TreeSet<>();
 
@@ -614,6 +658,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				for (String tagName : response.keySet()) {
 					Tag tag = new Tag();
 					tag.setName(tagName);
+					tag.setCount(response.get(tagName).size());
 					if (!topAvailableTags.contains(tag)) {
 						topAvailableTags.add(tag);
 					}
