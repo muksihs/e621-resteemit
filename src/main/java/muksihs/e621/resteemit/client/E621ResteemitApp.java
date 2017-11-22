@@ -336,8 +336,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				activeSet.removeIf((p) -> !mustHaveRatings.contains(p.getRating()));
 			}
 
-			// activeSet.removeIf((p) ->
-			// !extensionsWhitelist.contains(p.getFileExt().toLowerCase()));
+			activeSet.removeIf((p) -> !extensionsWhitelist.contains(p.getFileExt().toLowerCase()));
 			if (!mustNotHaveTags.isEmpty()) {
 				activeSet.removeIf((p) -> {
 					Set<String> tags = new HashSet<>(Arrays.asList(p.getTags().split("\\s+")));
@@ -660,7 +659,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		 */
 		if (activePage == 0 && !initialPageLoad) {
 			savedPageStartId = 0;
-			initialPageLoad=false;
+			initialPageLoad = false;
 		}
 		activePage = 0;
 		activeSet.clear();
@@ -687,7 +686,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			mustHaveRatings.addAll(state.getRatings());
 		}
 		fireEvent(new Event.SetRatingsBoxes(state.getRatings()));
-		initialPageLoad=true;
+		initialPageLoad = true;
 		validateTagsThenLoadPreviews();
 	}
 
