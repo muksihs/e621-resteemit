@@ -4,14 +4,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.fusesource.restygwt.client.JsonEncoderDecoder;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.storage.client.StorageMap;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
@@ -21,8 +24,8 @@ import e621.models.post.index.E621Post;
 import elemental2.dom.DomGlobal;
 
 public class IndexCache {
-	private static final int MAX_CACHE_AGE = 14;
-	private static final long DAY_ms = 1000l*60l*60l*24l;
+	private static final int MAX_CACHE_AGE = 31;
+	private static final long DAY_ms = 1000l * 60l * 60l * 24l;
 	private static final String LIST_E621POST = "list-e621post-";
 
 	// only deserialize the date property for the expires check loop
@@ -41,16 +44,16 @@ public class IndexCache {
 	private Map<String, String> memCache = new HashMap<>();
 
 	public IndexCache(int cachedPageSize) {
-		if (storage==null) {
-			storage=memCache;
+		if (storage == null) {
+			storage = memCache;
 		}
 		prefix = LIST_E621POST + cachedPageSize + ":";
 	}
 
-	public String  put(String key, List<E621Post> posts) {
+	public String put(String key, List<E621Post> posts) {
 		return _put(prefix + key, posts);
 	}
-	
+
 	private String _put(String prefixedKey, List<E621Post> posts) {
 		expiresCheck();
 		Cached value = new Cached(posts);
@@ -64,29 +67,30 @@ public class IndexCache {
 			pastDateSec = Long.max(createdSec, pastDateSec);
 		}
 		long dateDiffMs = System.currentTimeMillis() - pastDateSec * 1000l;
-		long expiresDateMs = System.currentTimeMillis() + dateDiffMs / 16l;
-		if (expiresDateMs > DAY_ms) {
-			Date futureDate = new Date(expiresDateMs);
+		if (dateDiffMs > DAY_ms) {
+			Date futureDate = new Date(System.currentTimeMillis() + dateDiffMs / 5l);
 			// max cache time is restricted to MAX_CACHE_AGE days
 			int daysBetween = CalendarUtil.getDaysBetween(new Date(), futureDate);
 			if (Math.abs(daysBetween) > MAX_CACHE_AGE) {
 				CalendarUtil.addDaysToDate(futureDate = new Date(), MAX_CACHE_AGE);
 			}
-			DomGlobal.console.log("Cache put expire date: " + new java.sql.Date(futureDate.getTime())+" "+new java.sql.Time(futureDate.getTime()));
 			value.setExpires(futureDate);
 		}
+		Date expiration = value.getExpires();
+		DomGlobal.console.log("Cache put: " +prefixedKey+" [" + new java.sql.Date(expiration.getTime()) + " "
+				+ new java.sql.Time(expiration.getTime())+"]");
 		String jsonString = codec.encode(value).toString();
+		jsonString = LZSEncoding.compressToUTF16(jsonString);
 		String s1 = memCache.put(prefixedKey, jsonString);
 		try {
-			jsonString = LZSEncoding.compressToUTF16(jsonString);
 			String s2 = storage.put(prefixedKey, jsonString);
-			return s1==null?s2:s1;
+			return s1 == null ? s2 : s1;
 		} catch (Exception e) {
 			GWT.log(e.getMessage(), e);
 			clearOldestFromLocalStorage();
 			try {
 				String s2 = storage.put(prefixedKey, jsonString);
-				return s1==null?s2:s1;
+				return s1 == null ? s2 : s1;
 			} catch (Exception e1) {
 				GWT.log(e1.getMessage(), e1);
 				storage.clear();
@@ -131,7 +135,7 @@ public class IndexCache {
 				storage.remove(prefixedKey);
 				continue;
 			}
-			if (cached==null||cached.getExpires()==null) {
+			if (cached == null || cached.getExpires() == null) {
 				storage.remove(prefixedKey);
 			}
 			KeyDate k = new KeyDate();
@@ -155,15 +159,16 @@ public class IndexCache {
 		String prefixedKey = prefix + key;
 		return _get(prefixedKey);
 	}
-	
+
 	private List<E621Post> _get(String prefixedKey) {
 		String jsonString = _getJsonString(prefixedKey);
-		if (jsonString==null) {
+		if (jsonString == null) {
 			return null;
 		}
 		try {
 			Cached decoded = codec.decode(jsonString);
-			if (decoded.isExpired()) {
+			if (decoded==null || decoded.isExpired()) {
+				GWT.log("expired: "+prefixedKey);
 				_remove(prefixedKey);
 				return null;
 			}
@@ -171,32 +176,37 @@ public class IndexCache {
 			if (posts != null && !posts.isEmpty()) {
 				return posts;
 			}
+			return null;
 		} catch (Exception e) {
+			GWT.log("cache exception: "+prefixedKey, e);
+			_remove(prefixedKey);
+			return null;
 		}
-		_remove(prefixedKey);
-		return null;
 	}
 
 	private String _getJsonString(String prefixedKey) {
 		String jsonString = memCache.get(prefixedKey);
-		if (jsonString==null) {
+		if (jsonString == null) {
 			jsonString = storage.get(prefixedKey);
+			if (jsonString!=null) {
+				// copy into memCache the item it did not have
+				memCache.put(prefixedKey, jsonString);
+			}
 		}
 		if (jsonString == null) {
 			return null;
 		}
 		// remove legacy data
 		if (jsonString.contains("\"expires\"")) {
-			_remove(prefixedKey);
+			GWT.log("remove legacy data: "+	_remove(prefixedKey));
 			return null;
 		}
-		//copy into memCache the item it did not have
-		memCache.put(prefixedKey, jsonString);
 		try {
-			return jsonString = LZSEncoding.decompressFromUTF16(jsonString);
+			return LZSEncoding.decompressFromUTF16(jsonString);
 		} catch (Exception e) {
+			GWT.log(e.getMessage(), e);
+			_remove(prefixedKey);
 		}
-		_remove(prefixedKey);
 		return null;
 	}
 
@@ -205,36 +215,51 @@ public class IndexCache {
 		if (new Random().nextInt(10) != 0) {
 			return;
 		}
-		for (String prefixedKey : prefixedKeySet()) {
-			String jsonString = _getJsonString(prefixedKey);
-			if (jsonString==null) {
-				continue;
-			}
-			if (!jsonString.contains("\"expires\"")) {
-				continue;
-			}
-			CachedExpiration cached;
-			try {
-				cached = expiresCodec.decode(jsonString);
-			} catch (Exception e) {
-				_remove(prefixedKey);
-				GWT.log(e.getMessage(), e);
-				continue;
-			}
-			if (cached.isExpired()) {
-				DomGlobal.console.log("Expired: ", prefixedKey);
-				_remove(prefixedKey);
-			}
-			//cache date is too far in the future... remove it
-			if (CalendarUtil.getDaysBetween(new Date(), cached.getExpires())>MAX_CACHE_AGE) {
-				_remove(prefixedKey);
-			}
-		}
+		// one item checked per javascript event loop to prevent browser hangs
+		Iterator<String> iter = prefixedKeySet().iterator();
+		expiresCheck(iter);
+	}
 
+	private void expiresCheck(Iterator<String> iter) {
+		if (!iter.hasNext()) {
+			return;
+		}
+		Scheduler.get().scheduleDeferred(() -> _expiresCheck(iter));
+	}
+
+	private void _expiresCheck(Iterator<String> iter) {
+		String prefixedKey = iter.next();
+		String jsonString = _getJsonString(prefixedKey);
+		if (jsonString == null) {
+			expiresCheck(iter);
+			return;
+		}
+		if (!jsonString.contains("\"expires\"")) {
+			expiresCheck(iter);
+			return;
+		}
+		CachedExpiration cached;
+		try {
+			cached = expiresCodec.decode(jsonString);
+		} catch (Exception e) {
+			_remove(prefixedKey);
+			GWT.log(e.getMessage(), e);
+			expiresCheck(iter);
+			return;
+		}
+		if (cached.isExpired()) {
+			DomGlobal.console.log("Expired: ", prefixedKey);
+			_remove(prefixedKey);
+		}
+		// cache date is too far in the future... remove it
+		if (Math.abs(CalendarUtil.getDaysBetween(new Date(), cached.getExpires())) > MAX_CACHE_AGE) {
+			_remove(prefixedKey);
+		}
+		expiresCheck(iter);
 	}
 
 	private Set<String> prefixedKeySet() {
-		Set<String> set = storage.keySet();
+		Set<String> set = new TreeSet<>(storage.keySet());
 		set.addAll(memCache.keySet());
 		return set;
 	}
@@ -252,10 +277,11 @@ public class IndexCache {
 		String prefixedKey = prefix + key;
 		return _remove(prefixedKey);
 	}
-	
+
 	private String _remove(String prefixedKey) {
+		DomGlobal.console.log("_remove: "+prefixedKey);
 		String v1 = storage.remove(prefixedKey);
 		String v2 = memCache.remove(prefixedKey);
-		return v1==null?v2:v1;
+		return v1 == null ? v2 : v1;
 	}
 }

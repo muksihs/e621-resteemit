@@ -29,10 +29,6 @@ public interface Event {
 
 	}
 
-	public class RefreshView extends GenericEvent {
-
-	}
-
 	public class MostRecentSet extends GenericEvent {
 
 	}

@@ -19,8 +19,6 @@
 					</m:MaterialNavContent>
 				</m:MaterialNavSection>
 				<m:MaterialNavSection hideOn="NONE" float="RIGHT">
-					<m:MaterialButton style="margin: 4px;" ui:field="refresh"
-						iconType="AUTORENEW" iconPosition="LEFT" text="Refresh" />
 					<m:MaterialButton style="margin: 4px; margin-right: 8px;"
 						ui:field="account" iconType="ACCOUNT_CIRCLE" iconPosition="LEFT"
 						text="Account" />

@@ -67,12 +67,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private int activePage;
 
 	@EventHandler
-	protected void refreshView(Event.RefreshView event) {
-		reloadingOnFilterChange = true;
-		fireEvent(new Event.LoadInitialPreviews());
-	}
-
-	@EventHandler
 	protected void showAccountDialog(Event.ShowAccountDialog event) {
 
 	}
@@ -80,6 +74,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	@EventHandler
 	protected void mostRecent(Event.MostRecentSet event) {
 		activePage = 0;
+		savedPageStartId = 0;
 		reloadingOnFilterChange = true;
 		fireEvent(new Event.LoadInitialPreviews());
 	}
@@ -156,6 +151,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		if (activePage > 0) {
 			hash.setPostId(savedPageStartId);
 		}
+		// } else {
+		// }
 		hash.setRatings(mustHaveRatings);
 		return hash;
 	}
@@ -405,45 +402,58 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		if (activePage > 0) {
 			fireEvent(new Event.Loading(true));
 			activePage--;
-			if (activePage == 0) {
-				savedPageStartId = 0;
-			}
 			fireEvent(new Event.PreviewsLoaded());
 		}
 	}
 
 	@EventHandler
 	protected void showNextSet(Event.NextPreviewSet event) {
+		activePage++;
 		fireEvent(new Event.Loading(true));
 		List<PostPreview> previewsToShow = activeSetForPage(activePage);
 		long tmp = Long.MAX_VALUE;
 		for (PostPreview preview : previewsToShow) {
 			tmp = Long.min(tmp, preview.getId());
 		}
-		activePage++;
 		long beforeId = tmp;
-		if (activePage == 0) {
-			savedPageStartId = 0;
-		}
 		Scheduler.get().scheduleDeferred(() -> {
 			additionalPreviewsLoad(beforeId);
 		});
 	}
 
+	private static class AlignedQuery {
+		public long beforeId;
+		public String query;
+		public String cachedQueryKey;
+	}
+
 	protected void additionalPreviewsLoad(long beforeId) {
-		String query = buildQuery();
-		// keep beforeId aligned with multiples of CACHED_PAGE_SIZE so the cache works
-		// correctly
-		beforeId = (long) (Math.ceil((double) beforeId / (double) CACHED_PAGE_SIZE) * (double) CACHED_PAGE_SIZE);
-		String cachedPostsKey = query + "," + beforeId;
-		List<E621Post> cached = INDEX_CACHE.get(cachedPostsKey);
+		AlignedQuery q = align(beforeId);
+		List<E621Post> cached = INDEX_CACHE.get(q.cachedQueryKey);
 		if (cached == null) {
 			fireEvent(new Event.QuickMessage("Searching E621..."));
-			E621Api.api().postIndex(query, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(cachedPostsKey));
+			E621Api.api().postIndex(q.query, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(q.cachedQueryKey));
 		} else {
 			fireEvent(new Event.QuickMessage("Searching cache... " + beforeId));
 			Scheduler.get().scheduleDeferred(() -> onPostsLoaded.onSuccess(null, cached));
 		}
+	}
+
+	private AlignedQuery align(long beforeId) {
+		AlignedQuery q = new AlignedQuery();
+		// keep beforeId aligned with multiples of CACHED_PAGE_SIZE so the cache works
+		// correctly
+		String query = buildQuery();
+		q.beforeId = getAlignedBeforeId(beforeId);
+		q.cachedQueryKey = query + "," + q.beforeId;
+		q.query = query;
+		return q;
+	}
+
+	private long getAlignedBeforeId(final long _beforeId) {
+		long beforeId = _beforeId;
+		beforeId = (long) (Math.ceil((double) beforeId / (double) CACHED_PAGE_SIZE) * (double) CACHED_PAGE_SIZE);
+		return beforeId;
 	}
 
 	private String buildQuery() {
@@ -483,8 +493,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		queryTags.addAll(tmpMustNotHave);
 		/*
 		 * try and sort tags to produce better queries: must have should be those with
-		 * least count of posts must not have should be those with the most count of
-		 * posts we seem to perform less queries preferring musthave over mustnothave
+		 * least count of posts and must not have should be those with the most count of
+		 * posts we seem to perform slightly less queries preferring must have tag over
+		 * must not have tags
 		 */
 		Collections.sort(queryTags, (a, b) -> {
 			// sort musthave before mustnothave
@@ -557,7 +568,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		fireEvent(new Event.Loading(true));
 		updateActiveTagFilters();
 		activePage = 0;
-		savedPageStartId = 0;
 		activeSet.clear();
 		String query = buildQuery();
 		E621Api.api().postIndex(query, CACHED_PAGE_SIZE, onPostsLoaded);
@@ -566,6 +576,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	@Override
 	public void onValueChange(ValueChangeEvent<String> event) {
 		String token = event.getValue();
+		GWT.log("Hash Change: " + token);
 		SavedState state = SavedState.parseHistoryToken(token);
 		mustHaveTags.clear();
 		mustNotHaveTags.clear();

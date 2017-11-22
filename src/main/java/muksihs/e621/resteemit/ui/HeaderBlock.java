@@ -26,15 +26,12 @@ public class HeaderBlock extends EventBusComposite {
 	@UiField
 	protected MaterialLabel version;
 	@UiField
-	protected MaterialButton refresh;
-	@UiField
 	protected MaterialButton account;
 
 	public HeaderBlock() {
 		super();
 		initWidget(uiBinder.createAndBindUi(this));
 		version.setText(versionTxt);
-		refresh.addClickHandler((e)->fireEvent(new Event.RefreshView()));
 		account.addClickHandler((e)->fireEvent(new Event.ShowAccountDialog()));
 	}
 
