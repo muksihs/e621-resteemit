@@ -28,6 +28,7 @@ import com.google.web.bindery.event.shared.binder.GenericEvent;
 
 import e621.E621Api;
 import e621.models.post.index.E621Post;
+import e621.models.post.tags.E621Tag;
 import e621.models.tag.index.Tag;
 import elemental2.dom.DomGlobal;
 import gwt.material.design.client.MaterialWithJQuery;
@@ -66,6 +67,29 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private final List<PostPreview> activeSet = new ArrayList<>();
 	private final Set<String> extensionsWhitelist = new TreeSet<>();
 	private int activePage;
+	private MethodCallback<List<E621Tag>> pickBestTagsThenPostConfirm=new MethodCallback<List<E621Tag>>() {
+		
+		@Override
+		public void onSuccess(Method method, List<E621Tag> response) {
+			for (E621Tag tag: response) {
+				GWT.log("post tag: "+tag.getName()+" ["+tag.getCount()+"]");
+			}
+		}
+		
+		@Override
+		public void onFailure(Method method, Throwable exception) {
+			fatalError(method, exception);
+		}
+
+	};
+	
+	private void fatalError(Method method, Throwable exception) {
+		fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
+		DomGlobal.console.log(exception);
+		DomGlobal.console.log(method);
+		DomGlobal.console.log(method.getResponse());
+		DomGlobal.console.log(method.getResponse().getText());
+	}
 
 	@EventHandler
 	protected void showAccountDialog(Event.ShowAccountDialog event) {
@@ -82,6 +106,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void steemPost(Event.SteemPost event) {
+		GWT.log("steemPost");
+		E621Api.api().postTags(event.getPreview().getId(), pickBestTagsThenPostConfirm);
 		if (!isLoggedIn()) {
 			fireEvent(new Event.Login<SteemPost>(event));
 		} else {
@@ -383,11 +409,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		@Override
 		public void onFailure(Method method, Throwable exception) {
 			// try reloading everything from scratch
-			fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
-			DomGlobal.console.log(exception);
-			DomGlobal.console.log(method);
-			DomGlobal.console.log(method.getResponse());
-			DomGlobal.console.log(method.getResponse().getText());
+			fatalError(method, exception);
 		}
 	};
 	private boolean initialPageLoad;
@@ -456,12 +478,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				@Override
 				public void onFailure(Method method, Throwable exception) {
 					// try reloading everything from scratch
-					fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
-					DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
-					DomGlobal.console.log(exception);
-					DomGlobal.console.log(method);
-					DomGlobal.console.log(method.getResponse());
-					DomGlobal.console.log(method.getResponse().getText());
+					fatalError(method, exception);
 				}
 			});
 		}
@@ -635,13 +652,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			@Override
 			public void onFailure(Method method, Throwable exception) {
 				// try reloading everything from scratch
-				fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
-				DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
-				DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
-				DomGlobal.console.log(exception);
-				DomGlobal.console.log(method);
-				DomGlobal.console.log(method.getResponse());
-				DomGlobal.console.log(method.getResponse().getText());
+				fatalError(method, exception);
 			}
 		};
 	}
@@ -750,11 +761,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			@Override
 			public void onFailure(Method method, Throwable exception) {
 				// try reloading everything from scratch
-				fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
-				DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
-				DomGlobal.console.log("HISTORY TOKEN: " + SavedState.asHistoryToken(getSavedStateHash()));
-				DomGlobal.console.log(exception);
-				DomGlobal.console.log(method);
+				fatalError(method, exception);
 			}
 		};
 		if (tags.length() > 0) {
