@@ -235,7 +235,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	@EventHandler
 	protected void steemPost(Event.SteemPost event) {
 		fireEvent(new Event.Loading(true));
-		GWT.log("steemPost");
 		MethodCallback<List<E621Tag>> cb = new MethodCallback<List<E621Tag>>() {
 			@Override
 			public void onSuccess(Method method, List<E621Tag> response) {
@@ -247,11 +246,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				fireEvent(new Event.FatalError(exception.getMessage()));
 			}
 		};
-		E621Api.api().postTags(event.getPreview().getId(), cb);
 		if (!isLoggedIn()) {
 			fireEvent(new Event.Login<SteemPost>(event));
 		} else {
-			// TODO
+			E621Api.api().postTags(event.getPreview().getId(), cb);
 		}
 
 	}
@@ -263,8 +261,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	@EventHandler
+	protected void loginComplete(Event.LoginComplete event) {
+		loggedIn=event.isLoggedIn();
+		if (afterLoginPendingEvent!=null) {
+			fireEvent(afterLoginPendingEvent);
+			afterLoginPendingEvent=null;
+		}
+	}
+	private GenericEvent afterLoginPendingEvent;
+	@EventHandler
 	protected <T extends GenericEvent> void login(Event.Login<T> event) {
-		// fireEvent(new Event.ShowLoginUi());
+		afterLoginPendingEvent=event.getRefireEvent();
+		fireEvent(new Event.ShowLoginUi());
 	}
 
 	@EventHandler

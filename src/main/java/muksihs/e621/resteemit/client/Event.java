@@ -10,6 +10,19 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class LoginComplete extends GenericEvent {
+		private final boolean loggedIn;
+		public LoginComplete(boolean loggedIn) {
+			this.loggedIn=loggedIn;
+		}
+		public boolean isLoggedIn() {
+			return loggedIn;
+		}
+	}
+
+	public class ShowLoginUi extends GenericEvent {
+	}
+
 	public class ClearSearch extends GenericEvent {
 
 	}
