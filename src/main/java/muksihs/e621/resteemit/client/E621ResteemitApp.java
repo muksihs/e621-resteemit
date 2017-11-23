@@ -46,7 +46,12 @@ import steem.TrendingTagsResult;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
-	private static final int CACHED_PAGE_SIZE = 15;
+	/**
+	 * A non-empirical and non-arbitrary number to skew tags in the "must have" set
+	 * higher as part of the automatic steem tag selection process.
+	 */
+	private static final int TAG_SKEW = 43;
+	private static final int CACHED_PAGE_SIZE = 20;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
 	public E621ResteemitApp() {
@@ -76,97 +81,128 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		public int comments;
 		public double totalPayouts;
 	}
-	public void collectMatchingTrendingTags(Map<String, String> error, TrendingTagsResult[] tags, String name, Iterator<E621Tag> iter, List<TrendingTag> collector) {
-		if (error!=null) {
+
+	public void matchingTagsCollector(Map<String, String> error, TrendingTagsResult[] tags, String name,
+			MatchingTagsState state) {
+		if (error != null) {
 			GWT.log(String.valueOf(error));
 		}
-		if (tags!=null) {
-			for (TrendingTagsResult trendingTag: tags) {
+		if (tags != null) {
+			for (TrendingTagsResult trendingTag : tags) {
 				if (!trendingTag.getName().equals(name)) {
 					continue;
 				}
 				TrendingTag tag = new TrendingTag();
-				tag.comments=trendingTag.getComments();
-				tag.name=trendingTag.getName();
-				tag.topPosts=trendingTag.getTop_posts();
+				tag.comments = trendingTag.getComments();
+				tag.name = trendingTag.getName();
+				tag.topPosts = trendingTag.getTop_posts();
 				try {
-					tag.totalPayouts=Double.valueOf(trendingTag.getTotal_payouts().replace(" SBD", ""));
+					tag.totalPayouts = Double.valueOf(trendingTag.getTotal_payouts().replace(" SBD", ""));
 				} catch (NumberFormatException e) {
 				}
-				collector.add(tag);
+				state.collector.add(tag);
 			}
 		}
-		getMatchingTrendingTag(iter, collector);
+		getMatchingTrendingTags(state);
 	}
-	
-	private void getMatchingTrendingTag(Iterator<E621Tag> iter, List<TrendingTag> collector) {
-		if (!iter.hasNext()) {
-			//sort descending order to most valuable at top of list
-			Collections.sort(collector, (a,b)->{
-				//sort by per top post payout average
-//				double p1 = a.totalPayouts/((double)a.topPosts+(double)a.comments+1d); 
-//				double p2 = b.totalPayouts/((double)b.topPosts+(double)b.comments+1d);
-//				if (Double.compare(p1, p2)!=0) {
-//					return Double.compare(p2, p1);
-//				}
-				//sort by payout (raw value of topic)
+
+	private void getMatchingTrendingTags(MatchingTagsState state) {
+		if (!state.iter.hasNext()) {
+			// sort descending order to most valuable at top of list
+			Collections.sort(state.collector, (a, b) -> {
+				// sort by per top post payout average
+				double p1 = a.totalPayouts / ((double) a.topPosts + (double) a.comments + 1d);
+				double p2 = b.totalPayouts / ((double) b.topPosts + (double) b.comments + 1d);
+				// make must have tags more likely to sort to preferred use
+				if (mustHaveTags.contains(a.name)) {
+					p1 += TAG_SKEW;
+				}
+				if (mustHaveTags.contains(b.name)) {
+					p2 += TAG_SKEW;
+				}
+				if (Double.compare(p1, p2) != 0) {
+					return Double.compare(p2, p1);
+				}
+				// sort by payout (raw value of topic)
 				if (a.totalPayouts != b.totalPayouts) {
 					return Double.compare(b.totalPayouts, a.totalPayouts);
 				}
-				//sort by number of posts (popularity of tag/audience by subject)
-				if (a.topPosts!=b.topPosts) {
+				// sort by number of posts (popularity of tag/audience by subject)
+				if (a.topPosts != b.topPosts) {
 					return Integer.compare(b.topPosts, a.topPosts);
 				}
-				//sort by number of comments (indicates audience response level?)
-				if (a.comments!=b.comments) {
+				// sort by number of comments (indicates audience response level?)
+				if (a.comments != b.comments) {
 					return Integer.compare(b.comments, a.comments);
 				}
 				return a.name.compareToIgnoreCase(b.name);
 			});
-			for (TrendingTag tag: collector) {
-				GWT.log("tag: "+tag.name+" ["+tag.topPosts+", "+tag.comments+", "+tag.totalPayouts+"]");
+			if (!state.post.getRating().equals(Rating.SAFE.getTag())) {
+				state.collector = state.collector.subList(0, Math.min(state.collector.size(), 4));
+				TrendingTag nsfwTag = new TrendingTag();
+				nsfwTag.name = "nsfw";
+				state.collector.add(nsfwTag);
+			} else {
+				state.collector = state.collector.subList(0, Math.min(state.collector.size(), 5));
 			}
+			if (state.collector.size() < 5) {
+				TrendingTag artTag = new TrendingTag();
+				artTag.name = "art";
+				state.collector.add(artTag);
+			}
+			if (state.collector.size() < 5) {
+				TrendingTag furryTag = new TrendingTag();
+				furryTag.name = "furry";
+				state.collector.add(furryTag);
+			}
+			if (state.collector.size() < 5) {
+				TrendingTag lifeTag = new TrendingTag();
+				lifeTag.name = "life";
+				state.collector.add(lifeTag);
+			}
+			Iterator<TrendingTag> iter = state.collector.iterator();
+			StringBuilder sb = new StringBuilder();
+			while (iter.hasNext()) {
+				sb.append(iter.next().name);
+				if (iter.hasNext()) {
+					sb.append(" ");
+				}
+			}
+			DomGlobal.console.log(sb.toString());
+			fireEvent(new Event.Loading(false));
 			return;
 		}
-		String name = iter.next().getName();
-		SteemApi.getTrendingTags(name, 1,(e,r)->collectMatchingTrendingTags(e, r, name, iter, collector));
+		String name = state.iter.next().getName();
+		SteemApi.getTrendingTags(name, 1, (e, r) -> matchingTagsCollector(e, r, name, state));
 	}
-	
-	private MethodCallback<List<E621Tag>> pickBestTagsThenPostConfirm=new MethodCallback<List<E621Tag>>() {
-		
-		@Override
-		public void onSuccess(Method method, List<E621Tag> response) {
-			List<E621Tag> withAlternateForms = new ArrayList<>();
-			withAlternateForms.addAll(response);
-			for (E621Tag tag: response) {
-				String name = tag.getName().toLowerCase();
-				String altName;
-				E621Tag alt;
-				altName=name.replaceAll("[^a-z0-9\\-]", "-");
-				if (!altName.equalsIgnoreCase(name)) {
-					alt = new E621Tag();
-					alt.setName(altName);
-					withAlternateForms.add(alt);
-				}
-				altName=name.replaceAll("[^a-z0-9\\-]", "");
-				if (!altName.equalsIgnoreCase(name)) {
-					alt = new E621Tag();
-					alt.setName(altName);
-					withAlternateForms.add(alt);
-				}
+
+	private void pickBestTagsThenPostConfirm(PostPreview preview, List<E621Tag> response) {
+		MatchingTagsState state = new MatchingTagsState();
+		state.post = preview;
+		state.withAlternateForms = new ArrayList<>();
+		state.collector = new ArrayList<>();
+		state.withAlternateForms.addAll(response);
+		for (E621Tag tag : response) {
+			String name = tag.getName().toLowerCase();
+			String altName;
+			E621Tag alt;
+			altName = name.replaceAll("[^a-z0-9\\-]", "-");
+			if (!altName.equalsIgnoreCase(name) && !altName.isEmpty()) {
+				alt = new E621Tag();
+				alt.setName(altName);
+				state.withAlternateForms.add(alt);
 			}
-			Iterator<E621Tag> iter = withAlternateForms.iterator();
-			getMatchingTrendingTag(iter, new ArrayList<>());
+			altName = name.replaceAll("[^a-z0-9\\-]", "");
+			if (!altName.equalsIgnoreCase(name) && !altName.isEmpty()) {
+				alt = new E621Tag();
+				alt.setName(altName);
+				state.withAlternateForms.add(alt);
+			}
 		}
-		
+		state.iter = state.withAlternateForms.iterator();
+		getMatchingTrendingTags(state);
+	}
 
-		@Override
-		public void onFailure(Method method, Throwable exception) {
-			fatalError(method, exception);
-		}
-
-	};
-	
 	private void fatalError(Method method, Throwable exception) {
 		fireEvent(new Event.FatalError(String.valueOf(exception.getMessage())));
 		DomGlobal.console.log(exception);
@@ -188,10 +224,30 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		fireEvent(new Event.LoadInitialPreviews());
 	}
 
+	private static class MatchingTagsState {
+		public List<TrendingTag> collector;
+		public Iterator<E621Tag> iter;
+		public PostPreview post;
+		public List<E621Tag> withAlternateForms;
+
+	}
+
 	@EventHandler
 	protected void steemPost(Event.SteemPost event) {
+		fireEvent(new Event.Loading(true));
 		GWT.log("steemPost");
-		E621Api.api().postTags(event.getPreview().getId(), pickBestTagsThenPostConfirm);
+		MethodCallback<List<E621Tag>> cb = new MethodCallback<List<E621Tag>>() {
+			@Override
+			public void onSuccess(Method method, List<E621Tag> response) {
+				pickBestTagsThenPostConfirm(event.getPreview(), response);
+			}
+
+			@Override
+			public void onFailure(Method method, Throwable exception) {
+				fireEvent(new Event.FatalError(exception.getMessage()));
+			}
+		};
+		E621Api.api().postTags(event.getPreview().getId(), cb);
 		if (!isLoggedIn()) {
 			fireEvent(new Event.Login<SteemPost>(event));
 		} else {
@@ -592,7 +648,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void showNextSet(Event.NextPreviewSet event) {
-		activePage++;
 		fireEvent(new Event.Loading(true));
 		List<PostPreview> previewsToShow = activeSetForPage(activePage);
 		long tmp = Long.MAX_VALUE;
@@ -601,6 +656,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		long beforeId = tmp;
 		Scheduler.get().scheduleDeferred(() -> {
+			activePage++;
 			additionalPreviewsLoad(beforeId);
 		});
 	}
@@ -615,7 +671,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		AlignedQuery q = align(beforeId);
 		List<E621Post> cached = INDEX_CACHE.get(q.cachedQueryKey);
 		if (cached == null) {
-			fireEvent(new Event.QuickMessage("Searching E621... "+q.beforeId));
+			fireEvent(new Event.QuickMessage("Searching E621... " + q.beforeId));
 			E621Api.api().postIndex(q.query, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(q.cachedQueryKey));
 		} else {
 			fireEvent(new Event.QuickMessage("Searching cache... " + q.beforeId));
