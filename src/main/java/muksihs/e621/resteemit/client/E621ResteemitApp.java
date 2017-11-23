@@ -514,7 +514,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		AlignedQuery q = align(beforeId);
 		List<E621Post> cached = INDEX_CACHE.get(q.cachedQueryKey);
 		if (cached == null) {
-			fireEvent(new Event.QuickMessage("Searching E621..."));
+			fireEvent(new Event.QuickMessage("Searching E621... "+q.beforeId));
 			E621Api.api().postIndex(q.query, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(q.cachedQueryKey));
 		} else {
 			fireEvent(new Event.QuickMessage("Searching cache... " + q.beforeId));
