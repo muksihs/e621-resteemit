@@ -103,6 +103,12 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		if (!iter.hasNext()) {
 			//sort descending order to most valuable at top of list
 			Collections.sort(collector, (a,b)->{
+				//sort by per top post payout average
+//				double p1 = a.totalPayouts/((double)a.topPosts+(double)a.comments+1d); 
+//				double p2 = b.totalPayouts/((double)b.topPosts+(double)b.comments+1d);
+//				if (Double.compare(p1, p2)!=0) {
+//					return Double.compare(p2, p1);
+//				}
 				//sort by payout (raw value of topic)
 				if (a.totalPayouts != b.totalPayouts) {
 					return Double.compare(b.totalPayouts, a.totalPayouts);
