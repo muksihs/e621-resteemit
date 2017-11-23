@@ -8,7 +8,7 @@
 		<m:MaterialHeader hideOn="NONE">
 			<m:MaterialNavBar>
 				<m:MaterialNavSection float="LEFT">
-					<m:MaterialNavBrand style="margin: 6px;"
+					<m:MaterialNavBrand ui:field="navBrand" style="margin: 6px;"
 						text="Muksihs' E621 Browser" />
 					<m:MaterialNavContent style="margin: 4px;">
 						<m:MaterialLabel text="for steemit - version: "></m:MaterialLabel>

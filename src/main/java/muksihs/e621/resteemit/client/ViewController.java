@@ -14,6 +14,7 @@ import gwt.material.design.client.ui.MaterialLoader;
 import gwt.material.design.client.ui.MaterialModal;
 import gwt.material.design.client.ui.MaterialTitle;
 import gwt.material.design.client.ui.MaterialToast;
+import muksihs.e621.resteemit.ui.AboutUi;
 import muksihs.e621.resteemit.ui.BrowseView;
 import muksihs.e621.resteemit.ui.LoginUi;
 
@@ -32,6 +33,13 @@ public class ViewController implements GlobalEventBus {
 	@EventHandler
 	protected void quickMessage(Event.QuickMessage event) {
 		MaterialToast.fireToast(event.getMessage(), 1000);
+	}
+	
+	@EventHandler
+	protected void showAboutui(Event.ShowAbout event) {
+		AboutUi about = new AboutUi();
+		RootPanel.get().add(about);
+		about.open();
 	}
 	
 	@EventHandler

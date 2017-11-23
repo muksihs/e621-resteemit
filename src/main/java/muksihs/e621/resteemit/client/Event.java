@@ -10,26 +10,49 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class ShowAbout extends GenericEvent {
+
+	}
+
+	public class LoginLogout extends GenericEvent {
+
+	}
+
 	public class TryLogin extends GenericEvent {
 		private final String username;
 		private final String wif;
+		private final boolean silent;
+
 		public TryLogin(String username, String wif) {
-			this.username=username;
-			this.wif=wif;
+			this(username, wif, false);
 		}
+
+		public TryLogin(String username, String wif, boolean silent) {
+			this.username = username;
+			this.wif = wif;
+			this.silent = silent;
+		}
+
 		public String getUsername() {
 			return username;
 		}
+
 		public String getWif() {
 			return wif;
+		}
+
+		public boolean isSilent() {
+			return silent;
 		}
 	}
 
 	public class LoginComplete extends GenericEvent {
 		private final boolean loggedIn;
+
 		public LoginComplete(boolean loggedIn) {
-			this.loggedIn=loggedIn;
+			this.loggedIn = loggedIn;
 		}
+
 		public boolean isLoggedIn() {
 			return loggedIn;
 		}
@@ -44,16 +67,14 @@ public interface Event {
 
 	public class AlertMessage extends GenericEvent {
 		private final String message;
+
 		public AlertMessage(String message) {
-			this.message=message;
+			this.message = message;
 		}
+
 		public String getMessage() {
 			return message;
 		}
-
-	}
-
-	public class ShowAccountDialog extends GenericEvent {
 
 	}
 
@@ -63,9 +84,11 @@ public interface Event {
 
 	public class QuickMessage extends GenericEvent {
 		private final String message;
+
 		public QuickMessage(String message) {
-			this.message=message;
+			this.message = message;
 		}
+
 		public String getMessage() {
 			return message;
 		}
@@ -73,10 +96,12 @@ public interface Event {
 	}
 
 	public class Login<T extends GenericEvent> extends GenericEvent {
-		private final T refireEvent; 
+		private final T refireEvent;
+
 		public Login(T event) {
-			this.refireEvent=event;
+			this.refireEvent = event;
 		}
+
 		public T getRefireEvent() {
 			return refireEvent;
 		}
@@ -84,9 +109,11 @@ public interface Event {
 
 	public class SteemPost extends GenericEvent {
 		private final PostPreview preview;
+
 		public SteemPost(PostPreview preview) {
-			this.preview=preview;
+			this.preview = preview;
 		}
+
 		public PostPreview getPreview() {
 			return preview;
 		}
@@ -98,7 +125,7 @@ public interface Event {
 		private final String message;
 
 		public FatalError(String message) {
-			this.message=message;
+			this.message = message;
 		}
 
 		public String getMessage() {
@@ -112,7 +139,7 @@ public interface Event {
 		private final Set<String> mustHaveRatings;
 
 		public SetRatingsBoxes(Set<String> mustHaveRatings) {
-			this.mustHaveRatings=mustHaveRatings;
+			this.mustHaveRatings = mustHaveRatings;
 		}
 
 		public Set<String> getMustHaveRatings() {
@@ -130,7 +157,7 @@ public interface Event {
 		private final boolean enable;
 
 		public EnablePreviousButton(boolean enable) {
-			this.enable=enable;
+			this.enable = enable;
 		}
 
 		public boolean isEnable() {
@@ -141,9 +168,11 @@ public interface Event {
 
 	public class RemoveFromFilter extends GenericEvent {
 		private final String tag;
+
 		public RemoveFromFilter(String tag) {
-			this.tag=tag;
+			this.tag = tag;
 		}
+
 		public String getTag() {
 			return tag;
 		}
@@ -165,9 +194,11 @@ public interface Event {
 
 	public class SetRating extends GenericEvent {
 		private final Set<Rating> rating;
+
 		public SetRating(Set<Rating> rating) {
-			this.rating=rating;
+			this.rating = rating;
 		}
+
 		public Set<Rating> getRating() {
 			return rating;
 		}

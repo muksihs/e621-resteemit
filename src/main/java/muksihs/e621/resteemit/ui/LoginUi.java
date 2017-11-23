@@ -3,15 +3,15 @@ package muksihs.e621.resteemit.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.binder.EventBinder;
 
 import gwt.material.design.client.ui.MaterialButton;
 import gwt.material.design.client.ui.MaterialInput;
 import gwt.material.design.client.ui.MaterialModal;
 import muksihs.e621.resteemit.client.Event;
 
-public class LoginUi extends Composite {
+public class LoginUi extends EventBusComposite {
 
 	@UiField
 	protected MaterialButton btnCancel;
@@ -43,6 +43,12 @@ public class LoginUi extends Composite {
 
 	public void open() {
 		modal.open();
+	}
+
+	interface MyEventBinder extends EventBinder<LoginUi> {}
+	@Override
+	protected <T extends EventBinder<EventBusComposite>> T getEventBinder() {
+		return GWT.create(MyEventBinder.class);
 	}
 
 }

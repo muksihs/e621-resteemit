@@ -9,6 +9,7 @@ import com.google.web.bindery.event.shared.binder.EventHandler;
 
 import gwt.material.design.client.ui.MaterialButton;
 import gwt.material.design.client.ui.MaterialLabel;
+import gwt.material.design.client.ui.MaterialNavBrand;
 import muksihs.e621.resteemit.client.Event;
 
 public class HeaderBlock extends EventBusComposite {
@@ -18,11 +19,14 @@ public class HeaderBlock extends EventBusComposite {
 
 	interface MyEventBinder extends EventBinder<HeaderBlock> {
 	}
-
+	
 	private static String versionTxt = "19000101";
 
 	private static HeaderBlockUiBinder uiBinder = GWT.create(HeaderBlockUiBinder.class);
 
+	@UiField
+	protected MaterialNavBrand navBrand;
+	
 	@UiField
 	protected MaterialLabel version;
 	@UiField
@@ -32,7 +36,8 @@ public class HeaderBlock extends EventBusComposite {
 		super();
 		initWidget(uiBinder.createAndBindUi(this));
 		version.setText(versionTxt);
-		account.addClickHandler((e)->fireEvent(new Event.ShowAccountDialog()));
+		account.addClickHandler((e)->fireEvent(new Event.LoginLogout()));
+		navBrand.addClickHandler((e)->fireEvent(new Event.ShowAbout()));
 	}
 
 	@Override
@@ -49,6 +54,15 @@ public class HeaderBlock extends EventBusComposite {
 	@Override
 	protected void onUnload() {
 		super.onUnload();
+	}
+	
+	@EventHandler
+	public void showLoggedInStatus(Event.LoginComplete event) {
+		if (event.isLoggedIn()) {
+			account.setText("LOGOUT");
+		} else {
+			account.setText("LOGIN");
+		}
 	}
 
 	@EventHandler

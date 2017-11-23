@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.shared.GWT;
@@ -34,18 +35,25 @@ import elemental2.dom.DomGlobal;
 import gwt.material.design.client.MaterialWithJQuery;
 import muksihs.e621.resteemit.client.Event.Rating;
 import muksihs.e621.resteemit.client.Event.SteemPost;
+import muksihs.e621.resteemit.client.cache.AccountCache;
 import muksihs.e621.resteemit.client.cache.IndexCache;
 import muksihs.e621.resteemit.client.cache.TagsCache;
 import muksihs.e621.resteemit.shared.Consts;
 import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.SavedState;
+import muksihs.e621.resteemit.shared.SteemPostingInfo;
 import muksihs.e621.resteemit.shared.View;
 import muksihs.e621.resteemit.ui.MainView;
 import steem.SteemApi;
+import steem.SteemAuth;
+import steem.SteemCallbackArray;
 import steem.TrendingTagsResult;
+import steem.model.accountinfo.AccountInfo;
+import steem.model.accountinfo.Posting;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
+	private static final String DEFAULT_USER = "default-user";
 	/**
 	 * A non-empirical and non-arbitrary number to skew tags in the "must have" set
 	 * higher as part of the automatic steem tag selection process.
@@ -212,8 +220,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	@EventHandler
-	protected void showAccountDialog(Event.ShowAccountDialog event) {
-
+	protected void showAccountDialog(Event.LoginLogout event) {
+		if (isLoggedIn()) {
+			new AccountCache().remove(DEFAULT_USER);
+			loggedIn=false;
+			fireEvent(new Event.LoginComplete(false));
+		} else {
+			fireEvent(new Event.Login<GenericEvent>(null));
+		}
 	}
 
 	@EventHandler
@@ -230,6 +244,76 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		public PostPreview post;
 		public List<E621Tag> withAlternateForms;
 
+	}
+	
+	@EventHandler
+	protected void tryLogin(Event.TryLogin event) {
+		SteemCallbackArray<AccountInfo> cb=new SteemCallbackArray<AccountInfo>() {
+			@Override
+			public void onResult(Map<String, String> error, AccountInfo[] result) {
+				fireEvent(new Event.Loading(false));
+				if (error!=null) {
+					if (!event.isSilent()) {
+						fireEvent(new Event.AlertMessage(error.toString()));
+					}
+					fireEvent(new Event.LoginComplete(false));
+					return;
+				}
+				if (result.length==0) {
+					if (!event.isSilent()) {
+						fireEvent(new Event.AlertMessage("Username not found!"));
+					}
+					fireEvent(new Event.LoginComplete(false));
+					return;
+				}
+				AccountInfo accountInfo = result[0];
+				if (accountInfo==null) {
+					fireEvent(new Event.LoginComplete(false));
+					return;
+				}
+				Posting posting = accountInfo.getPosting();
+				if (posting==null) {
+					fireEvent(new Event.LoginComplete(false));
+					return;
+				}
+				String[][] keyAuths = posting.getKeyAuths();
+				if (keyAuths==null || keyAuths.length==0) {
+					fireEvent(new Event.LoginComplete(false));
+					return;
+				}
+				String[] keylist = keyAuths[0];
+				if (keylist==null || keylist.length==0) {
+					fireEvent(new Event.LoginComplete(false));
+					return;
+				}
+				String publicWif = keylist[0];
+				try {
+					if (!SteemAuth.wifIsValid(event.getWif(), publicWif)) {
+						new AccountCache().remove(DEFAULT_USER);
+						if (!event.isSilent()) {
+							fireEvent(new Event.AlertMessage("INVALID PRIVATE POSTING KEY"));
+						}
+						fireEvent(new Event.LoginComplete(false));
+						return;
+					}
+				} catch (JavaScriptException e) {
+					if (!event.isSilent()) {
+						fireEvent(new Event.AlertMessage(e.getMessage()));
+					}
+					fireEvent(new Event.LoginComplete(false));
+					return;
+				}
+				AccountCache cache = new AccountCache();
+				SteemPostingInfo info = new SteemPostingInfo();
+				info.setUsername(event.getUsername());
+				info.setWif(event.getWif());
+				cache.put(DEFAULT_USER,info);
+				fireEvent(new Event.LoginComplete(true));
+				DomGlobal.console.log("Logged in as: "+info.getUsername());
+			}
+		};
+		fireEvent(new Event.Loading(true));
+		SteemApi.getAccounts(new String[] {event.getUsername()}, cb);
 	}
 
 	@EventHandler
@@ -263,11 +347,12 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	@EventHandler
 	protected void loginComplete(Event.LoginComplete event) {
 		loggedIn=event.isLoggedIn();
-		if (afterLoginPendingEvent!=null) {
+		if (afterLoginPendingEvent!=null && event.isLoggedIn()) {
 			fireEvent(afterLoginPendingEvent);
-			afterLoginPendingEvent=null;
 		}
+		afterLoginPendingEvent=null;
 	}
+	
 	private GenericEvent afterLoginPendingEvent;
 	@EventHandler
 	protected <T extends GenericEvent> void login(Event.Login<T> event) {
@@ -601,6 +686,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	private void startApp() {
+		// validate cached login credentials (if any)
+		AccountCache cache = new AccountCache();
+		SteemPostingInfo info = cache.get(DEFAULT_USER);
+		if (info!=null) {
+			fireEvent(new Event.TryLogin(info.getUsername(), info.getWif(), true));
+		} else {
+			fireEvent(new Event.LoginComplete(false));
+		}
 		// load most common available tags, then show the view
 		int limit = 500;
 		TagsCache tagsCache = new TagsCache(limit);
