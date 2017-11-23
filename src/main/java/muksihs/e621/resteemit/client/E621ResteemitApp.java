@@ -39,6 +39,7 @@ import muksihs.e621.resteemit.client.cache.AccountCache;
 import muksihs.e621.resteemit.client.cache.IndexCache;
 import muksihs.e621.resteemit.client.cache.TagsCache;
 import muksihs.e621.resteemit.shared.Consts;
+import muksihs.e621.resteemit.shared.MatchingTagsState;
 import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.SavedState;
 import muksihs.e621.resteemit.shared.SteemPostingInfo;
@@ -178,6 +179,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			}
 			DomGlobal.console.log(sb.toString());
 			fireEvent(new Event.Loading(false));
+			fireEvent(new Event.ConfirmPost(state));
 			return;
 		}
 		String name = state.iter.next().getName();
@@ -238,14 +240,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		fireEvent(new Event.LoadInitialPreviews());
 	}
 
-	private static class MatchingTagsState {
-		public List<TrendingTag> collector;
-		public Iterator<E621Tag> iter;
-		public PostPreview post;
-		public List<E621Tag> withAlternateForms;
-
-	}
-	
 	@EventHandler
 	protected void tryLogin(Event.TryLogin event) {
 		SteemCallbackArray<AccountInfo> cb=new SteemCallbackArray<AccountInfo>() {
