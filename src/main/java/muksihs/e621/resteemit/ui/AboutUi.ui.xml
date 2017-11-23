@@ -1,0 +1,67 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:m="urn:import:gwt.material.design.client.ui">
+	<ui:style>
+	
+	</ui:style>
+	<m:MaterialModal ui:field="modal">
+		<m:MaterialModalContent>
+			<m:MaterialTitle style="margin-top: -50px" title="Muksihs' E621 Browser"></m:MaterialTitle>
+		<m:MaterialButton ui:field="btnOk"
+				style='margin: 4px; float:right; clear:left;' text="DISMISS"></m:MaterialButton>
+			<g:HTML>
+				<div style='font-size: 150%;'>
+					<p>
+						This web application is designed to assist in the curation and
+						posting
+						to the
+						<a target="_blank" href='https://steemit.com/welcome'>Steem</a>
+						social media blockchain any
+						<a target="_blank" href='https://e621.net/'>E621 artwork</a>
+						that you deem
+						worthy of sharing and voting up.
+					</p>
+					<p>
+						This web application uses or incorporates:
+					</p>
+					<ul>
+						<li>
+							<a href='http://www.gwtproject.org/' target="_blank">GWT (Google Web
+								Toolkit)</a>
+						</li>
+						<li>
+							<a href='https://resty-gwt.github.io/' target="_blank">RestyGWT</a>
+						</li>
+						<li>
+							<a href='https://github.com/FasterXML/jackson-annotations'
+								target="_blank">Jackson Data Processor Annotations</a>
+						</li>
+						<li>
+							<a href='https://gwtmaterialdesign.github.io/gwt-material-demo/#about'
+								target="_blank">GWT Material</a>
+						</li>
+						<li>
+							<a href='https://github.com/google/elemental2' target="_blank">Elemental2</a>
+						</li>
+						<li>
+							<a href='https://github.com/google/gwteventbinder' target="_blank">GWT
+								EventBinder</a>
+						</li>
+						<li>
+							<a href='https://github.com/tommyettinger/BlazingChain' target="_blank">BlazingChain</a>
+						</li>
+					</ul>
+					<p>
+						Any shared posts are marked with a 1% beneficiary going to
+						<a href='https://steemit.com/@muksihs' target="_blank">@muksihs</a>
+						for creating and hosting the software.
+					</p>
+					<p>
+						The source code can be found at:
+						<a href='https://github.com/muksihs/e621-resteemit' target="_blank">GITHUB</a>
+					</p>
+				</div>
+			</g:HTML>
+		</m:MaterialModalContent>
+	</m:MaterialModal>
+</ui:UiBinder> 
