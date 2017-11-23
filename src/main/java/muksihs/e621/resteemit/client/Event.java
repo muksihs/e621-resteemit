@@ -10,6 +10,21 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class TryLogin extends GenericEvent {
+		private final String username;
+		private final String wif;
+		public TryLogin(String username, String wif) {
+			this.username=username;
+			this.wif=wif;
+		}
+		public String getUsername() {
+			return username;
+		}
+		public String getWif() {
+			return wif;
+		}
+	}
+
 	public class LoginComplete extends GenericEvent {
 		private final boolean loggedIn;
 		public LoginComplete(boolean loggedIn) {

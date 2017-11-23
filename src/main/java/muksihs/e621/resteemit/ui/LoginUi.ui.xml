@@ -1,0 +1,26 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:m="urn:import:gwt.material.design.client.ui">
+	<ui:style>
+	
+	</ui:style>
+	<m:MaterialModal ui:field="modal">
+	<m:MaterialModalContent>
+	<m:MaterialTitle style="margin-top: -50px" title="STEEM LOGIN"></m:MaterialTitle>
+	<m:MaterialLabel text="STEEM Username"></m:MaterialLabel>
+	<m:MaterialInput helperText="STEEM Username" type="TEXT" ui:field="username">
+	</m:MaterialInput>
+	<m:MaterialLabel text="STEEM Private Posting Key"></m:MaterialLabel>
+	<m:MaterialInput helperText="STEEM Private Posting Key" type="PASSWORD" ui:field="wif">
+	</m:MaterialInput>
+
+	
+	</m:MaterialModalContent>
+	<m:MaterialFooter>
+	<m:MaterialLink style='margin: 4px; float:left;' type="RAISED" href="https://steemit.com/pick_account" target="_blank" text="GET A STEEM ACCOUNT">
+	</m:MaterialLink>
+	<m:MaterialButton ui:field="btnLogin" style='margin: 4px; float:right;' text="LOGIN"></m:MaterialButton>
+	<m:MaterialButton ui:field="btnCancel" style='margin: 4px; float:right;' text="CANCEL"></m:MaterialButton>
+	</m:MaterialFooter>
+	</m:MaterialModal>
+</ui:UiBinder> 

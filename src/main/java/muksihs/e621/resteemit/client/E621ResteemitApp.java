@@ -234,7 +234,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void steemPost(Event.SteemPost event) {
-		fireEvent(new Event.Loading(true));
 		MethodCallback<List<E621Tag>> cb = new MethodCallback<List<E621Tag>>() {
 			@Override
 			public void onSuccess(Method method, List<E621Tag> response) {
@@ -249,6 +248,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		if (!isLoggedIn()) {
 			fireEvent(new Event.Login<SteemPost>(event));
 		} else {
+			fireEvent(new Event.Loading(true));
 			E621Api.api().postTags(event.getPreview().getId(), cb);
 		}
 
