@@ -217,7 +217,13 @@ public class IndexCache {
 		startExpiresCheck();
 	}
 	
+	private boolean expiresCheckRunning=false;
 	private void startExpiresCheck() {
+		if (expiresCheckRunning) {
+			return;
+		}
+		expiresCheckRunning=true;
+		DomGlobal.console.log("Expires check started");
 		// one item checked per javascript event loop to prevent browser hangs
 		Iterator<String> iter = prefixedKeySet().iterator();
 		expiresCheck(iter);
@@ -225,6 +231,8 @@ public class IndexCache {
 
 	private void expiresCheck(Iterator<String> iter) {
 		if (!iter.hasNext()) {
+			DomGlobal.console.log("Expires check completed");
+			expiresCheckRunning=false;
 			return;
 		}
 		Scheduler.get().scheduleDeferred(() -> _expiresCheck(iter));
