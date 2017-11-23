@@ -41,6 +41,8 @@ import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.SavedState;
 import muksihs.e621.resteemit.shared.View;
 import muksihs.e621.resteemit.ui.MainView;
+import steem.SteemApi;
+import steem.TrendingTagsResult;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
@@ -67,15 +69,91 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private final List<PostPreview> activeSet = new ArrayList<>();
 	private final Set<String> extensionsWhitelist = new TreeSet<>();
 	private int activePage;
+
+	public static class TrendingTag {
+		public String name;
+		public int topPosts;
+		public int comments;
+		public double totalPayouts;
+	}
+	public void collectMatchingTrendingTags(Map<String, String> error, TrendingTagsResult[] tags, String name, Iterator<E621Tag> iter, List<TrendingTag> collector) {
+		if (error!=null) {
+			GWT.log(String.valueOf(error));
+		}
+		if (tags!=null) {
+			for (TrendingTagsResult trendingTag: tags) {
+				if (!trendingTag.getName().equals(name)) {
+					continue;
+				}
+				TrendingTag tag = new TrendingTag();
+				tag.comments=trendingTag.getComments();
+				tag.name=trendingTag.getName();
+				tag.topPosts=trendingTag.getTop_posts();
+				try {
+					tag.totalPayouts=Double.valueOf(trendingTag.getTotal_payouts().replace(" SBD", ""));
+				} catch (NumberFormatException e) {
+				}
+				collector.add(tag);
+			}
+		}
+		getMatchingTrendingTag(iter, collector);
+	}
+	
+	private void getMatchingTrendingTag(Iterator<E621Tag> iter, List<TrendingTag> collector) {
+		if (!iter.hasNext()) {
+			//sort descending order to most valuable at top of list
+			Collections.sort(collector, (a,b)->{
+				//sort by payout (raw value of topic)
+				if (a.totalPayouts != b.totalPayouts) {
+					return Double.compare(b.totalPayouts, a.totalPayouts);
+				}
+				//sort by number of posts (popularity of tag/audience by subject)
+				if (a.topPosts!=b.topPosts) {
+					return Integer.compare(b.topPosts, a.topPosts);
+				}
+				//sort by number of comments (indicates audience response level?)
+				if (a.comments!=b.comments) {
+					return Integer.compare(b.comments, a.comments);
+				}
+				return a.name.compareToIgnoreCase(b.name);
+			});
+			for (TrendingTag tag: collector) {
+				GWT.log("tag: "+tag.name+" ["+tag.topPosts+", "+tag.comments+", "+tag.totalPayouts+"]");
+			}
+			return;
+		}
+		String name = iter.next().getName();
+		SteemApi.getTrendingTags(name, 1,(e,r)->collectMatchingTrendingTags(e, r, name, iter, collector));
+	}
+	
 	private MethodCallback<List<E621Tag>> pickBestTagsThenPostConfirm=new MethodCallback<List<E621Tag>>() {
 		
 		@Override
 		public void onSuccess(Method method, List<E621Tag> response) {
+			List<E621Tag> withAlternateForms = new ArrayList<>();
+			withAlternateForms.addAll(response);
 			for (E621Tag tag: response) {
-				GWT.log("post tag: "+tag.getName()+" ["+tag.getCount()+"]");
+				String name = tag.getName().toLowerCase();
+				String altName;
+				E621Tag alt;
+				altName=name.replaceAll("[^a-z0-9\\-]", "-");
+				if (!altName.equalsIgnoreCase(name)) {
+					alt = new E621Tag();
+					alt.setName(altName);
+					withAlternateForms.add(alt);
+				}
+				altName=name.replaceAll("[^a-z0-9\\-]", "");
+				if (!altName.equalsIgnoreCase(name)) {
+					alt = new E621Tag();
+					alt.setName(altName);
+					withAlternateForms.add(alt);
+				}
 			}
+			Iterator<E621Tag> iter = withAlternateForms.iterator();
+			getMatchingTrendingTag(iter, new ArrayList<>());
 		}
 		
+
 		@Override
 		public void onFailure(Method method, Throwable exception) {
 			fatalError(method, exception);
