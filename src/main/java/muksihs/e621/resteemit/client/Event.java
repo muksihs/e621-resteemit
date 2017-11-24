@@ -5,20 +5,31 @@ import java.util.Set;
 
 import com.google.web.bindery.event.shared.binder.GenericEvent;
 
-import muksihs.e621.resteemit.shared.MatchingTagsState;
 import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class PostPreviewContent extends GenericEvent {
+		private final String html;
+		public PostPreviewContent(String html) {
+			this.html=html;
+		}
+		public String getHtml() {
+			return html;
+		}
+
+	}
+
+	public class GetPostPreview extends GenericEvent {
+
+	}
+
+	public class DoPost extends GenericEvent {
+
+	}
+
 	public class ConfirmPost extends GenericEvent {
-		private final MatchingTagsState state;
-		public ConfirmPost(MatchingTagsState state) {
-			this.state=state;
-		}
-		public MatchingTagsState getState() {
-			return state;
-		}
 
 	}
 

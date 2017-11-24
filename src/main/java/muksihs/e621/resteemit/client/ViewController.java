@@ -16,6 +16,7 @@ import gwt.material.design.client.ui.MaterialTitle;
 import gwt.material.design.client.ui.MaterialToast;
 import muksihs.e621.resteemit.ui.AboutUi;
 import muksihs.e621.resteemit.ui.BrowseView;
+import muksihs.e621.resteemit.ui.ConfirmPostUi;
 import muksihs.e621.resteemit.ui.LoginUi;
 
 public class ViewController implements GlobalEventBus {
@@ -36,7 +37,14 @@ public class ViewController implements GlobalEventBus {
 	}
 	
 	@EventHandler
-	protected void showAboutui(Event.ShowAbout event) {
+	protected void showPostConfirmDialog(Event.ConfirmPost event) {
+		ConfirmPostUi confirm = new ConfirmPostUi();
+		RootPanel.get().add(confirm);
+		confirm.open();
+	}
+	
+	@EventHandler
+	protected void showAboutUi(Event.ShowAbout event) {
 		AboutUi about = new AboutUi();
 		RootPanel.get().add(about);
 		about.open();

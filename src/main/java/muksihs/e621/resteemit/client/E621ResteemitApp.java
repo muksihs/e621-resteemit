@@ -17,6 +17,11 @@ import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.AnchorElement;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
@@ -30,6 +35,7 @@ import com.google.web.bindery.event.shared.binder.GenericEvent;
 import e621.E621Api;
 import e621.models.post.index.E621Post;
 import e621.models.post.tags.E621Tag;
+import e621.models.post.tags.E621TagTypes;
 import e621.models.tag.index.Tag;
 import elemental2.dom.DomGlobal;
 import gwt.material.design.client.MaterialWithJQuery;
@@ -89,19 +95,21 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		public int topPosts;
 		public int comments;
 		public double totalPayouts;
+		public long type;
 	}
 
-	public void matchingTagsCollector(Map<String, String> error, TrendingTagsResult[] tags, String name,
+	public void matchingTagsCollector(Map<String, String> error, TrendingTagsResult[] tags, E621Tag e621tag,
 			MatchingTagsState state) {
 		if (error != null) {
 			GWT.log(String.valueOf(error));
 		}
 		if (tags != null) {
 			for (TrendingTagsResult trendingTag : tags) {
-				if (!trendingTag.getName().equals(name)) {
+				if (!trendingTag.getName().equals(e621tag.getName())) {
 					continue;
 				}
 				TrendingTag tag = new TrendingTag();
+				tag.type = e621tag.getType();
 				tag.comments = trendingTag.getComments();
 				tag.name = trendingTag.getName();
 				tag.topPosts = trendingTag.getTop_posts();
@@ -109,7 +117,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					tag.totalPayouts = Double.valueOf(trendingTag.getTotal_payouts().replace(" SBD", ""));
 				} catch (NumberFormatException e) {
 				}
-				state.collector.add(tag);
+				state.matchingSteemTags.add(tag);
 			}
 		}
 		getMatchingTrendingTags(state);
@@ -118,7 +126,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private void getMatchingTrendingTags(MatchingTagsState state) {
 		if (!state.iter.hasNext()) {
 			// sort descending order to most valuable at top of list
-			Collections.sort(state.collector, (a, b) -> {
+			Collections.sort(state.matchingSteemTags, (a, b) -> {
 				// sort by per top post payout average
 				double p1 = a.totalPayouts / ((double) a.topPosts + (double) a.comments + 1d);
 				double p2 = b.totalPayouts / ((double) b.topPosts + (double) b.comments + 1d);
@@ -146,30 +154,32 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				}
 				return a.name.compareToIgnoreCase(b.name);
 			});
+			List<TrendingTag> selectedTags;
 			if (!state.post.getRating().equals(Rating.SAFE.getTag())) {
-				state.collector = state.collector.subList(0, Math.min(state.collector.size(), 4));
+				selectedTags = state.matchingSteemTags.subList(0, Math.min(state.matchingSteemTags.size(), 4));
 				TrendingTag nsfwTag = new TrendingTag();
 				nsfwTag.name = "nsfw";
-				state.collector.add(nsfwTag);
+				state.matchingSteemTags.add(nsfwTag);
+				selectedTags.add(nsfwTag);
 			} else {
-				state.collector = state.collector.subList(0, Math.min(state.collector.size(), 5));
+				selectedTags = state.matchingSteemTags.subList(0, Math.min(state.matchingSteemTags.size(), 5));
 			}
-			if (state.collector.size() < 5) {
+			if (selectedTags.size() < 5) {
 				TrendingTag artTag = new TrendingTag();
 				artTag.name = "art";
-				state.collector.add(artTag);
+				selectedTags.add(artTag);
 			}
-			if (state.collector.size() < 5) {
+			if (selectedTags.size() < 5) {
 				TrendingTag furryTag = new TrendingTag();
 				furryTag.name = "furry";
-				state.collector.add(furryTag);
+				selectedTags.add(furryTag);
 			}
-			if (state.collector.size() < 5) {
+			if (selectedTags.size() < 5) {
 				TrendingTag lifeTag = new TrendingTag();
 				lifeTag.name = "life";
-				state.collector.add(lifeTag);
+				selectedTags.add(lifeTag);
 			}
-			Iterator<TrendingTag> iter = state.collector.iterator();
+			Iterator<TrendingTag> iter = selectedTags.iterator();
 			StringBuilder sb = new StringBuilder();
 			while (iter.hasNext()) {
 				sb.append(iter.next().name);
@@ -177,36 +187,190 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					sb.append(" ");
 				}
 			}
+			state.tagsForPost = sb.toString();
 			DomGlobal.console.log(sb.toString());
 			fireEvent(new Event.Loading(false));
-			fireEvent(new Event.ConfirmPost(state));
+			/*
+			 * In theory, there should never be more than one pending post possible.
+			 */
+			pendingPost = state;
+			fireEvent(new Event.ConfirmPost());
 			return;
 		}
-		String name = state.iter.next().getName();
-		SteemApi.getTrendingTags(name, 1, (e, r) -> matchingTagsCollector(e, r, name, state));
+		E621Tag e621tag = state.iter.next();
+		SteemApi.getTrendingTags(e621tag.getName(), 1, (e, r) -> matchingTagsCollector(e, r, e621tag, state));
+	}
+
+	/*
+	 * In theory, there should never be more than one pending post possible.
+	 */
+	private MatchingTagsState pendingPost;
+
+	@EventHandler
+	protected void getPostPreview(Event.GetPostPreview event) {
+		if (pendingPost == null) {
+			return;
+		}
+		fireEvent(new Event.PostPreviewContent(generatePostHtml()));
+	}
+
+	private String generatePostHtml() {
+		Document doc = Document.get();
+		ImageElement img = doc.createImageElement();
+		img.setSrc(pendingPost.post.getFileUrl());
+		img.setAttribute("style", "max-width: 100%; margin: 0px;");
+
+		DivElement imgDiv = doc.createDivElement();
+		imgDiv.setAttribute("style", "max-width: 100%; margin: 4px; text-align: center;");
+		imgDiv.appendChild(img);
+
+		AnchorElement muksihsLink = doc.createAnchorElement();
+		muksihsLink.setHref("http://muksihs.com/e621-resteemit/");
+		muksihsLink.setTarget("_blank");
+		muksihsLink.appendChild(doc.createTextNode("Muksihs' E621 Browser"));
+		ParagraphElement p1 = doc.createPElement();
+		p1.appendChild(doc.createTextNode("Curated using "));
+		p1.appendChild(muksihsLink);
+		p1.appendChild(doc.createTextNode("."));
+
+		long postId = pendingPost.post.getId();
+		AnchorElement e621Link = doc.createAnchorElement();
+		e621Link.setHref(Consts.E621_SHOW_POST + postId);
+		e621Link.setTarget("_blank");
+		e621Link.appendChild(doc.createTextNode("#" + postId));
+		ParagraphElement p2 = doc.createPElement();
+		p2.appendChild(doc.createTextNode("E621: "));
+		p2.appendChild(e621Link);
+		p2.appendChild(doc.createTextNode("."));
+
+		DivElement postDiv = doc.createDivElement();
+		postDiv.appendChild(imgDiv);
+		postDiv.appendChild(p1);
+		postDiv.appendChild(p2);
+
+		// special @author section
+		Iterator<E621Tag> ialt = pendingPost.withAlternateForms.iterator();
+		StringBuilder atAuthor = new StringBuilder();
+		while (ialt.hasNext()) {
+			E621Tag tag = ialt.next();
+			if (tag.getType() != E621TagTypes.Artist.getId()) {
+				continue;
+			}
+			if (tag.getCount() == null || tag.getCount() == 0) {
+				continue;
+			}
+			atAuthor.append("@");
+			atAuthor.append(tag.getName().replaceAll("_\\(.*?\\)", ""));
+			if (ialt.hasNext()) {
+				atAuthor.append(" ");
+			}
+		}
+		if (atAuthor.length() != 0) {
+			ParagraphElement p3 = doc.createPElement();
+			p3.appendChild(doc.createTextNode("Artist"));
+			String atTags = atAuthor.toString();
+			if (atTags.contains(" ")) {
+				p3.appendChild(doc.createTextNode("s"));
+			}
+			p3.appendChild(doc.createTextNode(": "));
+			p3.appendChild(doc.createTextNode(atTags));
+			postDiv.appendChild(p3);
+		}
+
+		for (E621TagTypes tagType : E621TagTypes.values()) {
+			StringBuilder sb = new StringBuilder();
+			Iterator<TrendingTag> iter = pendingPost.matchingSteemTags.iterator();
+			Set<String> already = new HashSet<>();
+			while (iter.hasNext()) {
+				TrendingTag steemTag = iter.next();
+				if (steemTag.type != tagType.getId()) {
+					continue;
+				}
+				if (already.contains(steemTag.name)) {
+					continue;
+				}
+				already.add(steemTag.name);
+				sb.append("#");
+				sb.append(steemTag.name);
+				if (iter.hasNext()) {
+					sb.append(" ");
+				}
+			}
+			if (sb.length() != 0) {
+				ParagraphElement p3 = doc.createPElement();
+				p3.appendChild(doc.createTextNode(tagType.name()));
+				String tags = sb.toString();
+				if (tags.contains(" ")) {
+					if (tagType == E621TagTypes.Artist || tagType == E621TagTypes.Character
+							|| tagType == E621TagTypes.Copyright) {
+						p3.appendChild(doc.createTextNode("s"));
+					}
+				}
+				p3.appendChild(doc.createTextNode(": "));
+				p3.appendChild(doc.createTextNode(tags));
+				postDiv.appendChild(p3);
+			}
+		}
+
+		DivElement tmpDiv = doc.createDivElement();
+		tmpDiv.appendChild(postDiv);
+		String html = tmpDiv.getInnerHTML();
+		return html;
 	}
 
 	private void pickBestTagsThenPostConfirm(PostPreview preview, List<E621Tag> response) {
 		MatchingTagsState state = new MatchingTagsState();
 		state.post = preview;
 		state.withAlternateForms = new ArrayList<>();
-		state.collector = new ArrayList<>();
+		state.matchingSteemTags = new ArrayList<>();
 		state.withAlternateForms.addAll(response);
+		Set<String> already = new HashSet<>();
 		for (E621Tag tag : response) {
 			String name = tag.getName().toLowerCase();
+			already.add(name);
 			String altName;
 			E621Tag alt;
 			altName = name.replaceAll("[^a-z0-9\\-]", "-");
-			if (!altName.equalsIgnoreCase(name) && !altName.isEmpty()) {
+			if (!already.contains(altName) && !altName.isEmpty()) {
+				already.add(altName);
 				alt = new E621Tag();
 				alt.setName(altName);
+				alt.setType(tag.getType());
 				state.withAlternateForms.add(alt);
 			}
 			altName = name.replaceAll("[^a-z0-9\\-]", "");
-			if (!altName.equalsIgnoreCase(name) && !altName.isEmpty()) {
+			if (!already.contains(altName) && !altName.isEmpty()) {
+				already.add(altName);
 				alt = new E621Tag();
 				alt.setName(altName);
+				alt.setType(tag.getType());
 				state.withAlternateForms.add(alt);
+			}
+			if (name.contains("(")) {
+				String name2 = name.replaceAll("\\(.*?\\)", "");
+				if (!already.contains(altName) && !altName.isEmpty()) {
+					already.add(altName);
+					alt = new E621Tag();
+					alt.setName(altName);
+					alt.setType(tag.getType());
+					state.withAlternateForms.add(alt);
+				}
+				altName = name2.replaceAll("[^a-z0-9\\-]", "-");
+				if (!already.contains(altName) && !altName.isEmpty()) {
+					already.add(altName);
+					alt = new E621Tag();
+					alt.setName(altName);
+					alt.setType(tag.getType());
+					state.withAlternateForms.add(alt);
+				}
+				altName = name2.replaceAll("[^a-z0-9\\-]", "");
+				if (!already.contains(altName) && !altName.isEmpty()) {
+					already.add(altName);
+					alt = new E621Tag();
+					alt.setName(altName);
+					alt.setType(tag.getType());
+					state.withAlternateForms.add(alt);
+				}
 			}
 		}
 		state.iter = state.withAlternateForms.iterator();
@@ -222,10 +386,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	@EventHandler
-	protected void showAccountDialog(Event.LoginLogout event) {
+	protected void loginLogoutToggle(Event.LoginLogout event) {
 		if (isLoggedIn()) {
-			new AccountCache().remove(DEFAULT_USER);
-			loggedIn=false;
+			loggedIn = false;
 			fireEvent(new Event.LoginComplete(false));
 		} else {
 			fireEvent(new Event.Login<GenericEvent>(null));
@@ -242,18 +405,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void tryLogin(Event.TryLogin event) {
-		SteemCallbackArray<AccountInfo> cb=new SteemCallbackArray<AccountInfo>() {
+		SteemCallbackArray<AccountInfo> cb = new SteemCallbackArray<AccountInfo>() {
 			@Override
 			public void onResult(Map<String, String> error, AccountInfo[] result) {
 				fireEvent(new Event.Loading(false));
-				if (error!=null) {
+				if (error != null) {
 					if (!event.isSilent()) {
 						fireEvent(new Event.AlertMessage(error.toString()));
 					}
 					fireEvent(new Event.LoginComplete(false));
 					return;
 				}
-				if (result.length==0) {
+				if (result.length == 0) {
 					if (!event.isSilent()) {
 						fireEvent(new Event.AlertMessage("Username not found!"));
 					}
@@ -261,22 +424,22 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					return;
 				}
 				AccountInfo accountInfo = result[0];
-				if (accountInfo==null) {
+				if (accountInfo == null) {
 					fireEvent(new Event.LoginComplete(false));
 					return;
 				}
 				Posting posting = accountInfo.getPosting();
-				if (posting==null) {
+				if (posting == null) {
 					fireEvent(new Event.LoginComplete(false));
 					return;
 				}
 				String[][] keyAuths = posting.getKeyAuths();
-				if (keyAuths==null || keyAuths.length==0) {
+				if (keyAuths == null || keyAuths.length == 0) {
 					fireEvent(new Event.LoginComplete(false));
 					return;
 				}
 				String[] keylist = keyAuths[0];
-				if (keylist==null || keylist.length==0) {
+				if (keylist == null || keylist.length == 0) {
 					fireEvent(new Event.LoginComplete(false));
 					return;
 				}
@@ -301,13 +464,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				SteemPostingInfo info = new SteemPostingInfo();
 				info.setUsername(event.getUsername());
 				info.setWif(event.getWif());
-				cache.put(DEFAULT_USER,info);
+				cache.put(DEFAULT_USER, info);
 				fireEvent(new Event.LoginComplete(true));
-				DomGlobal.console.log("Logged in as: "+info.getUsername());
+				DomGlobal.console.log("Logged in as: " + info.getUsername());
 			}
 		};
 		fireEvent(new Event.Loading(true));
-		SteemApi.getAccounts(new String[] {event.getUsername()}, cb);
+		SteemApi.getAccounts(new String[] { event.getUsername() }, cb);
 	}
 
 	@EventHandler
@@ -340,17 +503,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void loginComplete(Event.LoginComplete event) {
-		loggedIn=event.isLoggedIn();
-		if (afterLoginPendingEvent!=null && event.isLoggedIn()) {
+		loggedIn = event.isLoggedIn();
+		if (afterLoginPendingEvent != null && event.isLoggedIn()) {
 			fireEvent(afterLoginPendingEvent);
 		}
-		afterLoginPendingEvent=null;
+		afterLoginPendingEvent = null;
 	}
-	
+
 	private GenericEvent afterLoginPendingEvent;
+
 	@EventHandler
 	protected <T extends GenericEvent> void login(Event.Login<T> event) {
-		afterLoginPendingEvent=event.getRefireEvent();
+		afterLoginPendingEvent = event.getRefireEvent();
 		fireEvent(new Event.ShowLoginUi());
 	}
 
@@ -683,7 +847,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		// validate cached login credentials (if any)
 		AccountCache cache = new AccountCache();
 		SteemPostingInfo info = cache.get(DEFAULT_USER);
-		if (info!=null) {
+		if (info != null) {
 			fireEvent(new Event.TryLogin(info.getUsername(), info.getWif(), true));
 		} else {
 			fireEvent(new Event.LoginComplete(false));

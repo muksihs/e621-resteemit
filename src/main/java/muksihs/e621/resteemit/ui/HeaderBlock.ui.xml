@@ -6,8 +6,13 @@
 	</ui:style>
 	<m:MaterialPanel style='text-align: left;'>
 		<m:MaterialHeader hideOn="NONE">
-			<m:MaterialNavBar>
-				<m:MaterialNavSection float="LEFT">
+			<m:MaterialNavBar style="margin-bottom: 12px;">
+				<m:MaterialNavSection hideOn="NONE" float="LEFT">
+					<m:MaterialButton style="margin: 2px; margin-left: 8px;"
+						ui:field="account" iconType="ACCOUNT_CIRCLE" iconPosition="LEFT"
+						text="Account" />
+				</m:MaterialNavSection>
+				<m:MaterialNavSection float="RIGHT">
 					<m:MaterialNavBrand ui:field="navBrand" style="margin: 6px;"
 						text="Muksihs' E621 Browser" />
 					<m:MaterialNavContent style="margin: 4px;">
@@ -17,11 +22,6 @@
 						<m:MaterialLink target="_blank"
 							href="https://www.steemit.com/@muksihs" text="@muksihs"></m:MaterialLink>
 					</m:MaterialNavContent>
-				</m:MaterialNavSection>
-				<m:MaterialNavSection hideOn="NONE" float="RIGHT">
-					<m:MaterialButton style="margin: 4px; margin-right: 8px;"
-						ui:field="account" iconType="ACCOUNT_CIRCLE" iconPosition="LEFT"
-						text="Account" />
 				</m:MaterialNavSection>
 			</m:MaterialNavBar>
 		</m:MaterialHeader>
