@@ -8,6 +8,7 @@ import com.google.web.bindery.event.shared.binder.EventBinder;
 import com.google.web.bindery.event.shared.binder.EventHandler;
 
 import gwt.material.design.client.ui.MaterialButton;
+import gwt.material.design.client.ui.MaterialInput;
 import gwt.material.design.client.ui.MaterialModal;
 import gwt.material.design.client.ui.MaterialPanel;
 import muksihs.e621.resteemit.client.Event;
@@ -22,17 +23,19 @@ public class ConfirmPostUi extends EventBusComposite {
 	@UiField
 	protected MaterialModal modal;
 	@UiField
-	MaterialPanel preview;
+	protected MaterialPanel preview;
 	@UiField
-	MaterialButton btnPost;
+	protected MaterialButton btnPost;
 	@UiField
-	MaterialButton btnCancel;
+	protected MaterialButton btnCancel;
+	@UiField
+	protected MaterialInput title;
 
 	public ConfirmPostUi() {
 		initWidget(uiBinder.createAndBindUi(this));
 		modal.addCloseHandler((e)->this.removeFromParent());
 		btnPost.addClickHandler((e)->{
-			fireEvent(new Event.DoPost());
+			fireEvent(new Event.DoPost(title.getValue()));
 			modal.close();
 			}
 		);
@@ -52,10 +55,16 @@ public class ConfirmPostUi extends EventBusComposite {
 		preview.getElement().setInnerHTML(event.getHtml());
 	}
 	
+	@EventHandler
+	protected void setTitle(Event.SetPostTitle event) {
+		title.setValue(event.getTitle());
+	}
+	
 	@Override
 	protected void onLoad() {
 		super.onLoad();
 		fireEvent(new Event.GetPostPreview());
+		fireEvent(new Event.GetAutomaticTitle());
 	}
 
 	public void open() {

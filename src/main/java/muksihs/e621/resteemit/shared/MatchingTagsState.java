@@ -11,6 +11,6 @@ public class MatchingTagsState {
 	public Iterator<E621Tag> iter;
 	public PostPreview post;
 	public List<E621Tag> withAlternateForms;
-	public String tagsForPost;
+	public List<String> tagsForPost;
 
 }

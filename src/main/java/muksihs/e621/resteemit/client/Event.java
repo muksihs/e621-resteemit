@@ -10,6 +10,44 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class SetPostTitle extends GenericEvent {
+
+		private final String title;
+		public SetPostTitle(String title) {
+			this.title=title;
+		}
+
+		public String getTitle() {
+			return this.title;
+		}
+
+	}
+
+	public class GetAutomaticTitle extends GenericEvent {
+
+	}
+
+	public class PostDone extends GenericEvent {
+		private final String author;
+		private final String firstTag;
+		private final String permLink;
+		public PostDone(String author, String firstTag, String permLink) {
+			this.author=author;
+			this.firstTag=firstTag;
+			this.permLink=permLink;
+		}
+		public String getAuthor() {
+			return author;
+		}
+		public String getFirstTag() {
+			return firstTag;
+		}
+		public String getPermLink() {
+			return permLink;
+		}
+
+	}
+
 	public class PostPreviewContent extends GenericEvent {
 		private final String html;
 		public PostPreviewContent(String html) {
@@ -26,6 +64,13 @@ public interface Event {
 	}
 
 	public class DoPost extends GenericEvent {
+		private final String title;
+		public DoPost(String title) {
+			this.title=title;
+		}
+		public String getTitle() {
+			return title;
+		}
 
 	}
 
