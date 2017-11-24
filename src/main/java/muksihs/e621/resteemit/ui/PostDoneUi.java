@@ -10,6 +10,7 @@ import com.google.web.bindery.event.shared.binder.EventHandler;
 import gwt.material.design.client.ui.MaterialButton;
 import gwt.material.design.client.ui.MaterialLink;
 import gwt.material.design.client.ui.MaterialModal;
+import muksihs.e621.resteemit.client.E621ResteemitApp.MostRecentPostInfo;
 import muksihs.e621.resteemit.client.Event;
 
 public class PostDoneUi extends EventBusComposite {
@@ -34,6 +35,8 @@ public class PostDoneUi extends EventBusComposite {
 	
 	public PostDoneUi() {
 		initWidget(uiBinder.createAndBindUi(this));
+		btnOk.addClickHandler((e)->modal.close());
+		modal.addCloseHandler((e)->this.removeFromParent());
 	}
 
 	interface MyEventBinder extends EventBinder<PostDoneUi>{}
@@ -44,10 +47,17 @@ public class PostDoneUi extends EventBusComposite {
 	public void open() {
 		modal.open();
 	}
+	
+	@Override
+	protected void onLoad() {
+		super.onLoad();
+		fireEvent(new Event.GetMostRecentPostInfo());
+	}
 
 	@EventHandler
-	protected void linkInfo(Event.PostDone event) {
-		String href = event.getFirstTag() + "/" + "@" + event.getAuthor() + "/" + event.getPermLink();
+	protected void linkInfo(Event.SetMostRecentPostInfo event) {
+		MostRecentPostInfo info = event.getInfo();
+		String href = info.firstTag + "/" + "@" + info.author + "/" + info.permLink;
 		steemit.setHref("https://www.steemit.com/" + href);
 		steemit.setEnabled(true);
 		chainbb.setHref("https://www.chainbb.com/" + href);

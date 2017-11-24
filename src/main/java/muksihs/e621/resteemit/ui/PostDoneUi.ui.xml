@@ -10,16 +10,14 @@
 			<m:MaterialButton ui:field="btnOk"
 				style='margin: 4px; float:right; clear:left;' text="DISMISS"></m:MaterialButton>
 			<m:MaterialTitle title="Success! Your selection has been posted."></m:MaterialTitle>
-			<m:MaterialButton enabled="false" ui:field="another"
-				text="Post another gallery"></m:MaterialButton>
 			<m:MaterialDivider></m:MaterialDivider>
-			<m:MaterialLink target="_blank" enabled="false"
+			<m:MaterialLink style="font-size: 200%;" target="_blank" enabled="false"
 				ui:field="steemit" text="View post at steemit.com"></m:MaterialLink>
 			<m:MaterialDivider></m:MaterialDivider>
-			<m:MaterialLink target="_blank" enabled="false"
+			<m:MaterialLink style="font-size: 200%;" target="_blank" enabled="false"
 				ui:field="chainbb" text="View post at chainbb.com"></m:MaterialLink>
 			<m:MaterialDivider></m:MaterialDivider>
-			<m:MaterialLink target="_blank" enabled="false"
+			<m:MaterialLink style="font-size: 200%;" target="_blank" enabled="false"
 				ui:field="busyorg" text="View post at busy.org"></m:MaterialLink>
 		</m:MaterialModalContent>
 	</m:MaterialModal>

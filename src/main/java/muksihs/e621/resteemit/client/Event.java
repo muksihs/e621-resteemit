@@ -5,10 +5,25 @@ import java.util.Set;
 
 import com.google.web.bindery.event.shared.binder.GenericEvent;
 
+import muksihs.e621.resteemit.client.E621ResteemitApp.MostRecentPostInfo;
 import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
+
+	public class GetMostRecentPostInfo extends GenericEvent {
+
+	}
+
+	public class SetMostRecentPostInfo extends GenericEvent {
+		private final MostRecentPostInfo info;
+		public SetMostRecentPostInfo(MostRecentPostInfo info) {
+			this.info=info;
+		}
+		public MostRecentPostInfo getInfo() {
+			return info;
+		}
+	}
 
 	public class SetPostTitle extends GenericEvent {
 
@@ -28,24 +43,6 @@ public interface Event {
 	}
 
 	public class PostDone extends GenericEvent {
-		private final String author;
-		private final String firstTag;
-		private final String permLink;
-		public PostDone(String author, String firstTag, String permLink) {
-			this.author=author;
-			this.firstTag=firstTag;
-			this.permLink=permLink;
-		}
-		public String getAuthor() {
-			return author;
-		}
-		public String getFirstTag() {
-			return firstTag;
-		}
-		public String getPermLink() {
-			return permLink;
-		}
-
 	}
 
 	public class PostPreviewContent extends GenericEvent {

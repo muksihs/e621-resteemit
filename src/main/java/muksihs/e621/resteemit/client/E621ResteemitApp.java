@@ -261,15 +261,19 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		SteemCallback<CommentResult> benifCb = new SteemCallback<CommentResult>() {
 			@Override
 			public void onResult(Map<String, String> error, CommentResult result) {
+				mostRecent = new MostRecentPostInfo();
+				mostRecent.author=author;
+				mostRecent.firstTag=firstTag;
+				mostRecent.permLink=permLink;
 				fireEvent(new Event.Loading(false));
 				if (error != null) {
 					GWT.log("ERROR: " + error);
 					fireEvent(new Event.AlertMessage("ERROR: " + error.toString()));
-					fireEvent(new Event.PostDone(author, firstTag, permLink));
+					fireEvent(new Event.PostDone());
 				}
 				if (result != null) {
 					GWT.log("RESULT: " + result);
-					fireEvent(new Event.PostDone(author, firstTag, permLink));
+					fireEvent(new Event.PostDone());
 				}
 			}
 		};
@@ -297,12 +301,24 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			GWT.log(e.getMessage(), e);
 		}
 	}
+	public static class MostRecentPostInfo {
+		public String author;
+		public String firstTag;
+		public String permLink;
+	}
+	private MostRecentPostInfo mostRecent;
+	@EventHandler
+	protected void getMostRecentPostInfo(Event.GetMostRecentPostInfo event) {
+		if (mostRecent!=null) {
+			fireEvent(new Event.SetMostRecentPostInfo(mostRecent));
+		}
+	}
 
 	private String generateTitle(List<E621Tag> tagList, long id) {
 		String autoTitle = "E621 Artwork";
 		String atArtists = getAtArtists(tagList);
 		if (!atArtists.trim().isEmpty()) {
-			autoTitle += ", ";
+			autoTitle = autoTitle.trim() + ", ";
 			if (atArtists.contains(" ")) {
 				autoTitle += "Artists: " + atArtists;
 			} else {
@@ -311,16 +327,16 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		String characters = getCharacters(tagList);
 		if (!characters.trim().isEmpty()) {
-			autoTitle += ", ";
+			autoTitle = autoTitle.trim() + ", ";
 			autoTitle += "Featuring: " + characters;
 		} else {
 			String species = getSpecies(tagList);
 			if (!species.trim().isEmpty()) {
-				autoTitle += ", ";
+				autoTitle = autoTitle.trim() + ", ";
 				autoTitle += "Subject Material: " + species;
 			}
 		}
-		autoTitle += ", Post Id# " + id;
+		autoTitle = autoTitle.trim() + ", Post Id# " + id;
 		return autoTitle;
 	}
 
@@ -451,10 +467,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			if (tag.getCount() == null || tag.getCount() == 0) {
 				continue;
 			}
-			species.append(tag.getName().replaceAll("_\\(.*?\\)", ""));
-			if (ialt.hasNext()) {
-				species.append(" ");
+			if (species.length()!=0) {
+				species.append(", ");
 			}
+			species.append(tag.getName().replaceAll("_\\(.*?\\)", ""));
 		}
 		return species.toString();
 	}
@@ -470,10 +486,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			if (tag.getCount() == null || tag.getCount() == 0) {
 				continue;
 			}
-			characters.append(tag.getName().replaceAll("_\\(.*?\\)", ""));
-			if (ialt.hasNext()) {
-				characters.append(" ");
+			if (characters.length()!=0) {
+				characters.append(", ");
 			}
+			characters.append(tag.getName().replaceAll("_\\(.*?\\)", ""));
 		}
 		return characters.toString();
 	}

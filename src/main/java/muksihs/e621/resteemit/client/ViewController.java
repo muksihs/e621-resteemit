@@ -18,6 +18,7 @@ import muksihs.e621.resteemit.ui.AboutUi;
 import muksihs.e621.resteemit.ui.BrowseView;
 import muksihs.e621.resteemit.ui.ConfirmPostUi;
 import muksihs.e621.resteemit.ui.LoginUi;
+import muksihs.e621.resteemit.ui.PostDoneUi;
 
 public class ViewController implements GlobalEventBus {
 
@@ -29,6 +30,13 @@ public class ViewController implements GlobalEventBus {
 	public ViewController(Panel view) {
 		this.view=view;
 		eventBinder.bindEventHandlers(this, eventBus);
+	}
+	
+	@EventHandler
+	protected void postDoneUi(Event.PostDone event) {
+		PostDoneUi doneUi = new PostDoneUi();
+		RootPanel.get().add(doneUi);
+		doneUi.open();
 	}
 	
 	@EventHandler
