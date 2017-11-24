@@ -273,10 +273,6 @@ public class IndexCache {
 			expiresCheck(iter);
 			return;
 		}
-		// cache date is too far in the future... remove it
-		if (Math.abs(CalendarUtil.getDaysBetween(new Date(), decoded.getExpires())) > MAX_CACHE_AGE) {
-			_remove(prefixedKey);
-		}
 		expiresCheck(iter);
 	}
 
