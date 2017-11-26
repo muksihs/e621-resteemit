@@ -10,6 +10,7 @@ public class MatchingTagsState {
 	public List<TrendingTag> matchingSteemTags;
 	public Iterator<E621Tag> iter;
 	public PostPreview post;
+	public List<E621Tag> e621tags;
 	public List<E621Tag> withAlternateForms;
 	public List<String> tagsForPost;
 

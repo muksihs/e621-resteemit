@@ -66,7 +66,7 @@ import steem.model.accountinfo.Posting;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
-	private static final int MAX_TAGS_PER_POST = 10;
+	private static final int MAX_TAGS_PER_POST = 8;
 	private static final String BENEFICIARY_ACCOUNT = "muksihs";
 	private static final Beneficiary BENEFICIARY = new Beneficiary(BENEFICIARY_ACCOUNT, 1);
 	private static final String DEFAULT_USER = "default-user";
@@ -173,21 +173,24 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			} else {
 				selectedTags = state.matchingSteemTags.subList(0, Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST));
 			}
-			if (selectedTags.size() < 5) {
+			if (selectedTags.size() < 3) {
 				TrendingTag artTag = new TrendingTag();
 				artTag.name = "art";
 				selectedTags.add(artTag);
 			}
-			if (selectedTags.size() < 5) {
+			if (selectedTags.size() < 3) {
 				TrendingTag furryTag = new TrendingTag();
 				furryTag.name = "furry";
 				selectedTags.add(furryTag);
 			}
-			if (selectedTags.size() < 5) {
+			if (selectedTags.size() < 3) {
 				TrendingTag lifeTag = new TrendingTag();
 				lifeTag.name = "life";
 				selectedTags.add(lifeTag);
 			}
+			TrendingTag e621tag = new TrendingTag();
+			e621tag.name="e621";
+			selectedTags.add(e621tag);
 			state.tagsForPost=new ArrayList<>();
 			Iterator<TrendingTag> iter = selectedTags.iterator();
 			while (iter.hasNext()) {
@@ -225,6 +228,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			fireEvent(new Event.Login<GenericEvent>(new Event.ConfirmPost()));
 			return;
 		}
+		List<String> tagsForPost = pendingPost.tagsForPost;
+		//always add author names to tags list if not already in list
+		Set<String> artists = getArtists(pendingPost.e621tags);
+		tagsForPost.addAll(artists);
+		
 		String username = info.getUsername();
 		final CommentMetadata metadata = new CommentMetadata();
 		final String body;
@@ -237,7 +245,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		try {
 			metadata.setApp("MuksihsE621Browser/1.0");
 			metadata.setFormat("html");
-			metadata.setTags(pendingPost.tagsForPost.toArray(new String[0]));
+			metadata.setTags(tagsForPost.toArray(new String[0]));
 			body = generatePostHtml();
 			title = event.getTitle();
 			if (title == null || title.trim().isEmpty()) {
@@ -247,7 +255,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			}
 			permLink = generatePermaLink(title);
 			author = username;
-			firstTag = pendingPost.tagsForPost.get(0);
+			firstTag = tagsForPost.get(0);
 			parentAuthor = "";
 			wif = info.getWif();
 		} catch (Exception e1) {
@@ -381,7 +389,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		postDiv.appendChild(p2);
 
 		// special @artist section
-		String atArtists = getAtArtists(pendingPost.withAlternateForms);
+		String atArtists = getAtArtists(pendingPost.e621tags);
 		if (atArtists.length() != 0) {
 			ParagraphElement p3 = doc.createPElement();
 			p3.appendChild(doc.createTextNode("Artist"));
@@ -453,6 +461,22 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		return atAuthor.toString();
 	}
+	
+	private Set<String> getArtists(List<E621Tag> taglist) {
+		Iterator<E621Tag> iter = taglist.iterator();
+		Set<String> artists=new TreeSet<>();
+		while (iter.hasNext()) {
+			E621Tag tag = iter.next();
+			if (tag.getType() != E621TagTypes.Artist.getId()) {
+				continue;
+			}
+			if (tag.getCount() == null || tag.getCount() == 0) {
+				continue;
+			}
+			artists.add(tag.getName());
+		}
+		return artists;
+	}
 
 	private String getSpecies(List<E621Tag> taglist) {
 		Iterator<E621Tag> ialt = taglist.iterator();
@@ -498,6 +522,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		state.withAlternateForms = new ArrayList<>();
 		state.matchingSteemTags = new ArrayList<>();
 		state.withAlternateForms.addAll(response);
+		state.e621tags=new ArrayList<>(response);
 		Set<String> already = new HashSet<>();
 		for (E621Tag tag : response) {
 			String name = tag.getName().toLowerCase();
