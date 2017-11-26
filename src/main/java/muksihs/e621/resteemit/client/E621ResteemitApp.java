@@ -594,6 +594,22 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void tryLogin(Event.TryLogin event) {
+		String wif = event.getWif();
+		wif = wif==null?"":wif.trim();
+		if (!wif.equals(wif.replaceAll("[^123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]",  ""))) {
+			if (!event.isSilent()) {
+				fireEvent(new Event.AlertMessage("That is not a valid key."));
+			}
+			fireEvent(new Event.Loading(false));
+			return;
+		}
+		if (wif.startsWith("STM")) {
+			if (!event.isSilent()) {
+				fireEvent(new Event.AlertMessage("That is not the PRIVATE posting key. Please visit your wallet => permissions => select \"show private key\" next to your posting key, to obtain your private posting key. It will not start with 'STM'."));
+			}
+			fireEvent(new Event.Loading(false));
+			return;
+		}
 		SteemCallbackArray<AccountInfo> cb = new SteemCallbackArray<AccountInfo>() {
 			@Override
 			public void onResult(Map<String, String> error, AccountInfo[] result) {
@@ -643,6 +659,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 						return;
 					}
 				} catch (JavaScriptException e) {
+					DomGlobal.console.log(e.getMessage());
+					DomGlobal.console.log(e);
 					if (!event.isSilent()) {
 						fireEvent(new Event.AlertMessage(e.getMessage()));
 					}
@@ -651,11 +669,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				}
 				AccountCache cache = new AccountCache();
 				SteemPostingInfo info = new SteemPostingInfo();
-				info.setUsername(event.getUsername());
+				info.setUsername(accountInfo.getName());
 				info.setWif(event.getWif());
 				cache.put(DEFAULT_USER, info);
 				fireEvent(new Event.LoginComplete(true));
-				DomGlobal.console.log("Logged in as: " + info.getUsername());
+				DomGlobal.console.log("Logged in as: " + accountInfo.getName());
 			}
 		};
 		fireEvent(new Event.Loading(true));
