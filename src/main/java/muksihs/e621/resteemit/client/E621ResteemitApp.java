@@ -225,9 +225,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			return;
 		}
 		String username = info.getUsername();
-		while (username.trim().startsWith("@")) {
-			username = username.trim().substring(1);
-		}
 		final CommentMetadata metadata = new CommentMetadata();
 		final String body;
 		String title;
@@ -662,7 +659,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			}
 		};
 		fireEvent(new Event.Loading(true));
-		SteemApi.getAccounts(new String[] { event.getUsername() }, cb);
+		String username=event.getUsername();
+		while (username.trim().startsWith("@")) {
+			username = username.trim().substring(1);
+		}
+		SteemApi.getAccounts(new String[] { username }, cb);
 	}
 
 	@EventHandler
