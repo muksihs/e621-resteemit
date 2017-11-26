@@ -66,6 +66,7 @@ import steem.model.accountinfo.Posting;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
+	private static final int MAX_TAGS_PER_POST = 10;
 	private static final String BENEFICIARY_ACCOUNT = "muksihs";
 	private static final Beneficiary BENEFICIARY = new Beneficiary(BENEFICIARY_ACCOUNT, 1);
 	private static final String DEFAULT_USER = "default-user";
@@ -164,13 +165,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			});
 			List<TrendingTag> selectedTags;
 			if (!state.post.getRating().equals(Rating.SAFE.getTag())) {
-				selectedTags = state.matchingSteemTags.subList(0, Math.min(state.matchingSteemTags.size(), 4));
+				selectedTags = state.matchingSteemTags.subList(0, Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST-1));
 				TrendingTag nsfwTag = new TrendingTag();
 				nsfwTag.name = "nsfw";
 				state.matchingSteemTags.add(nsfwTag);
 				selectedTags.add(nsfwTag);
 			} else {
-				selectedTags = state.matchingSteemTags.subList(0, Math.min(state.matchingSteemTags.size(), 5));
+				selectedTags = state.matchingSteemTags.subList(0, Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST));
 			}
 			if (selectedTags.size() < 5) {
 				TrendingTag artTag = new TrendingTag();
