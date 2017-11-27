@@ -10,6 +10,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.binder.EventBinder;
@@ -246,6 +247,7 @@ public class BrowseView extends EventBusComposite {
 
 	@EventHandler
 	protected void showPreviews(Event.ShowPreviews event) {
+		Window.scrollTo(0, 0);
 		posts.clear();
 		for (PostPreview preview : event.getPreviews()) {
 			MaterialImage img = new MaterialImage(preview.getSampleUrl());
