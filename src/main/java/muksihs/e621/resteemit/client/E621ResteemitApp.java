@@ -275,20 +275,20 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		SteemCallback<CommentResult> benifCb = new SteemCallback<CommentResult>() {
 			@Override
 			public void onResult(Map<String, String> error, CommentResult result) {
-				mostRecent = new MostRecentPostInfo();
-				mostRecent.author=author;
-				mostRecent.firstTag=firstTag;
-				mostRecent.permLink=permLink;
-				fireEvent(new Event.Loading(false));
 				if (error != null) {
 					GWT.log("ERROR: " + error);
 					fireEvent(new Event.AlertMessage("ERROR: " + error.toString()));
 				}
+				mostRecent = new MostRecentPostInfo();
+				mostRecent.author=author;
+				mostRecent.firstTag=firstTag;
+				mostRecent.permLink=permLink;
+				fireEvent(new Event.PostDone());
+				fireEvent(new Event.Loading(false));
 				if (result != null) {
 					GWT.log("RESULT: " + result);
 					SteemBroadcast.vote(wif, username, username, permLink, 10000, voteCb);
 				}
-				fireEvent(new Event.PostDone());
 			}
 		};
 		SteemCallback<CommentResult> commentCb = new SteemCallback<CommentResult>() {
