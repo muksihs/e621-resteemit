@@ -359,10 +359,15 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		ImageElement img = doc.createImageElement();
 		img.setSrc(pendingPost.post.getFileUrl());
 		img.setAttribute("style", "max-width: 100%; margin: 0px;");
+		
+		AnchorElement imgA = doc.createAnchorElement();
+		imgA.setTarget("_blank");
+		imgA.setHref(pendingPost.post.getFileUrl());
+		imgA.appendChild(img);
 
 		DivElement imgDiv = doc.createDivElement();
 		imgDiv.setAttribute("style", "max-width: 100%; margin: 4px; text-align: center;");
-		imgDiv.appendChild(img);
+		imgDiv.appendChild(imgA);
 
 		AnchorElement muksihsLink = doc.createAnchorElement();
 		muksihsLink.setHref("http://muksihs.com/e621-resteemit/");
