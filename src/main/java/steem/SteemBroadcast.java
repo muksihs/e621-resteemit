@@ -171,6 +171,8 @@ public class SteemBroadcast {
 			boolean allowCurationRewards, //
 			JavaScriptObject javaScriptObject, //
 			SteemCallback<CommentResult> callback);
+	
+	public static native void vote(String wif, String username, String author, String permLink, int weight, SteemCallback<VoteResult> cb);
 
 	@JsOverlay
 	private static String escapeJson(String string) {

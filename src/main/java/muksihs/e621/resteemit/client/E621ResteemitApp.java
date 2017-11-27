@@ -61,6 +61,7 @@ import steem.SteemBroadcast.CommentOptionsExtensions;
 import steem.SteemCallback;
 import steem.SteemCallbackArray;
 import steem.TrendingTagsResult;
+import steem.VoteResult;
 import steem.model.accountinfo.AccountInfo;
 import steem.model.accountinfo.Posting;
 
@@ -264,6 +265,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			GWT.log(e1.getMessage(), e1);
 			return;
 		}
+		SteemCallback<VoteResult> voteCb=new SteemCallback<VoteResult>() {
+			@Override
+			public void onResult(Map<String, String> error, VoteResult result) {
+				// TODO Auto-generated method stub
+				
+			}
+		};
 		SteemCallback<CommentResult> benifCb = new SteemCallback<CommentResult>() {
 			@Override
 			public void onResult(Map<String, String> error, CommentResult result) {
@@ -275,12 +283,12 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				if (error != null) {
 					GWT.log("ERROR: " + error);
 					fireEvent(new Event.AlertMessage("ERROR: " + error.toString()));
-					fireEvent(new Event.PostDone());
 				}
 				if (result != null) {
 					GWT.log("RESULT: " + result);
-					fireEvent(new Event.PostDone());
+					SteemBroadcast.vote(wif, username, username, permLink, 10000, voteCb);
 				}
+				fireEvent(new Event.PostDone());
 			}
 		};
 		SteemCallback<CommentResult> commentCb = new SteemCallback<CommentResult>() {
