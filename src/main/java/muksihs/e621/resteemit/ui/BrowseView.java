@@ -145,7 +145,6 @@ public class BrowseView extends EventBusComposite {
 	@EventHandler
 	protected void enablePreviousButton(Event.EnablePreviousButton event) {
 		this.previous.setEnabled(event.isEnable());
-		this.mostRecent.setEnabled(event.isEnable());
 	}
 
 	@EventHandler
