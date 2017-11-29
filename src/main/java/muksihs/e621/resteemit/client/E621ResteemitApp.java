@@ -139,13 +139,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		if (!state.iter.hasNext()) {
 			// sort descending order to most valuable at top of list
 			Collections.sort(state.matchingSteemTags, (a, b) -> {
-				// sort by number of recent posts
-				if (a.topPosts != b.topPosts) {
-					return Integer.compare(b.topPosts, a.topPosts);
-				}
 				// sort by payout (raw value of topic)
 				if (a.totalPayouts != b.totalPayouts) {
 					return Double.compare(b.totalPayouts, a.totalPayouts);
+				}
+				// sort by number of recent posts
+				if (a.topPosts != b.topPosts) {
+					return Integer.compare(b.topPosts, a.topPosts);
 				}
 				// sort by total number of comments
 				if (a.comments != b.comments) {
