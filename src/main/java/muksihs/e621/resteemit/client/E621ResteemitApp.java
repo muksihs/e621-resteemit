@@ -273,7 +273,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					fireEvent(new Event.AlertMessage("ERROR: " + error.toString()));
 				}
 				if (result != null) {
-					GWT.log("RESULT: " + result);
 					CommentOptionsExtensions extensions = new CommentOptionsExtensions();
 					extensions.beneficiaries.beneficiaries.add(BENEFICIARY);
 					Scheduler.get().scheduleDeferred(
