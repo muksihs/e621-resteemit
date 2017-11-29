@@ -310,7 +310,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		String atArtists = getAtArtists(tagList);
 		atArtists=atArtists.replace("@", "");
 		if (!atArtists.trim().isEmpty()) {
-			atArtists = atArtists.replaceAll("_?\\(.*?\\)", "").replace("_", " ");
+			atArtists = atArtists.replaceAll("_?\\(.*?\\)", "").replace("_", " ").replace("/", " ");
 			String[] tmp = atArtists.split("\\s+");
 			for (int ix = 0; ix < tmp.length; ix++) {
 				String tmpName = tmp[ix];
@@ -328,7 +328,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		String characters = getCharacters(tagList);
 		if (!characters.trim().isEmpty()) {
-			characters = characters.replaceAll("_?\\(.*?\\)", "").replace("_", " ");
+			characters = characters.replaceAll("_?\\(.*?\\)", "").replace("_", " ").replace("/", " ");
 			String[] tmp = characters.split("\\s+");
 			for (int ix = 0; ix < tmp.length; ix++) {
 				String tmpName = tmp[ix];
@@ -342,7 +342,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		} else {
 			String species = getSpecies(tagList);
 			if (!species.trim().isEmpty()) {
-				species = species.replaceAll("_?\\(.*?\\)", "").replace("_", " ");
+				species = species.replaceAll("_?\\(.*?\\)", "").replace("_", " ").replace("/", " ");
 				String[] tmp = species.split("\\s+");
 				for (int ix = 0; ix < tmp.length; ix++) {
 					String tmpName = tmp[ix];
@@ -436,7 +436,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				}
 				String name = e621Tag.getName();
 				name = name.replaceAll("_?\\(.*?\\)", "");
-				name = name.replace("_", "-");
+				name = name.replace("_", "-").replace("/", "-");
 				if (already.contains(name)) {
 					continue;
 				}
@@ -555,7 +555,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		for (E621Tag tag : response) {
 			String name = tag.getName().toLowerCase();
 			already.add(name);
-			String altName = name.replaceAll("\\(.*?\\)", "").replace("_", "-");
+			String altName = name.replaceAll("\\(.*?\\)", "").replace("_", "-").replace("/", "-");
 			if (!already.contains(altName) && !altName.isEmpty()) {
 				already.add(altName);
 				E621Tag alt = new E621Tag();
