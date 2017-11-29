@@ -355,7 +355,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				autoTitle += "Subject Material: " + species;
 			}
 		}
-		autoTitle = autoTitle.trim() + ", Post Id# " + id;
+//		autoTitle = autoTitle.trim() + ", Post Id# " + id;
 		return autoTitle;
 	}
 
