@@ -60,7 +60,7 @@ public class PostDoneUi extends EventBusComposite {
 		String href = info.firstTag + "/" + "@" + info.author + "/" + info.permLink;
 		steemit.setHref("https://www.steemit.com/" + href);
 		steemit.setEnabled(true);
-		chainbb.setHref("https://www.chainbb.com/" + href);
+		chainbb.setHref("https://chainbb.com/" + href);
 		chainbb.setEnabled(true);
 		busyorg.setHref("https://www.busy.org/" + href);
 		busyorg.setEnabled(true);
