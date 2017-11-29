@@ -140,18 +140,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			// sort descending order to most valuable at top of list
 			Collections.sort(state.matchingSteemTags, (a, b) -> {
 				// sort by per top post payout average
-//				double p1 = a.totalPayouts / ((double) a.topPosts + (double) a.comments + 1d);
-//				double p2 = b.totalPayouts / ((double) b.topPosts + (double) b.comments + 1d);
-//				// make must have tags more likely to sort to preferred use
+				double p1 = a.totalPayouts / ((double) a.comments + 1d);
+				double p2 = b.totalPayouts / ((double) b.comments + 1d);
+				// make must have tags more likely to sort to preferred use
 //				if (mustHaveTags.contains(a.name)) {
 //					p1 += TAG_SKEW;
 //				}
 //				if (mustHaveTags.contains(b.name)) {
 //					p2 += TAG_SKEW;
 //				}
-//				if (Double.compare(p1, p2) != 0) {
-//					return Double.compare(p2, p1);
-//				}
+				if (Double.compare(p1, p2) != 0) {
+					return Double.compare(p2, p1);
+				}
 				// sort by number of recent posts
 				if (a.topPosts != b.topPosts) {
 					return Integer.compare(b.topPosts, a.topPosts);
