@@ -77,7 +77,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	 * A non-empirical and non-arbitrary number to skew tags in the "must have" set
 	 * higher as part of the automatic steem tag selection process.
 	 */
-//	 private static final int TAG_SKEW = 43;
+	// private static final int TAG_SKEW = 43;
 	private static final int CACHED_PAGE_SIZE = 20;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
@@ -195,9 +195,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	protected void automaticTitle(Event.GetAutomaticTitle event) {
 		List<E621Tag> withAlternateForms = pendingPost.withAlternateForms;
 		long id = pendingPost.post.getId();
-		String generatedTitle = generateTitle(withAlternateForms, id);
-		generatedTitle = generatedTitle.replace("_", " ");
-		fireEvent(new Event.SetPostTitle(generatedTitle));
+		fireEvent(new Event.SetPostTitle(generateTitle(withAlternateForms, id)));
 	}
 
 	@EventHandler
@@ -310,7 +308,17 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private String generateTitle(List<E621Tag> tagList, long id) {
 		String autoTitle = "E621 Artwork";
 		String atArtists = getAtArtists(tagList);
+		atArtists=atArtists.replace("@", "");
 		if (!atArtists.trim().isEmpty()) {
+			atArtists = atArtists.replaceAll("_?\\(.*?\\)", "").replace("_", " ");
+			String[] tmp = atArtists.split("\\s+");
+			for (int ix = 0; ix < tmp.length; ix++) {
+				String tmpName = tmp[ix];
+				if (tmpName.length() > 1) {
+					tmp[ix] = tmpName.substring(0, 1).toUpperCase() + tmpName.substring(1);
+				}
+			}
+			atArtists = String.join(" ", tmp);
 			autoTitle = autoTitle.trim() + ", ";
 			if (atArtists.contains(" ")) {
 				autoTitle += "Artists: " + atArtists;
@@ -320,11 +328,29 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		String characters = getCharacters(tagList);
 		if (!characters.trim().isEmpty()) {
+			characters = characters.replaceAll("_?\\(.*?\\)", "").replace("_", " ");
+			String[] tmp = characters.split("\\s+");
+			for (int ix = 0; ix < tmp.length; ix++) {
+				String tmpName = tmp[ix];
+				if (tmpName.length() > 1) {
+					tmp[ix] = tmpName.substring(0, 1).toUpperCase() + tmpName.substring(1);
+				}
+			}
+			characters = String.join(" ", tmp);
 			autoTitle = autoTitle.trim() + ", ";
 			autoTitle += "Featuring: " + characters;
 		} else {
 			String species = getSpecies(tagList);
 			if (!species.trim().isEmpty()) {
+				species = species.replaceAll("_?\\(.*?\\)", "").replace("_", " ");
+				String[] tmp = species.split("\\s+");
+				for (int ix = 0; ix < tmp.length; ix++) {
+					String tmpName = tmp[ix];
+					if (tmpName.length() > 1) {
+						tmp[ix] = tmpName.substring(0, 1).toUpperCase() + tmpName.substring(1);
+					}
+				}
+				species = String.join(" ", tmp);
 				autoTitle = autoTitle.trim() + ", ";
 				autoTitle += "Subject Material: " + species;
 			}
@@ -387,33 +413,36 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		postDiv.appendChild(p2);
 
 		// special @artist section
-		String atArtists = getAtArtists(pendingPost.e621tags);
-		if (atArtists.length() != 0) {
-			ParagraphElement p3 = doc.createPElement();
-			p3.appendChild(doc.createTextNode("Artist"));
-			if (atArtists.contains(" ")) {
-				p3.appendChild(doc.createTextNode("s"));
-			}
-			p3.appendChild(doc.createTextNode(": "));
-			p3.appendChild(doc.createTextNode(atArtists));
-			postDiv.appendChild(p3);
-		}
+		// String atArtists = getAtArtists(pendingPost.e621tags);
+		// if (atArtists.length() != 0) {
+		// ParagraphElement p3 = doc.createPElement();
+		// p3.appendChild(doc.createTextNode("Artist"));
+		// if (atArtists.contains(" ")) {
+		// p3.appendChild(doc.createTextNode("s"));
+		// }
+		// p3.appendChild(doc.createTextNode(": "));
+		// p3.appendChild(doc.createTextNode(atArtists));
+		// postDiv.appendChild(p3);
+		// }
 
 		for (E621TagTypes tagType : E621TagTypes.values()) {
 			StringBuilder sb = new StringBuilder();
-			Iterator<TrendingTag> iter = pendingPost.matchingSteemTags.iterator();
+			Iterator<E621Tag> iter = pendingPost.e621tags.iterator();
 			Set<String> already = new HashSet<>();
 			while (iter.hasNext()) {
-				TrendingTag steemTag = iter.next();
-				if (steemTag.type != tagType.getId()) {
+				E621Tag e621Tag = iter.next();
+				if (e621Tag.getType() != tagType.getId()) {
 					continue;
 				}
-				if (already.contains(steemTag.name)) {
+				String name = e621Tag.getName();
+				name = name.replaceAll("_?\\(.*?\\)", "");
+				name = name.replace("_", "-");
+				if (already.contains(name)) {
 					continue;
 				}
-				already.add(steemTag.name);
+				already.add(name);
 				sb.append("#");
-				sb.append(steemTag.name);
+				sb.append(name);
 				if (iter.hasNext()) {
 					sb.append(" ");
 				}
