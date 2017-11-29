@@ -19,13 +19,12 @@ public class E621EP implements EntryPoint, IsSdm {
 		@Override
 		public void onFailure(Exception reason) {
 			GWT.log(reason.getMessage(), reason);
-			 Scheduler.get().scheduleDeferred(new E621ResteemitApp());
+			Scheduler.get().scheduleDeferred(new E621ResteemitApp());
 		}
 
 		@Override
 		public void onSuccess(Void result) {
-			Scheduler.get().scheduleDeferred(new AuthTest());
-			 Scheduler.get().scheduleDeferred(new E621ResteemitApp());
+			Scheduler.get().scheduleDeferred(new E621ResteemitApp());
 		}
 	};
 
@@ -34,7 +33,7 @@ public class E621EP implements EntryPoint, IsSdm {
 		GWT.log("onModuleLoad");
 		GWT.setUncaughtExceptionHandler(handler);
 		try {
-			//Location.getProtocol() + 
+			// Location.getProtocol() +
 			String scriptUrl = "//cdn.steemjs.com/lib/latest/steem.min.js";
 			GWT.log("steemjs CDN: " + scriptUrl);
 			ScriptInjector.fromUrl(scriptUrl)//
