@@ -152,17 +152,17 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 //				if (Double.compare(p1, p2) != 0) {
 //					return Double.compare(p2, p1);
 //				}
-				// sort by payout (raw value of topic)
-				if (a.totalPayouts != b.totalPayouts) {
-					return Double.compare(b.totalPayouts, a.totalPayouts);
-				}
 				// sort by number of posts (popularity of tag/audience by subject)
 				if (a.topPosts != b.topPosts) {
 					return Integer.compare(b.topPosts, a.topPosts);
 				}
-				// sort by number of comments (indicates audience response level?)
+				// sort by number of comments
 				if (a.comments != b.comments) {
 					return Integer.compare(b.comments, a.comments);
+				}
+				// sort by payout (raw value of topic)
+				if (a.totalPayouts != b.totalPayouts) {
+					return Double.compare(b.totalPayouts, a.totalPayouts);
 				}
 				return a.name.compareToIgnoreCase(b.name);
 			});
@@ -180,7 +180,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			}
 			TrendingTag e621tag = new TrendingTag();
 			e621tag.name="e621";
-			selectedTags.add(e621tag);
+			selectedTags.add(0, e621tag);
 			state.tagsForPost=new ArrayList<>();
 			Iterator<TrendingTag> iter = selectedTags.iterator();
 			while (iter.hasNext()) {
@@ -274,10 +274,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				mostRecent.permLink=permLink;
 				fireEvent(new Event.PostDone());
 				fireEvent(new Event.Loading(false));
-				if (result != null) {
-					GWT.log("RESULT: " + result);
-					SteemBroadcast.vote(wif, username, username, permLink, 10000, voteCb);
-				}
 			}
 		};
 		SteemCallback<CommentResult> commentCb = new SteemCallback<CommentResult>() {
@@ -292,6 +288,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					CommentOptionsExtensions extensions = new CommentOptionsExtensions();
 					extensions.beneficiaries.beneficiaries.add(BENEFICIARY);
 					SteemBroadcast.commentOptions(wif, author, permLink, extensions, benifCb);
+					SteemBroadcast.vote(wif, username, username, permLink, 10000, voteCb);
 				}
 			}
 		};
