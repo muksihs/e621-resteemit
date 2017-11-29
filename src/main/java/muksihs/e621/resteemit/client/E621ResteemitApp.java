@@ -77,7 +77,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	 * A non-empirical and non-arbitrary number to skew tags in the "must have" set
 	 * higher as part of the automatic steem tag selection process.
 	 */
-	private static final int TAG_SKEW = 43;
+	// private static final int TAG_SKEW = 43;
 	private static final int CACHED_PAGE_SIZE = 20;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
@@ -143,12 +143,12 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				double p1 = a.totalPayouts / ((double) a.comments + 1d);
 				double p2 = b.totalPayouts / ((double) b.comments + 1d);
 				// make must have tags more likely to sort to preferred use
-//				if (mustHaveTags.contains(a.name)) {
-//					p1 += TAG_SKEW;
-//				}
-//				if (mustHaveTags.contains(b.name)) {
-//					p2 += TAG_SKEW;
-//				}
+				// if (mustHaveTags.contains(a.name)) {
+				// p1 += TAG_SKEW;
+				// }
+				// if (mustHaveTags.contains(b.name)) {
+				// p2 += TAG_SKEW;
+				// }
 				if (Double.compare(p1, p2) != 0) {
 					return Double.compare(p2, p1);
 				}
@@ -168,20 +168,20 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			});
 			List<TrendingTag> selectedTags;
 			if (!state.post.getRating().equals(Rating.SAFE.getTag())) {
-				int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST-2);
+				int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 2);
 				selectedTags = state.matchingSteemTags.subList(0, min);
 				TrendingTag nsfwTag = new TrendingTag();
 				nsfwTag.name = "nsfw";
 				state.matchingSteemTags.add(nsfwTag);
 				selectedTags.add(nsfwTag);
 			} else {
-				int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST-1);
+				int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 1);
 				selectedTags = state.matchingSteemTags.subList(0, min);
 			}
 			TrendingTag e621tag = new TrendingTag();
-			e621tag.name="e621";
+			e621tag.name = "e621";
 			selectedTags.add(0, e621tag);
-			state.tagsForPost=new ArrayList<>();
+			state.tagsForPost = new ArrayList<>();
 			Iterator<TrendingTag> iter = selectedTags.iterator();
 			while (iter.hasNext()) {
 				state.tagsForPost.add(iter.next().name);
@@ -203,10 +203,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	 * In theory, there should never be more than one pending post possible.
 	 */
 	private MatchingTagsState pendingPost;
-	
+
 	@EventHandler
 	protected void automaticTitle(Event.GetAutomaticTitle event) {
-		fireEvent(new Event.SetPostTitle(generateTitle(pendingPost.withAlternateForms, pendingPost.post.getId())));
+		List<E621Tag> withAlternateForms = pendingPost.withAlternateForms;
+		long id = pendingPost.post.getId();
+		String generatedTitle = generateTitle(withAlternateForms, id);
+		generatedTitle = generatedTitle.replace("_", " ");
+		fireEvent(new Event.SetPostTitle(generatedTitle));
 	}
 
 	@EventHandler
@@ -219,10 +223,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			return;
 		}
 		List<String> tagsForPost = pendingPost.tagsForPost;
-//		//always add author names to tags list if not already in list
-//		Set<String> artists = getArtists(pendingPost.e621tags);
-//		tagsForPost.addAll(artists);
-		
+		// //always add author names to tags list if not already in list
+		// Set<String> artists = getArtists(pendingPost.e621tags);
+		// tagsForPost.addAll(artists);
+
 		String username = info.getUsername();
 		final CommentMetadata metadata = new CommentMetadata();
 		final String body;
@@ -254,11 +258,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			GWT.log(e1.getMessage(), e1);
 			return;
 		}
-		SteemCallback<VoteResult> voteCb=new SteemCallback<VoteResult>() {
+		SteemCallback<VoteResult> voteCb = new SteemCallback<VoteResult>() {
 			@Override
 			public void onResult(Map<String, String> error, VoteResult result) {
-				// TODO Auto-generated method stub
-				
 			}
 		};
 		SteemCallback<CommentResult> benifCb = new SteemCallback<CommentResult>() {
@@ -269,9 +271,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					fireEvent(new Event.AlertMessage("ERROR: " + error.toString()));
 				}
 				mostRecent = new MostRecentPostInfo();
-				mostRecent.author=author;
-				mostRecent.firstTag=firstTag;
-				mostRecent.permLink=permLink;
+				mostRecent.author = author;
+				mostRecent.firstTag = firstTag;
+				mostRecent.permLink = permLink;
 				fireEvent(new Event.PostDone());
 				fireEvent(new Event.Loading(false));
 			}
@@ -287,8 +289,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					GWT.log("RESULT: " + result);
 					CommentOptionsExtensions extensions = new CommentOptionsExtensions();
 					extensions.beneficiaries.beneficiaries.add(BENEFICIARY);
-					Scheduler.get().scheduleDeferred(()->SteemBroadcast.commentOptions(wif, author, permLink, extensions, benifCb));
-					Scheduler.get().scheduleDeferred(()->SteemBroadcast.vote(wif, username, username, permLink, 10000, voteCb));
+					Scheduler.get().scheduleDeferred(
+							() -> SteemBroadcast.commentOptions(wif, author, permLink, extensions, benifCb));
+					Scheduler.get().scheduleDeferred(
+							() -> SteemBroadcast.vote(wif, username, username, permLink, 10000, voteCb));
 				}
 			}
 		};
@@ -301,15 +305,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			GWT.log(e.getMessage(), e);
 		}
 	}
+
 	public static class MostRecentPostInfo {
 		public String author;
 		public String firstTag;
 		public String permLink;
 	}
+
 	private MostRecentPostInfo mostRecent;
+
 	@EventHandler
 	protected void getMostRecentPostInfo(Event.GetMostRecentPostInfo event) {
-		if (mostRecent!=null) {
+		if (mostRecent != null) {
 			fireEvent(new Event.SetMostRecentPostInfo(mostRecent));
 		}
 	}
@@ -350,26 +357,25 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	private String generatePostHtml() {
 		Document doc = Document.get();
-		
+
 		AnchorElement muksihsLink = doc.createAnchorElement();
 		muksihsLink.setHref("http://muksihs.com/e621-resteemit/");
 		muksihsLink.setTarget("_blank");
 		muksihsLink.appendChild(doc.createTextNode("http://muksihs.com/e621-resteemit/"));
-		
-		
+
 		ParagraphElement p1 = doc.createPElement();
 		p1.appendChild(doc.createTextNode("Curated using Muksihs' E621 Browser: "));
 		p1.appendChild(muksihsLink);
 		p1.appendChild(doc.createTextNode("."));
-		
+
 		Element curatedBy = doc.createElement("center");
 		curatedBy.getStyle().setTextAlign(TextAlign.CENTER);
 		curatedBy.appendChild(p1);
-		
+
 		ImageElement img = doc.createImageElement();
 		img.setSrc(pendingPost.post.getFileUrl());
 		img.setAttribute("style", "max-width: 100%; margin: 0px;");
-		
+
 		AnchorElement imgA = doc.createAnchorElement();
 		imgA.setTarget("_blank");
 		imgA.setHref(pendingPost.post.getFileUrl());
@@ -467,10 +473,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		return atAuthor.toString();
 	}
-	
+
+	@SuppressWarnings("unused")
 	private Set<String> getArtists(List<E621Tag> taglist) {
 		Iterator<E621Tag> iter = taglist.iterator();
-		Set<String> artists=new TreeSet<>();
+		Set<String> artists = new TreeSet<>();
 		while (iter.hasNext()) {
 			E621Tag tag = iter.next();
 			if (tag.getType() != E621TagTypes.Artist.getId()) {
@@ -495,14 +502,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			if (tag.getCount() == null || tag.getCount() == 0) {
 				continue;
 			}
-			if (species.length()!=0) {
+			if (species.length() != 0) {
 				species.append(", ");
 			}
 			species.append(tag.getName().replaceAll("_\\(.*?\\)", ""));
 		}
 		return species.toString();
 	}
-	
+
 	private String getCharacters(List<E621Tag> taglist) {
 		Iterator<E621Tag> ialt = taglist.iterator();
 		StringBuilder characters = new StringBuilder();
@@ -514,7 +521,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			if (tag.getCount() == null || tag.getCount() == 0) {
 				continue;
 			}
-			if (characters.length()!=0) {
+			if (characters.length() != 0) {
 				characters.append(", ");
 			}
 			characters.append(tag.getName().replaceAll("_\\(.*?\\)", ""));
@@ -528,54 +535,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		state.withAlternateForms = new ArrayList<>();
 		state.matchingSteemTags = new ArrayList<>();
 		state.withAlternateForms.addAll(response);
-		state.e621tags=new ArrayList<>(response);
+		state.e621tags = new ArrayList<>(response);
 		Set<String> already = new HashSet<>();
 		for (E621Tag tag : response) {
 			String name = tag.getName().toLowerCase();
 			already.add(name);
-			String altName;
-			E621Tag alt;
-			altName = name.replaceAll("[^a-z0-9\\-]", "-");
+			String altName = name.replaceAll("\\(.*?\\)", "").replace("_", "-");
 			if (!already.contains(altName) && !altName.isEmpty()) {
 				already.add(altName);
-				alt = new E621Tag();
+				E621Tag alt = new E621Tag();
 				alt.setName(altName);
 				alt.setType(tag.getType());
 				state.withAlternateForms.add(alt);
-			}
-			altName = name.replaceAll("[^a-z0-9\\-]", "");
-			if (!already.contains(altName) && !altName.isEmpty()) {
-				already.add(altName);
-				alt = new E621Tag();
-				alt.setName(altName);
-				alt.setType(tag.getType());
-				state.withAlternateForms.add(alt);
-			}
-			if (name.contains("(")) {
-				String name2 = name.replaceAll("\\(.*?\\)", "");
-				if (!already.contains(altName) && !altName.isEmpty()) {
-					already.add(altName);
-					alt = new E621Tag();
-					alt.setName(altName);
-					alt.setType(tag.getType());
-					state.withAlternateForms.add(alt);
-				}
-				altName = name2.replaceAll("[^a-z0-9\\-]", "-");
-				if (!already.contains(altName) && !altName.isEmpty()) {
-					already.add(altName);
-					alt = new E621Tag();
-					alt.setName(altName);
-					alt.setType(tag.getType());
-					state.withAlternateForms.add(alt);
-				}
-				altName = name2.replaceAll("[^a-z0-9\\-]", "");
-				if (!already.contains(altName) && !altName.isEmpty()) {
-					already.add(altName);
-					alt = new E621Tag();
-					alt.setName(altName);
-					alt.setType(tag.getType());
-					state.withAlternateForms.add(alt);
-				}
 			}
 		}
 		state.iter = state.withAlternateForms.iterator();
@@ -627,8 +598,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	@EventHandler
 	protected void tryLogin(Event.TryLogin event) {
 		String wif = event.getWif();
-		wif = wif==null?"":wif.trim();
-		if (!wif.equals(wif.replaceAll("[^123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]",  ""))) {
+		wif = wif == null ? "" : wif.trim();
+		if (!wif.equals(wif.replaceAll("[^123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]", ""))) {
 			if (!event.isSilent()) {
 				fireEvent(new Event.AlertMessage("That is not a valid key."));
 			}
@@ -637,7 +608,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		if (wif.startsWith("STM")) {
 			if (!event.isSilent()) {
-				fireEvent(new Event.AlertMessage("That is not the PRIVATE posting key. Please visit your wallet => permissions => select \"show private key\" next to your posting key, to obtain your private posting key. It will not start with 'STM'."));
+				fireEvent(new Event.AlertMessage(
+						"That is not the PRIVATE posting key. Please visit your wallet => permissions => select \"show private key\" next to your posting key, to obtain your private posting key. It will not start with 'STM'."));
 			}
 			fireEvent(new Event.Loading(false));
 			return;
@@ -709,7 +681,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			}
 		};
 		fireEvent(new Event.Loading(true));
-		String username=event.getUsername();
+		String username = event.getUsername();
 		while (username.trim().startsWith("@")) {
 			username = username.trim().substring(1);
 		}
