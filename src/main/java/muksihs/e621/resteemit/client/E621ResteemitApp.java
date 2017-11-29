@@ -152,13 +152,13 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 //				if (Double.compare(p1, p2) != 0) {
 //					return Double.compare(p2, p1);
 //				}
-				// sort by total number of comments
-				if (a.comments != b.comments) {
-					return Integer.compare(b.comments, a.comments);
-				}
 				// sort by number of recent posts
 				if (a.topPosts != b.topPosts) {
 					return Integer.compare(b.topPosts, a.topPosts);
+				}
+				// sort by total number of comments
+				if (a.comments != b.comments) {
+					return Integer.compare(b.comments, a.comments);
 				}
 				// sort by payout (raw value of topic)
 				if (a.totalPayouts != b.totalPayouts) {
