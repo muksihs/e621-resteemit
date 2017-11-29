@@ -20,8 +20,10 @@ import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.ParagraphElement;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
@@ -67,7 +69,7 @@ import steem.model.accountinfo.Posting;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
-	private static final int MAX_TAGS_PER_POST = 6;
+	private static final int MAX_TAGS_PER_POST = 5;
 	private static final String BENEFICIARY_ACCOUNT = "muksihs";
 	private static final Beneficiary BENEFICIARY = new Beneficiary(BENEFICIARY_ACCOUNT, 1);
 	private static final String DEFAULT_USER = "default-user";
@@ -138,18 +140,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			// sort descending order to most valuable at top of list
 			Collections.sort(state.matchingSteemTags, (a, b) -> {
 				// sort by per top post payout average
-				double p1 = a.totalPayouts / ((double) a.topPosts + (double) a.comments + 1d);
-				double p2 = b.totalPayouts / ((double) b.topPosts + (double) b.comments + 1d);
-				// make must have tags more likely to sort to preferred use
-				if (mustHaveTags.contains(a.name)) {
-					p1 += TAG_SKEW;
-				}
-				if (mustHaveTags.contains(b.name)) {
-					p2 += TAG_SKEW;
-				}
-				if (Double.compare(p1, p2) != 0) {
-					return Double.compare(p2, p1);
-				}
+//				double p1 = a.totalPayouts / ((double) a.topPosts + (double) a.comments + 1d);
+//				double p2 = b.totalPayouts / ((double) b.topPosts + (double) b.comments + 1d);
+//				// make must have tags more likely to sort to preferred use
+//				if (mustHaveTags.contains(a.name)) {
+//					p1 += TAG_SKEW;
+//				}
+//				if (mustHaveTags.contains(b.name)) {
+//					p2 += TAG_SKEW;
+//				}
+//				if (Double.compare(p1, p2) != 0) {
+//					return Double.compare(p2, p1);
+//				}
 				// sort by payout (raw value of topic)
 				if (a.totalPayouts != b.totalPayouts) {
 					return Double.compare(b.totalPayouts, a.totalPayouts);
@@ -166,28 +168,15 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			});
 			List<TrendingTag> selectedTags;
 			if (!state.post.getRating().equals(Rating.SAFE.getTag())) {
-				selectedTags = state.matchingSteemTags.subList(0, Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST-1));
+				int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST-2);
+				selectedTags = state.matchingSteemTags.subList(0, min);
 				TrendingTag nsfwTag = new TrendingTag();
 				nsfwTag.name = "nsfw";
 				state.matchingSteemTags.add(nsfwTag);
 				selectedTags.add(nsfwTag);
 			} else {
-				selectedTags = state.matchingSteemTags.subList(0, Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST));
-			}
-			if (selectedTags.size() < 3) {
-				TrendingTag artTag = new TrendingTag();
-				artTag.name = "art";
-				selectedTags.add(artTag);
-			}
-			if (selectedTags.size() < 3) {
-				TrendingTag furryTag = new TrendingTag();
-				furryTag.name = "furry";
-				selectedTags.add(furryTag);
-			}
-			if (selectedTags.size() < 3) {
-				TrendingTag lifeTag = new TrendingTag();
-				lifeTag.name = "life";
-				selectedTags.add(lifeTag);
+				int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST-1);
+				selectedTags = state.matchingSteemTags.subList(0, min);
 			}
 			TrendingTag e621tag = new TrendingTag();
 			e621tag.name="e621";
@@ -230,9 +219,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			return;
 		}
 		List<String> tagsForPost = pendingPost.tagsForPost;
-		//always add author names to tags list if not already in list
-		Set<String> artists = getArtists(pendingPost.e621tags);
-		tagsForPost.addAll(artists);
+//		//always add author names to tags list if not already in list
+//		Set<String> artists = getArtists(pendingPost.e621tags);
+//		tagsForPost.addAll(artists);
 		
 		String username = info.getUsername();
 		final CommentMetadata metadata = new CommentMetadata();
@@ -364,6 +353,22 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	private String generatePostHtml() {
 		Document doc = Document.get();
+		
+		AnchorElement muksihsLink = doc.createAnchorElement();
+		muksihsLink.setHref("http://muksihs.com/e621-resteemit/");
+		muksihsLink.setTarget("_blank");
+		muksihsLink.appendChild(doc.createTextNode("http://muksihs.com/e621-resteemit/"));
+		
+		
+		ParagraphElement p1 = doc.createPElement();
+		p1.appendChild(doc.createTextNode("Curated using Muksihs' E621 Browser: "));
+		p1.appendChild(muksihsLink);
+		p1.appendChild(doc.createTextNode("."));
+		
+		Element curatedBy = doc.createElement("center");
+		curatedBy.getStyle().setTextAlign(TextAlign.CENTER);
+		curatedBy.appendChild(p1);
+		
 		ImageElement img = doc.createImageElement();
 		img.setSrc(pendingPost.post.getFileUrl());
 		img.setAttribute("style", "max-width: 100%; margin: 0px;");
@@ -377,15 +382,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		imgDiv.setAttribute("style", "max-width: 100%; margin: 4px; text-align: center;");
 		imgDiv.appendChild(imgA);
 
-		AnchorElement muksihsLink = doc.createAnchorElement();
-		muksihsLink.setHref("http://muksihs.com/e621-resteemit/");
-		muksihsLink.setTarget("_blank");
-		muksihsLink.appendChild(doc.createTextNode("Muksihs' E621 Browser"));
-		ParagraphElement p1 = doc.createPElement();
-		p1.appendChild(doc.createTextNode("Curated using "));
-		p1.appendChild(muksihsLink);
-		p1.appendChild(doc.createTextNode("."));
-
 		long postId = pendingPost.post.getId();
 		AnchorElement e621Link = doc.createAnchorElement();
 		e621Link.setHref(Consts.E621_SHOW_POST + postId);
@@ -397,8 +393,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		p2.appendChild(doc.createTextNode("."));
 
 		DivElement postDiv = doc.createDivElement();
+		postDiv.appendChild(curatedBy);
 		postDiv.appendChild(imgDiv);
-		postDiv.appendChild(p1);
 		postDiv.appendChild(p2);
 
 		// special @artist section
