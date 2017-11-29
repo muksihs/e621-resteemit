@@ -287,8 +287,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					GWT.log("RESULT: " + result);
 					CommentOptionsExtensions extensions = new CommentOptionsExtensions();
 					extensions.beneficiaries.beneficiaries.add(BENEFICIARY);
-					SteemBroadcast.commentOptions(wif, author, permLink, extensions, benifCb);
-					SteemBroadcast.vote(wif, username, username, permLink, 10000, voteCb);
+					Scheduler.get().scheduleDeferred(()->SteemBroadcast.commentOptions(wif, author, permLink, extensions, benifCb));
+					Scheduler.get().scheduleDeferred(()->SteemBroadcast.vote(wif, username, username, permLink, 10000, voteCb));
 				}
 			}
 		};
