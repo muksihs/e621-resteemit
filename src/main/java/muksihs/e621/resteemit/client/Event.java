@@ -11,6 +11,24 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class SetAutomaticTags extends GenericEvent {
+
+		private final List<String> tagsForpost;
+
+		public SetAutomaticTags(List<String> tagsForPost) {
+			this.tagsForpost=tagsForPost;
+		}
+
+		public List<String> getTagsForpost() {
+			return tagsForpost;
+		}
+
+	}
+
+	public class GetAutomaticTags extends GenericEvent {
+
+	}
+
 	public class GetMostRecentPostInfo extends GenericEvent {
 
 	}

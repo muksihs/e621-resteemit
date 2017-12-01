@@ -15,6 +15,7 @@
 			<m:MaterialInput helperText="POST TITLE" type="TEXT"
 				ui:field="title">
 			</m:MaterialInput>
+			<m:MaterialPanel ui:field="tags"></m:MaterialPanel>
 			<m:MaterialPanel ui:field="preview"></m:MaterialPanel>
 		</m:MaterialModalContent>
 	</m:MaterialModal>

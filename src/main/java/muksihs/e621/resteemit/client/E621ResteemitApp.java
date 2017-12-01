@@ -215,6 +215,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		pendingPost = state;
 		fireEvent(new Event.ConfirmPost());
 	}
+	
+	@EventHandler
+	protected void GetAutomaticTags(Event.GetAutomaticTags event) {
+		fireEvent(new Event.SetAutomaticTags(pendingPost.tagsForPost));
+	}
 
 	/*
 	 * In theory, there should never be more than one pending post possible.

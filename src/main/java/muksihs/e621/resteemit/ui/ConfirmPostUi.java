@@ -7,6 +7,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.binder.EventBinder;
 import com.google.web.bindery.event.shared.binder.EventHandler;
 
+import gwt.material.design.client.ui.MaterialAnchorButton;
 import gwt.material.design.client.ui.MaterialButton;
 import gwt.material.design.client.ui.MaterialInput;
 import gwt.material.design.client.ui.MaterialModal;
@@ -30,16 +31,17 @@ public class ConfirmPostUi extends EventBusComposite {
 	protected MaterialButton btnCancel;
 	@UiField
 	protected MaterialInput title;
+	@UiField
+	protected MaterialPanel tags;
 
 	public ConfirmPostUi() {
 		initWidget(uiBinder.createAndBindUi(this));
-		modal.addCloseHandler((e)->this.removeFromParent());
-		btnPost.addClickHandler((e)->{
+		modal.addCloseHandler((e) -> this.removeFromParent());
+		btnPost.addClickHandler((e) -> {
 			fireEvent(new Event.DoPost(title.getValue()));
 			modal.close();
-			}
-		);
-		btnCancel.addClickHandler((e)->modal.close());
+		});
+		btnCancel.addClickHandler((e) -> modal.close());
 	}
 
 	interface MyEventBinder extends EventBinder<ConfirmPostUi> {
@@ -49,22 +51,34 @@ public class ConfirmPostUi extends EventBusComposite {
 	protected <T extends EventBinder<EventBusComposite>> T getEventBinder() {
 		return GWT.create(MyEventBinder.class);
 	}
-	
+
+	@EventHandler
+	protected void setAutomaticTags(Event.SetAutomaticTags event) {
+		tags.clear();
+		for (String tag : event.getTagsForpost()) {
+			MaterialAnchorButton tagLabel = new MaterialAnchorButton(tag);
+			tagLabel.setMargin(1);
+			tagLabel.setEnabled(false);
+			tags.add(tagLabel);
+		}
+	}
+
 	@EventHandler
 	protected void postPreviewContent(Event.PostPreviewContent event) {
 		preview.getElement().setInnerHTML(event.getHtml());
 	}
-	
+
 	@EventHandler
 	protected void setTitle(Event.SetPostTitle event) {
 		title.setValue(event.getTitle());
 	}
-	
+
 	@Override
 	protected void onLoad() {
 		super.onLoad();
 		fireEvent(new Event.GetPostPreview());
 		fireEvent(new Event.GetAutomaticTitle());
+		fireEvent(new Event.GetAutomaticTags());
 	}
 
 	public void open() {
