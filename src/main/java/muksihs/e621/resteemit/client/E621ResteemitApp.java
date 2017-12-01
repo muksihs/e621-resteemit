@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -69,6 +70,7 @@ import steem.model.accountinfo.Posting;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
+	private static final double E621_TAG_WEIGHT = 2.65d;
 	private static final int MAX_TAGS_PER_POST = 5;
 	private static final String BENEFICIARY_ACCOUNT = "muksihs";
 	private static final Beneficiary BENEFICIARY = new Beneficiary(BENEFICIARY_ACCOUNT, 1);
@@ -107,7 +109,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		public int topPosts;
 		public int comments;
 		public double totalPayouts;
-		public long type;
+		public Long e621Count;
+		public double weight;
 	}
 
 	public void matchingTagsCollector(Map<String, String> error, TrendingTagsResult[] tags, E621Tag e621tag,
@@ -121,7 +124,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					continue;
 				}
 				TrendingTag tag = new TrendingTag();
-				tag.type = e621tag.getType();
+				tag.e621Count = e621tag.getCount();
 				tag.comments = trendingTag.getComments();
 				tag.name = trendingTag.getName();
 				tag.topPosts = trendingTag.getTop_posts();
@@ -137,53 +140,81 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	private void getMatchingTrendingTags(MatchingTagsState state) {
 		if (!state.iter.hasNext()) {
-			// sort descending order to most valuable at top of list
-			Collections.sort(state.matchingSteemTags, (a, b) -> {
-				// sort by payout (raw value of topic)
-				if (a.totalPayouts != b.totalPayouts) {
-					return Double.compare(b.totalPayouts, a.totalPayouts);
-				}
-				// sort by number of recent posts
-				if (a.topPosts != b.topPosts) {
-					return Integer.compare(b.topPosts, a.topPosts);
-				}
-				// sort by total number of comments
-				if (a.comments != b.comments) {
-					return Integer.compare(b.comments, a.comments);
-				}
-				return a.name.compareToIgnoreCase(b.name);
-			});
-			List<TrendingTag> selectedTags;
-			if (!state.post.getRating().equals(Rating.SAFE.getTag())) {
-				int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 2);
-				selectedTags = state.matchingSteemTags.subList(0, min);
-				TrendingTag nsfwTag = new TrendingTag();
-				nsfwTag.name = "nsfw";
-				state.matchingSteemTags.add(nsfwTag);
-				selectedTags.add(nsfwTag);
-			} else {
-				int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 1);
-				selectedTags = state.matchingSteemTags.subList(0, min);
-			}
-			TrendingTag e621tag = new TrendingTag();
-			e621tag.name = "e621";
-			selectedTags.add(0, e621tag);
-			state.tagsForPost = new ArrayList<>();
-			Iterator<TrendingTag> iter = selectedTags.iterator();
-			while (iter.hasNext()) {
-				state.tagsForPost.add(iter.next().name);
-			}
-			DomGlobal.console.log(String.join(" ", state.tagsForPost));
-			fireEvent(new Event.Loading(false));
-			/*
-			 * In theory, there should never be more than one pending post possible.
-			 */
-			pendingPost = state;
-			fireEvent(new Event.ConfirmPost());
+			selectBestTagsAndConfirmPost(state);
 			return;
 		}
 		E621Tag e621tag = state.iter.next();
 		SteemApi.getTrendingTags(e621tag.getName(), 1, (e, r) -> matchingTagsCollector(e, r, e621tag, state));
+	}
+
+	private void selectBestTagsAndConfirmPost(MatchingTagsState state) {
+		// calculator divisor
+		double maxPayout = 1d;// 1 is min to prevent divide by zero
+		long maxE621Count = 1l;// 1 is min to prevent divide by zero
+		for (TrendingTag tag : state.matchingSteemTags) {
+			maxPayout = Double.max(maxPayout, tag.totalPayouts);
+			maxE621Count = Long.max(maxE621Count, tag.e621Count);
+		}
+		// calculate percent weights
+		for (TrendingTag tag : state.matchingSteemTags) {
+			//caclulate e621 weighting then reverse it so that less used tags get more weight
+			tag.weight = (1d - (double) tag.e621Count / (double) maxE621Count)*E621_TAG_WEIGHT;
+			//add total payout weight
+			tag.weight += tag.totalPayouts / maxPayout;
+		}
+		// sort descending order to most valuable at top of list
+		Collections.sort(state.matchingSteemTags, (a, b) -> {
+			// sort by per post payout desc (is weighted heavily towards less used E621 tags)
+			if (Double.compare(a.weight, b.weight)!=0) {
+				return Double.compare(b.weight, a.weight);
+			}
+			// sort by payout (raw value of topic)
+			if (a.totalPayouts != b.totalPayouts) {
+				return Double.compare(b.totalPayouts, a.totalPayouts);
+			}
+			// sort by number of recent posts
+			if (a.topPosts != b.topPosts) {
+				return Integer.compare(b.topPosts, a.topPosts);
+			}
+			// sort by total number of comments
+			if (a.comments != b.comments) {
+				return Integer.compare(b.comments, a.comments);
+			}
+			return a.name.compareToIgnoreCase(b.name);
+		});
+		List<TrendingTag> selectedTags;
+		if (!state.post.getRating().equals(Rating.SAFE.getTag())) {
+			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 2);
+			selectedTags = state.matchingSteemTags.subList(0, min);
+			TrendingTag nsfwTag = new TrendingTag();
+			nsfwTag.name = "nsfw";
+			state.matchingSteemTags.add(nsfwTag);
+			selectedTags.add(nsfwTag);
+		} else {
+			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 1);
+			selectedTags = state.matchingSteemTags.subList(0, min);
+		}
+		TrendingTag e621tag = new TrendingTag();
+		e621tag.name = "e621";
+		selectedTags.add(0, e621tag);
+		state.tagsForPost = new ArrayList<>();
+		Iterator<TrendingTag> iter = selectedTags.iterator();
+		while (iter.hasNext()) {
+			state.tagsForPost.add(iter.next().name);
+		}
+		StringBuilder sb = new StringBuilder();
+		for (TrendingTag selectedTag: selectedTags) {
+			int tmp = (int)(selectedTag.weight*100d);
+			sb.append(selectedTag.name+" ["+tmp+"/"+((int)(selectedTag.totalPayouts/maxPayout*100d))+"], ");
+		}
+		DomGlobal.console.log(String.join(" ", state.tagsForPost));
+		DomGlobal.console.log(sb.toString());
+		fireEvent(new Event.Loading(false));
+		/*
+		 * In theory, there should never be more than one pending post possible.
+		 */
+		pendingPost = state;
+		fireEvent(new Event.ConfirmPost());
 	}
 
 	/*
@@ -193,7 +224,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void automaticTitle(Event.GetAutomaticTitle event) {
-		List<E621Tag> withAlternateForms = pendingPost.withAlternateForms;
+		List<E621Tag> withAlternateForms = pendingPost.asSteemFormatted;
 		long id = pendingPost.post.getId();
 		fireEvent(new Event.SetPostTitle(generateTitle(withAlternateForms, id)));
 	}
@@ -228,7 +259,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			body = generatePostHtml();
 			title = event.getTitle();
 			if (title == null || title.trim().isEmpty()) {
-				List<E621Tag> tagList = pendingPost.withAlternateForms;
+				List<E621Tag> tagList = pendingPost.asSteemFormatted;
 				long id = pendingPost.post.getId();
 				title = generateTitle(tagList, id);
 			}
@@ -308,7 +339,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private String generateTitle(List<E621Tag> tagList, long id) {
 		String autoTitle = "E621 Artwork";
 		String atArtists = getAtArtists(tagList);
-		atArtists=atArtists.replace("@", "");
+		atArtists = atArtists.replace("@", "");
 		if (!atArtists.trim().isEmpty()) {
 			atArtists = atArtists.replaceAll("_?\\(.*?\\)", "").replace("_", " ").replace("/", " ");
 			String[] tmp = atArtists.split("\\s+");
@@ -355,7 +386,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				autoTitle += "Subject Material: " + species;
 			}
 		}
-//		autoTitle = autoTitle.trim() + ", Post Id# " + id;
+		// autoTitle = autoTitle.trim() + ", Post Id# " + id;
 		return autoTitle;
 	}
 
@@ -411,19 +442,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		postDiv.appendChild(curatedBy);
 		postDiv.appendChild(imgDiv);
 		postDiv.appendChild(p2);
-
-		// special @artist section
-		// String atArtists = getAtArtists(pendingPost.e621tags);
-		// if (atArtists.length() != 0) {
-		// ParagraphElement p3 = doc.createPElement();
-		// p3.appendChild(doc.createTextNode("Artist"));
-		// if (atArtists.contains(" ")) {
-		// p3.appendChild(doc.createTextNode("s"));
-		// }
-		// p3.appendChild(doc.createTextNode(": "));
-		// p3.appendChild(doc.createTextNode(atArtists));
-		// postDiv.appendChild(p3);
-		// }
 
 		for (E621TagTypes tagType : E621TagTypes.values()) {
 			StringBuilder sb = new StringBuilder();
@@ -547,24 +565,31 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private void pickBestTagsThenPostConfirm(PostPreview preview, List<E621Tag> response) {
 		MatchingTagsState state = new MatchingTagsState();
 		state.post = preview;
-		state.withAlternateForms = new ArrayList<>();
+		state.asSteemFormatted = new ArrayList<>();
 		state.matchingSteemTags = new ArrayList<>();
-		state.withAlternateForms.addAll(response);
+		state.asSteemFormatted.addAll(response);
 		state.e621tags = new ArrayList<>(response);
 		Set<String> already = new HashSet<>();
-		for (E621Tag tag : response) {
-			String name = tag.getName().toLowerCase();
-			already.add(name);
-			String altName = name.replaceAll("\\(.*?\\)", "").replace("_", "-").replace("/", "-");
-			if (!already.contains(altName) && !altName.isEmpty()) {
-				already.add(altName);
-				E621Tag alt = new E621Tag();
-				alt.setName(altName);
-				alt.setType(tag.getType());
-				state.withAlternateForms.add(alt);
+		ListIterator<E621Tag> liter = response.listIterator();
+		while (liter.hasNext()) {
+			E621Tag tag = liter.next();
+			String altName = tag.getName().toLowerCase();
+			altName = altName.replaceAll("_?\\(.*?\\)", "");
+			altName = altName.replace("_", "-");
+			altName = altName.replace("/", "-");
+			if (altName.replace("-", "").length() < altName.length() - 1) {
+				 altName=altName.replace("-", "");
+//				liter.remove();
+//				continue;
 			}
+			if (already.contains(altName)) {
+				liter.remove();
+				continue;
+			}
+			already.add(altName);
+			tag.setName(altName);
 		}
-		state.iter = state.withAlternateForms.iterator();
+		state.iter = state.asSteemFormatted.iterator();
 		getMatchingTrendingTags(state);
 	}
 
