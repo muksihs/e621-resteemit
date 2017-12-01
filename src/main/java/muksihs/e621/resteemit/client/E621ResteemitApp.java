@@ -70,16 +70,15 @@ import steem.model.accountinfo.Posting;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
-	private static final double E621_TAG_WEIGHT = 2.65d;
 	private static final int MAX_TAGS_PER_POST = 5;
 	private static final String BENEFICIARY_ACCOUNT = "muksihs";
 	private static final Beneficiary BENEFICIARY = new Beneficiary(BENEFICIARY_ACCOUNT, 1);
 	private static final String DEFAULT_USER = "default-user";
 	/**
-	 * A non-empirical and non-arbitrary number to skew tags in the "must have" set
+	 * A non-empirical and non-arbitrary number to skew lower usage E621 tags
 	 * higher as part of the automatic steem tag selection process.
 	 */
-	// private static final int TAG_SKEW = 43;
+	private static final double E621_TAG_WEIGHT = 2.65d;
 	private static final int CACHED_PAGE_SIZE = 20;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
