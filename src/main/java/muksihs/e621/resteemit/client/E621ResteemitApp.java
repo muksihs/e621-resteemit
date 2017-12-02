@@ -567,14 +567,16 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	private void pickBestTagsThenPostConfirm(PostPreview preview, List<E621Tag> response) {
+		//sort descending by count,
+		Collections.sort(response, (a,b)->Long.compare(b.getCount(), a.getCount()));
 		MatchingTagsState state = new MatchingTagsState();
 		state.post = preview;
 		state.asSteemFormatted = new ArrayList<>();
 		state.matchingSteemTags = new ArrayList<>();
-		state.asSteemFormatted.addAll(response);
+		state.asSteemFormatted = new ArrayList<>(response);
 		state.e621tags = new ArrayList<>(response);
 		Set<String> already = new HashSet<>();
-		ListIterator<E621Tag> liter = response.listIterator();
+		ListIterator<E621Tag> liter = state.asSteemFormatted.listIterator();
 		while (liter.hasNext()) {
 			E621Tag tag = liter.next();
 			String altName = tag.getName().toLowerCase();
@@ -583,8 +585,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			altName = altName.replace("/", "-");
 			if (altName.replace("-", "").length() < altName.length() - 1) {
 				 altName=altName.replace("-", "");
-//				liter.remove();
-//				continue;
 			}
 			if (already.contains(altName)) {
 				liter.remove();
