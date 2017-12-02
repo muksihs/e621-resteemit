@@ -79,7 +79,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	 * higher as part of the automatic steem tag selection process.
 	 */
 	private static final double E621_TAG_WEIGHT = 2.65d;
-	private static final int CACHED_PAGE_SIZE = 20;
+//	private static final int CACHED_PAGE_SIZE = 20;
+	private static final int CACHED_PAGE_SIZE = 50;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
 	public E621ResteemitApp() {
@@ -1216,14 +1217,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	private String buildQuery() {
 		List<String> tags = new ArrayList<>();
-		if (mustHaveRatings.size() == 1) {
-			// querying E621 with multiple ratings doesn't seem to give correct results
-			// so rely strictly on client side filtering if more than one rating provided
-			Iterator<String> iRatings = mustHaveRatings.iterator();
-			while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
-				tags.add("rating:" + iRatings.next());
-			}
-		}
+//		if (mustHaveRatings.size() == 1) {
+//			// querying E621 with multiple ratings doesn't seem to give correct results
+//			// so rely strictly on client side filtering if more than one rating provided
+//			Iterator<String> iRatings = mustHaveRatings.iterator();
+//			while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
+//				tags.add("rating:" + iRatings.next());
+//			}
+//		}
 		List<Tag> tmpMustHave = new ArrayList<>();
 		List<Tag> tmpMustNotHave = new ArrayList<>();
 		Iterator<String> iMust = mustHaveTags.iterator();
