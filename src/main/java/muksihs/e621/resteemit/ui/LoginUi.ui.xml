@@ -4,7 +4,7 @@
 	<ui:style>
 	
 	</ui:style>
-	<m:MaterialModal ui:field="modal">
+	<m:MaterialModal ui:field="modal" fullscreen="false">
 	<m:MaterialModalContent>
 	<m:MaterialTitle style="margin-top: -50px" title="STEEM LOGIN"></m:MaterialTitle>
 	<m:MaterialLabel text="STEEM Username"></m:MaterialLabel>

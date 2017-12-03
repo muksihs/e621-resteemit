@@ -6,7 +6,7 @@
 	
 	</ui:style>
 	<m:MaterialPanel>
-		<m:MaterialPanel style='text-align: right;' ui:field="menu">
+		<m:MaterialPanel style='text-align: right; margin-top: 2px;' ui:field="menu">
 			<m:MaterialPanel
 				style='text-align: left; margin: 4px; display: inline-block;'>
 				<m:MaterialCheckBox ui:field="ratingSafe" text="Show Safe"
@@ -23,15 +23,23 @@
 					text="Show Explicit" type="FILLED" />
 			</m:MaterialPanel>
 			<m:MaterialButton ui:field="clearSearch" style='margin: 2px;'
-				text="Clear Search"></m:MaterialButton>
+				text="Clear Search"/>
 			<m:MaterialButton ui:field="mostRecent" style='margin: 2px;'
-				text="Most Recent"></m:MaterialButton>
+				text="Most Recent"/>
 			<m:MaterialButton ui:field="previous" style='margin: 2px;'
-				text="Previous"></m:MaterialButton>
+				text="Previous"/>
 			<m:MaterialButton ui:field="next" style='margin: 2px;'
-				text="Next"></m:MaterialButton>
+				text="Next"/>
 		</m:MaterialPanel>
-		<m:MaterialPanel style="text-align: center;" ui:field="posts"></m:MaterialPanel>
+		<m:MaterialPanel style="text-align: center; margin-bottom: 4px;" ui:field="posts"/>
+		
+		<m:MaterialPanel style='text-align: right; padding-top: 4px;' ui:field="menuBtm">
+			<m:MaterialButton ui:field="previousBtm" style='margin: 2px;'
+				text="Previous"/>
+			<m:MaterialButton ui:field="nextBtm" style='margin: 2px;'
+				text="Next"/>
+		</m:MaterialPanel>
+		
 		<m:MaterialCollapsible ui:field="tags">
 			<m:MaterialCollapsibleItem>
 				<m:MaterialCollapsibleHeader>

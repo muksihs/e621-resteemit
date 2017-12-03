@@ -17,6 +17,7 @@ import gwt.material.design.client.ui.MaterialToast;
 import muksihs.e621.resteemit.ui.AboutUi;
 import muksihs.e621.resteemit.ui.BrowseView;
 import muksihs.e621.resteemit.ui.ConfirmPostUi;
+import muksihs.e621.resteemit.ui.ImageModalUi;
 import muksihs.e621.resteemit.ui.LoginUi;
 import muksihs.e621.resteemit.ui.PostDoneUi;
 
@@ -30,6 +31,13 @@ public class ViewController implements GlobalEventBus {
 	public ViewController(Panel view) {
 		this.view=view;
 		eventBinder.bindEventHandlers(this, eventBus);
+	}
+	
+	@EventHandler
+	protected void showImageModal(Event.ImageModal event) {
+		ImageModalUi ui = new ImageModalUi();
+		RootPanel.get().add(ui);
+		ui.open();
 	}
 	
 	@EventHandler

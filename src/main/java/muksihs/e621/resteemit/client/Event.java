@@ -11,6 +11,42 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class SetModalImage extends GenericEvent {
+
+		private final PostPreview zoomPreview;
+
+		public SetModalImage(PostPreview zoomPreview) {
+			this.zoomPreview = zoomPreview;
+		}
+
+		public PostPreview getZoomPreview() {
+			return zoomPreview;
+		}
+
+	}
+
+	public class GetModalImage extends GenericEvent {
+
+	}
+
+	public class ImageModal extends GenericEvent {
+
+	}
+
+	public class ZoomImage extends GenericEvent {
+
+		private final PostPreview preview;
+
+		public ZoomImage(PostPreview preview) {
+			this.preview=preview;
+		}
+
+		public PostPreview getPreview() {
+			return preview;
+		}
+
+	}
+
 	public class SetAutomaticTags extends GenericEvent {
 
 		private final List<String> tagsForpost;

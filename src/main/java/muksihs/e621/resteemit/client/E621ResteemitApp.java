@@ -103,6 +103,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private final List<PostPreview> activeSet = new ArrayList<>();
 	private final Set<String> extensionsWhitelist = new TreeSet<>();
 	private int activePage;
+	private PostPreview zoomPreview;
 
 	public static class TrendingTag {
 		public String name;
@@ -218,7 +219,18 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 	
 	@EventHandler
-	protected void GetAutomaticTags(Event.GetAutomaticTags event) {
+	protected void getModalImage(Event.GetModalImage event) {
+		fireEvent(new Event.SetModalImage(zoomPreview));
+	}
+	
+	@EventHandler
+	protected void zoomImage(Event.ZoomImage event) {
+		this.zoomPreview = event.getPreview();
+		fireEvent(new Event.ImageModal());
+	}
+	
+	@EventHandler
+	protected void getAutomaticTags(Event.GetAutomaticTags event) {
 		fireEvent(new Event.SetAutomaticTags(pendingPost.tagsForPost));
 	}
 

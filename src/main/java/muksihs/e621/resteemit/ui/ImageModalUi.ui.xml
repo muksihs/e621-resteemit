@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:m="urn:import:gwt.material.design.client.ui">
+	<ui:style>
+	
+	</ui:style>
+	<m:MaterialModal ui:field="modal" fullscreen="true">
+		<m:MaterialModalContent>
+			<m:MaterialButton ui:field="btnSteem" style='margin: 4px; float:right;' text="STEEM POST"/>
+			<m:MaterialButton ui:field="btnDismiss"
+				style='margin: 4px; float:right;' text="DISMISS"></m:MaterialButton>
+			<m:MaterialImage style="width: 100%;" ui:field="image" ></m:MaterialImage>
+		</m:MaterialModalContent>
+	</m:MaterialModal>
+</ui:UiBinder> 

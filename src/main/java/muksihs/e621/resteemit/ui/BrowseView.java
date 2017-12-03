@@ -7,6 +7,7 @@ import java.util.TreeSet;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -27,7 +28,6 @@ import gwt.material.design.client.ui.MaterialImage;
 import gwt.material.design.client.ui.MaterialLink;
 import gwt.material.design.client.ui.MaterialModal;
 import gwt.material.design.client.ui.MaterialPanel;
-import gwt.material.design.client.ui.html.Anchor;
 import gwt.material.design.client.ui.html.Br;
 import muksihs.e621.resteemit.client.Event;
 import muksihs.e621.resteemit.client.Event.Rating;
@@ -37,26 +37,31 @@ import muksihs.e621.resteemit.shared.PostPreview;
 public class BrowseView extends EventBusComposite {
 
 	@UiField
+	MaterialPanel posts;
+	@UiField
+	MaterialPanel filterTags;
+	@UiField
+	MaterialPanel availableTags;
+	
+	@UiField
 	protected MaterialCheckBox ratingSafe;
 	@UiField
 	protected MaterialCheckBox ratingQuestionable;
 	@UiField
 	protected MaterialCheckBox ratingExplicit;
-
 	@UiField
 	MaterialButton clearSearch;
-	@UiField
-	MaterialPanel filterTags;
-	@UiField
-	MaterialPanel availableTags;
-	@UiField
-	MaterialPanel posts;
 	@UiField
 	MaterialButton mostRecent;
 	@UiField
 	MaterialButton previous;
 	@UiField
 	MaterialButton next;
+	
+	@UiField
+	MaterialButton previousBtm;
+	@UiField
+	MaterialButton nextBtm;
 
 	private static BrowseViewUiBinder uiBinder = GWT.create(BrowseViewUiBinder.class);
 
@@ -98,6 +103,8 @@ public class BrowseView extends EventBusComposite {
 		initWidget(uiBinder.createAndBindUi(this));
 		previous.addClickHandler(this::getPrevious);
 		next.addClickHandler(this::getNext);
+		previousBtm.addClickHandler(this::getPrevious);
+		nextBtm.addClickHandler(this::getNext);
 		mostRecent.addClickHandler((e) -> fireEvent(new Event.MostRecentSet()));
 		ratingSafe.addClickHandler((e) -> updateRatings(ratingSafe));
 		ratingQuestionable.addClickHandler((e) -> updateRatings(ratingQuestionable));
@@ -116,12 +123,6 @@ public class BrowseView extends EventBusComposite {
 	@Override
 	protected void onLoad() {
 		super.onLoad();
-		// if (History.getToken().trim().isEmpty()) {
-		// ratingSafe.setValue(true);
-		// ratingQuestionable.setValue(false);
-		// ratingExplicit.setValue(false);
-		// updateRatings(ratingSafe);
-		// }
 		fireEvent(new Event.BrowseViewLoaded());
 	}
 
@@ -145,6 +146,7 @@ public class BrowseView extends EventBusComposite {
 	@EventHandler
 	protected void enablePreviousButton(Event.EnablePreviousButton event) {
 		this.previous.setEnabled(event.isEnable());
+		this.previousBtm.setEnabled(event.isEnable());
 	}
 
 	@EventHandler
@@ -255,40 +257,47 @@ public class BrowseView extends EventBusComposite {
 			img.setMargin(2);
 			img.setHoverable(true);
 			img.setTitle("#" + preview.getId() + " " + preview.getTags());
-			Anchor a = new Anchor();
+			img.addClickHandler((e)->fireEvent(new Event.ZoomImage(preview)));
 			String href = Consts.E621_SHOW_POST + preview.getId();
-			a.getElement().setAttribute("href", href);
-			a.getElement().setAttribute("target", "_blank");
-			a.add(img);
+			MaterialButton viewTags = new MaterialButton();
+			viewTags.setWidth("45%");
+			viewTags.setMargin(2);
+			viewTags.setText("TAGS VIEW");
+			viewTags.addClickHandler((e) -> showPostTags(preview.getTags()));
+			MaterialButton zoomImage = new MaterialButton();
+			zoomImage.setWidth("45%");
+			zoomImage.setMargin(2);
+			zoomImage.setText("ZOOM IMAGE");
+			zoomImage.addClickHandler((e)->fireEvent(new Event.ZoomImage(preview)));
+			MaterialButton steemPost = new MaterialButton();
+			steemPost.setWidth("45%");
+			steemPost.setMargin(2);
+			steemPost.setText("STEEMIT!");
+			steemPost.addClickHandler((e) -> fireEvent(new Event.SteemPost(preview)));
+			MaterialLink e621Post = new MaterialLink();
+			e621Post.setWidth("45%");
+			e621Post.setMargin(2);
+			e621Post.setTarget("_blank");
+			e621Post.setHref(href);
+			e621Post.setText("E621 POST");
+			e621Post.setType(ButtonType.RAISED);
+			
 			MaterialPanel panel = new MaterialPanel();
+			panel.getElement().getStyle().setVerticalAlign(VerticalAlign.TOP);
 			panel.getElement().getStyle().setDisplay(Style.Display.INLINE_BLOCK);
-			panel.getElement().getStyle().setPadding(0, Style.Unit.PCT);
 			panel.getElement().getStyle().setMargin(4, Style.Unit.PX);
 			String style = panel.getElement().getAttribute("style");
 			if (!style.endsWith(";") && !style.trim().isEmpty()) {
 				style += ";";
 			}
-			style += "max-width: 400px; max-height: 400px;";
+			style += "max-width: 400px; max-height: 100%;";
 			panel.getElement().setAttribute("style", style);
-			panel.add(a);
+			panel.add(img);
 			panel.add(new Br());
-			MaterialButton showTagFilterDialog = new MaterialButton();
-			showTagFilterDialog.setMargin(2);
-			showTagFilterDialog.setText("VIEW TAGS");
-			showTagFilterDialog.addClickHandler((e) -> showPostTags(preview.getTags()));
-			panel.add(showTagFilterDialog);
-			MaterialLink viewPostLink = new MaterialLink();
-			viewPostLink.setMargin(2);
-			viewPostLink.setTarget("_blank");
-			viewPostLink.setHref(href);
-			viewPostLink.setText("VIEW POST");
-			viewPostLink.setType(ButtonType.RAISED);
-			MaterialButton steemPost = new MaterialButton();
-			steemPost.setMargin(2);
-			steemPost.setText("STEEM POST");
-			steemPost.addClickHandler((e) -> fireEvent(new Event.SteemPost(preview)));
+			panel.add(viewTags);
+			panel.add(zoomImage);
+			panel.add(e621Post);
 			panel.add(steemPost);
-			panel.add(viewPostLink);
 			posts.add(panel);
 		}
 	}
