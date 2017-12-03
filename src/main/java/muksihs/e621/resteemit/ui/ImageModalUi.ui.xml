@@ -6,10 +6,11 @@
 	</ui:style>
 	<m:MaterialModal ui:field="modal" fullscreen="true">
 		<m:MaterialModalContent>
-			<m:MaterialButton ui:field="btnSteem" style='margin: 4px; float:right;' text="STEEM POST"/>
 			<m:MaterialButton ui:field="btnDismiss"
-				style='margin: 4px; float:right;' text="DISMISS"></m:MaterialButton>
-			<m:MaterialImage style="width: 100%;" ui:field="image" ></m:MaterialImage>
+				style='margin: 4px; float:right;' text="DISMISS" />
+			<m:MaterialButton ui:field="btnSteem"
+				style='margin: 4px; float:right;' text="STEEM POST" />
+			<m:MaterialImage style="width: 100%;" ui:field="image" />
 		</m:MaterialModalContent>
 	</m:MaterialModal>
 </ui:UiBinder> 
