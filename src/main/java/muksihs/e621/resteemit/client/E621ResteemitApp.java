@@ -41,7 +41,6 @@ import e621.models.post.tags.E621Tag;
 import e621.models.post.tags.E621TagTypes;
 import e621.models.tag.index.Tag;
 import elemental2.dom.DomGlobal;
-import gwt.material.design.client.MaterialWithJQuery;
 import muksihs.e621.resteemit.client.Event.Rating;
 import muksihs.e621.resteemit.client.Event.SteemPost;
 import muksihs.e621.resteemit.client.cache.AccountCache;
@@ -1110,20 +1109,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@Override
 	public void execute() {
-		waitForMaterialLoad();
-	}
-
-	private void waitForMaterialLoad() {
-		if (MaterialWithJQuery.isjQueryLoaded()) {
-			if (MaterialWithJQuery.isMaterializeLoaded()) {
-				onReady();
-				return;
-			}
-		}
-		Scheduler.get().scheduleDeferred(this::waitForMaterialLoad);
-	}
-
-	private void onReady() {
 		rp = RootPanel.get("e621resteemit");
 		rp.clear();
 		MainView mainView = new MainView();
