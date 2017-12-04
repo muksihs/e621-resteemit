@@ -291,7 +291,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		final String parentAuthor;
 		final String wif;
 		try {
-			metadata.setApp("MuksihsE621Browser/1.0");
+			metadata.setApp("MuksihsE621Browser/"+Consts.APP_VERSION);
 			metadata.setFormat("html");
 			metadata.setTags(tagsForPost.toArray(new String[0]));
 			body = generatePostHtml();
