@@ -11,6 +11,34 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class UpdateUpvotePreference extends GenericEvent {
+		private final boolean upvote;
+
+		public UpdateUpvotePreference(boolean upvote) {
+			this.upvote = upvote;
+		}
+
+		public boolean isUpvote() {
+			return upvote;
+		}
+
+	}
+
+	public class SetUpvotePreference extends GenericEvent {
+		public SetUpvotePreference(boolean upvote) {
+			this.upvote=upvote;
+		}
+		private final boolean upvote;
+		public Boolean isUpvote() {
+			return this.upvote;
+		}
+
+	}
+
+	public class GetUpvotePreference extends GenericEvent {
+
+	}
+
 	public class SetModalImage extends GenericEvent {
 
 		private final PostPreview zoomPreview;

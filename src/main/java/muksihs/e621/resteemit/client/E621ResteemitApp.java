@@ -219,6 +219,27 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 	
 	@EventHandler
+	protected void getUpvotePreference(Event.GetUpvotePreference event) {
+		SteemPostingInfo user = new AccountCache().get(DEFAULT_USER);
+		if (user==null) {
+			fireEvent(new Event.SetUpvotePreference(false));
+			return;
+		}
+		fireEvent(new Event.SetUpvotePreference(user.isUpvote()));
+	}
+	
+	@EventHandler
+	protected void updateUpvotePreference(Event.UpdateUpvotePreference event) {
+		AccountCache accountCache = new AccountCache();
+		SteemPostingInfo user = accountCache.get(DEFAULT_USER);
+		if (user==null) {
+			return;
+		}
+		user.setUpvote(event.isUpvote());
+		accountCache.put(DEFAULT_USER, user);
+	}
+	
+	@EventHandler
 	protected void getModalImage(Event.GetModalImage event) {
 		fireEvent(new Event.SetModalImage(zoomPreview));
 	}
@@ -594,8 +615,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			E621Tag tag = liter.next();
 			String altName = tag.getName().toLowerCase();
 			altName = altName.replaceAll("_?\\(.*?\\)", "");
-			altName = altName.replace("_", "-");
-			altName = altName.replace("/", "-");
+			altName = altName.replaceAll("[^a-z0-9]", "-");
+//			altName = altName.replace("/", "-");
+			altName = altName.replaceAll("-+", "-");
 			if (altName.replace("-", "").length() < altName.length() - 1) {
 				 altName=altName.replace("-", "");
 			}

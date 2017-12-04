@@ -8,6 +8,7 @@ public class SteemPostingInfo {
 	}
 	private String username;
 	private String wif;
+	private boolean upvote;
 	public SteemPostingInfo() {
 	}
 	
@@ -22,5 +23,13 @@ public class SteemPostingInfo {
 	}
 	public void setWif(String wif) {
 		this.wif = wif;
+	}
+
+	public boolean isUpvote() {
+		return upvote;
+	}
+
+	public void setUpvote(boolean upvote) {
+		this.upvote = upvote;
 	}
 }

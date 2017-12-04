@@ -7,14 +7,20 @@
 	<m:MaterialModal ui:field="modal" fullscreen="false">
 		<m:MaterialModalContent>
 			<m:MaterialTitle style="margin-top: -50px" title="CONFIRM POST"></m:MaterialTitle>
-			<m:MaterialButton ui:field="btnPost"
-				style='margin: 4px; float:right;' text="POST"></m:MaterialButton>
-			<m:MaterialButton ui:field="btnCancel"
-				style='margin: 4px; float:right;' text="CANCEL"></m:MaterialButton>
-			<m:MaterialLabel text="POST TITLE"></m:MaterialLabel>
-			<m:MaterialInput helperText="POST TITLE" type="TEXT"
-				ui:field="title">
-			</m:MaterialInput>
+			<m:MaterialPanel style='margin: 4px; width: auto; text-align: right;'>
+				<m:MaterialPanel
+					style='text-align: left; margin: 4px; margin-right: 8px; display: inline-block;'>
+					<m:MaterialCheckBox ui:field="upvote" text="Upvote Post"
+						type="FILLED" />
+				</m:MaterialPanel>
+				<m:MaterialButton ui:field="btnPost" text="POST" />
+				<m:MaterialButton ui:field="btnCancel" text="CANCEL" />
+			</m:MaterialPanel>
+			<m:MaterialPanel>
+				<m:MaterialLabel text="POST TITLE" />
+				<m:MaterialInput helperText="POST TITLE" type="TEXT"
+					ui:field="title" />
+			</m:MaterialPanel>
 			<m:MaterialPanel ui:field="tags"></m:MaterialPanel>
 			<m:MaterialPanel ui:field="preview"></m:MaterialPanel>
 		</m:MaterialModalContent>
