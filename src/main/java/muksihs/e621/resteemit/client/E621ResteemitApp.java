@@ -75,11 +75,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private static final Beneficiary BENEFICIARY = new Beneficiary(BENEFICIARY_ACCOUNT, 1);
 	private static final String DEFAULT_USER = "default-user";
 	/**
-	 * A non-empirical and non-arbitrary number to skew lower usage E621 tags
-	 * higher as part of the automatic steem tag selection process.
+	 * A non-empirical and non-arbitrary number to skew lower usage E621 tags higher
+	 * as part of the automatic steem tag selection process.
 	 */
 	private static final double E621_TAG_WEIGHT = 2.65d;
-//	private static final int CACHED_PAGE_SIZE = 20;
+	// private static final int CACHED_PAGE_SIZE = 20;
 	private static final int CACHED_PAGE_SIZE = 50;
 	private static final IndexCache INDEX_CACHE = new IndexCache(CACHED_PAGE_SIZE);
 
@@ -158,15 +158,17 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		// calculate percent weights
 		for (TrendingTag tag : state.matchingSteemTags) {
-			//caclulate e621 weighting then reverse it so that less used tags get more weight
-			tag.weight = (1d - (double) tag.e621Count / (double) maxE621Count)*E621_TAG_WEIGHT;
-			//add total payout weight
+			// caclulate e621 weighting then reverse it so that less used tags get more
+			// weight
+			tag.weight = (1d - (double) tag.e621Count / (double) maxE621Count) * E621_TAG_WEIGHT;
+			// add total payout weight
 			tag.weight += tag.totalPayouts / maxPayout;
 		}
 		// sort descending order to most valuable at top of list
 		Collections.sort(state.matchingSteemTags, (a, b) -> {
-			// sort by per post payout desc (is weighted heavily towards less used E621 tags)
-			if (Double.compare(a.weight, b.weight)!=0) {
+			// sort by per post payout desc (is weighted heavily towards less used E621
+			// tags)
+			if (Double.compare(a.weight, b.weight) != 0) {
 				return Double.compare(b.weight, a.weight);
 			}
 			// sort by payout (raw value of topic)
@@ -204,9 +206,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			state.tagsForPost.add(iter.next().name);
 		}
 		StringBuilder sb = new StringBuilder();
-		for (TrendingTag selectedTag: selectedTags) {
-			int tmp = (int)(selectedTag.weight*100d);
-			sb.append(selectedTag.name+" ["+tmp+"/"+((int)(selectedTag.totalPayouts/maxPayout*100d))+"], ");
+		for (TrendingTag selectedTag : selectedTags) {
+			int tmp = (int) (selectedTag.weight * 100d);
+			sb.append(selectedTag.name + " [" + tmp + "/" + ((int) (selectedTag.totalPayouts / maxPayout * 100d))
+					+ "], ");
 		}
 		DomGlobal.console.log(String.join(" ", state.tagsForPost));
 		DomGlobal.console.log(sb.toString());
@@ -217,39 +220,39 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		pendingPost = state;
 		fireEvent(new Event.ConfirmPost());
 	}
-	
+
 	@EventHandler
 	protected void getUpvotePreference(Event.GetUpvotePreference event) {
 		SteemPostingInfo user = new AccountCache().get(DEFAULT_USER);
-		if (user==null) {
+		if (user == null) {
 			fireEvent(new Event.SetUpvotePreference(false));
 			return;
 		}
 		fireEvent(new Event.SetUpvotePreference(user.isUpvote()));
 	}
-	
+
 	@EventHandler
 	protected void updateUpvotePreference(Event.UpdateUpvotePreference event) {
 		AccountCache accountCache = new AccountCache();
 		SteemPostingInfo user = accountCache.get(DEFAULT_USER);
-		if (user==null) {
+		if (user == null) {
 			return;
 		}
 		user.setUpvote(event.isUpvote());
 		accountCache.put(DEFAULT_USER, user);
 	}
-	
+
 	@EventHandler
 	protected void getModalImage(Event.GetModalImage event) {
 		fireEvent(new Event.SetModalImage(zoomPreview));
 	}
-	
+
 	@EventHandler
 	protected void zoomImage(Event.ZoomImage event) {
 		this.zoomPreview = event.getPreview();
 		fireEvent(new Event.ImageModal());
 	}
-	
+
 	@EventHandler
 	protected void getAutomaticTags(Event.GetAutomaticTags event) {
 		fireEvent(new Event.SetAutomaticTags(pendingPost.tagsForPost));
@@ -291,7 +294,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		final String parentAuthor;
 		final String wif;
 		try {
-			metadata.setApp("MuksihsE621Browser/"+Consts.APP_VERSION);
+			metadata.setApp("MuksihsE621Browser/" + Consts.APP_VERSION);
 			metadata.setFormat("html");
 			metadata.setTags(tagsForPost.toArray(new String[0]));
 			body = generatePostHtml();
@@ -340,12 +343,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					fireEvent(new Event.AlertMessage("ERROR: " + error.toString()));
 				}
 				if (result != null) {
-					CommentOptionsExtensions extensions = new CommentOptionsExtensions();
-					extensions.beneficiaries.beneficiaries.add(BENEFICIARY);
-					Scheduler.get().scheduleDeferred(
-							() -> SteemBroadcast.commentOptions(wif, author, permLink, extensions, benifCb));
-					Scheduler.get().scheduleDeferred(
-							() -> SteemBroadcast.vote(wif, username, username, permLink, 10000, voteCb));
+					setBeneficiary(permLink, author, wif, benifCb);
+					upvoteOwnPost(username, permLink, wif, voteCb);
 				}
 			}
 		};
@@ -601,8 +600,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	private void pickBestTagsThenPostConfirm(PostPreview preview, List<E621Tag> response) {
-		//sort descending by count,
-		Collections.sort(response, (a,b)->Long.compare(b.getCount(), a.getCount()));
+		// sort descending by count,
+		Collections.sort(response, (a, b) -> Long.compare(b.getCount(), a.getCount()));
 		MatchingTagsState state = new MatchingTagsState();
 		state.post = preview;
 		state.asSteemFormatted = new ArrayList<>();
@@ -616,10 +615,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			String altName = tag.getName().toLowerCase();
 			altName = altName.replaceAll("_?\\(.*?\\)", "");
 			altName = altName.replaceAll("[^a-z0-9]", "-");
-//			altName = altName.replace("/", "-");
+			// altName = altName.replace("/", "-");
 			altName = altName.replaceAll("-+", "-");
 			if (altName.replace("-", "").length() < altName.length() - 1) {
-				 altName=altName.replace("-", "");
+				altName = altName.replace("-", "");
 			}
 			if (already.contains(altName)) {
 				liter.remove();
@@ -1251,14 +1250,14 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	private String buildQuery() {
 		List<String> tags = new ArrayList<>();
-//		if (mustHaveRatings.size() == 1) {
-//			// querying E621 with multiple ratings doesn't seem to give correct results
-//			// so rely strictly on client side filtering if more than one rating provided
-//			Iterator<String> iRatings = mustHaveRatings.iterator();
-//			while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
-//				tags.add("rating:" + iRatings.next());
-//			}
-//		}
+		// if (mustHaveRatings.size() == 1) {
+		// // querying E621 with multiple ratings doesn't seem to give correct results
+		// // so rely strictly on client side filtering if more than one rating provided
+		// Iterator<String> iRatings = mustHaveRatings.iterator();
+		// while (iRatings.hasNext() && tags.size() < MAX_TAGS_PER_QUERY) {
+		// tags.add("rating:" + iRatings.next());
+		// }
+		// }
 		List<Tag> tmpMustHave = new ArrayList<>();
 		List<Tag> tmpMustNotHave = new ArrayList<>();
 		Iterator<String> iMust = mustHaveTags.iterator();
@@ -1463,6 +1462,25 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			reloadingOnFilterChange = true;
 			fireEvent(new Event.LoadInitialPreviews());
 		}
+	}
+
+	private void upvoteOwnPost(String username, final String permLink, final String wif,
+			SteemCallback<VoteResult> voteCb) {
+		Scheduler.get().scheduleDeferred(() -> {
+			// only if user wants to upvote their own post...
+			SteemPostingInfo user = new AccountCache().get(DEFAULT_USER);
+			if (user != null && user.isUpvote()) {
+				SteemBroadcast.vote(wif, username, username, permLink, 10000, voteCb);
+			}
+		});
+	}
+
+	private void setBeneficiary(final String permLink, final String author, final String wif,
+			SteemCallback<CommentResult> benifCb) {
+		CommentOptionsExtensions extensions = new CommentOptionsExtensions();
+		extensions.beneficiaries.beneficiaries.add(BENEFICIARY);
+		Scheduler.get()
+				.scheduleDeferred(() -> SteemBroadcast.commentOptions(wif, author, permLink, extensions, benifCb));
 	}
 
 }
