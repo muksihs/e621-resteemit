@@ -373,10 +373,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	private String generateTitle(List<E621Tag> tagList, long id) {
-		String autoTitle = "E621 Artwork";
+//		String autoTitle = "E621 Artwork";
+		String autoTitle = "";
 		String atArtists = getAtArtists(tagList);
 		atArtists = atArtists.replace("@", "");
-		if (!atArtists.trim().isEmpty()) {
+		if (getArtistCount(tagList)>0) {
 			atArtists = atArtists.replaceAll("_?\\(.*?\\)", "").replace("_", " ").replace("/", " ");
 			String[] tmp = atArtists.split("\\s+");
 			for (int ix = 0; ix < tmp.length; ix++) {
@@ -386,8 +387,15 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				}
 			}
 			atArtists = String.join(" ", tmp);
-			autoTitle = autoTitle.trim() + ", ";
-			if (atArtists.contains(" ")) {
+			tmp = atArtists.split("-+");
+			for (int ix = 0; ix < tmp.length; ix++) {
+				String tmpName = tmp[ix];
+				if (tmpName.length() > 1) {
+					tmp[ix] = tmpName.substring(0, 1).toUpperCase() + tmpName.substring(1);
+				}
+			}
+			atArtists = String.join("-", tmp);
+			if (getArtistCount(tagList)>1) {
 				autoTitle += "Artists: " + atArtists;
 			} else {
 				autoTitle += "Artist: " + atArtists;
@@ -541,6 +549,19 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			}
 		}
 		return atAuthor.toString();
+	}
+	
+	private int getArtistCount(List<E621Tag> taglist) {
+		int count=0;
+		Iterator<E621Tag> ialt = taglist.iterator();
+		while (ialt.hasNext()) {
+			E621Tag tag = ialt.next();
+			if (tag.getType() != E621TagTypes.Artist.getId()) {
+				continue;
+			}
+			count++;
+		}
+		return count;
 	}
 
 	@SuppressWarnings("unused")
