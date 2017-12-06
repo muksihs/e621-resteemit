@@ -373,11 +373,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	}
 
 	private String generateTitle(List<E621Tag> tagList, long id) {
-//		String autoTitle = "E621 Artwork";
+		// String autoTitle = "E621 Artwork";
 		String autoTitle = "";
 		String atArtists = getAtArtists(tagList);
 		atArtists = atArtists.replace("@", "");
-		if (getArtistCount(tagList)>0) {
+		if (getArtistCount(tagList) > 0) {
 			atArtists = atArtists.replaceAll("_?\\(.*?\\)", "").replace("_", " ").replace("/", " ");
 			String[] tmp = atArtists.split("\\s+");
 			for (int ix = 0; ix < tmp.length; ix++) {
@@ -395,7 +395,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				}
 			}
 			atArtists = String.join("-", tmp);
-			if (getArtistCount(tagList)>1) {
+			if (getArtistCount(tagList) > 1) {
 				autoTitle += "Artists: " + atArtists;
 			} else {
 				autoTitle += "Artist: " + atArtists;
@@ -527,7 +527,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 		DivElement tmpDiv = doc.createDivElement();
 		tmpDiv.appendChild(postDiv);
-		String html = "<html>\n" + tmpDiv.getInnerHTML().replace(">", ">\n") + "</html>";
+		String html = "<html>\n" + tmpDiv.getInnerHTML().replace("<", "\n<").replace(">", ">\n").replaceAll("\n+", "\n")
+				+ "</html>";
 		return html;
 	}
 
@@ -550,9 +551,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		return atAuthor.toString();
 	}
-	
+
 	private int getArtistCount(List<E621Tag> taglist) {
-		int count=0;
+		int count = 0;
 		Iterator<E621Tag> ialt = taglist.iterator();
 		while (ialt.hasNext()) {
 			E621Tag tag = ialt.next();
