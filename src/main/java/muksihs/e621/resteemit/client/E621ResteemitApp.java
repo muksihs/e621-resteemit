@@ -414,23 +414,22 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			characters = String.join(" ", tmp);
 			autoTitle = autoTitle.trim() + ", ";
 			autoTitle += "Featuring: " + characters;
+		} else {
+			String species = getSpecies(tagList);
+			if (!species.trim().isEmpty()) {
+				species = species.replaceAll("_?\\(.*?\\)", "").replace("_", " ").replace("/", " ");
+				String[] tmp = species.split("\\s+");
+				for (int ix = 0; ix < tmp.length; ix++) {
+					String tmpName = tmp[ix];
+					if (tmpName.length() > 1) {
+						tmp[ix] = tmpName.substring(0, 1).toUpperCase() + tmpName.substring(1);
+					}
+				}
+				species = String.join(" ", tmp);
+				autoTitle = autoTitle.trim() + ", ";
+				autoTitle += "Subject Material: " + species;
+			}
 		}
-//		else {
-//			String species = getSpecies(tagList);
-//			if (!species.trim().isEmpty()) {
-//				species = species.replaceAll("_?\\(.*?\\)", "").replace("_", " ").replace("/", " ");
-//				String[] tmp = species.split("\\s+");
-//				for (int ix = 0; ix < tmp.length; ix++) {
-//					String tmpName = tmp[ix];
-//					if (tmpName.length() > 1) {
-//						tmp[ix] = tmpName.substring(0, 1).toUpperCase() + tmpName.substring(1);
-//					}
-//				}
-//				species = String.join(" ", tmp);
-//				autoTitle = autoTitle.trim() + ", ";
-//				autoTitle += "Subject Material: " + species;
-//			}
-//		}
 		// autoTitle = autoTitle.trim() + ", Post Id# " + id;
 		return autoTitle;
 	}
