@@ -527,8 +527,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 		DivElement tmpDiv = doc.createDivElement();
 		tmpDiv.appendChild(postDiv);
-		String html = "<html>\n" + tmpDiv.getInnerHTML().replace("<", "\n<").replace(">", ">\n").replaceAll("\n+", "\n")
-				+ "</html>";
+		String html = "<html>" + tmpDiv.getInnerHTML() + "</html>";
 		return html;
 	}
 
