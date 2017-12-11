@@ -6,6 +6,7 @@ import java.util.Set;
 import com.google.web.bindery.event.shared.binder.GenericEvent;
 
 import muksihs.e621.resteemit.client.E621ResteemitApp.MostRecentPostInfo;
+import muksihs.e621.resteemit.shared.E621Rating;
 import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.View;
 
@@ -326,28 +327,15 @@ public interface Event {
 
 	}
 
-	public static enum Rating {
-		SAFE("s"), QUESTIONABLE("q"), EXPLICIT("e");
-		private final String tag;
-
-		private Rating(String tag) {
-			this.tag = tag;
-		}
-
-		public String getTag() {
-			return tag;
-		}
-	}
-
 	public class SetRating extends GenericEvent {
-		private final Set<Rating> rating;
+		private final Set<E621Rating> e621Rating;
 
-		public SetRating(Set<Rating> rating) {
-			this.rating = rating;
+		public SetRating(Set<E621Rating> e621Rating) {
+			this.e621Rating = e621Rating;
 		}
 
-		public Set<Rating> getRating() {
-			return rating;
+		public Set<E621Rating> getRating() {
+			return e621Rating;
 		}
 	}
 

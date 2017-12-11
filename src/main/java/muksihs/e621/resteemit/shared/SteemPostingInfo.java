@@ -1,5 +1,8 @@
 package muksihs.e621.resteemit.shared;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 public class SteemPostingInfo {
 	public SteemPostingInfo(String username, String wif) {
 		super();
@@ -9,7 +12,10 @@ public class SteemPostingInfo {
 	private String username;
 	private String wif;
 	private boolean upvote;
+	private Set<E621Filter> savedFilters;
+	
 	public SteemPostingInfo() {
+		savedFilters = new TreeSet<>();
 	}
 	
 	public String getUsername() {

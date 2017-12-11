@@ -22,6 +22,10 @@
 				<m:MaterialCheckBox ui:field="ratingExplicit"
 					text="Show Explicit" type="FILLED" />
 			</m:MaterialPanel>
+			<m:MaterialButton ui:field="loadFilter" style='margin: 2px;'
+				text="Load Filter"/>
+				<m:MaterialButton ui:field="saveFilter" style='margin: 2px;'
+				text="Save Filter"/>
 			<m:MaterialButton ui:field="clearSearch" style='margin: 2px;'
 				text="Clear Search"/>
 			<m:MaterialButton ui:field="mostRecent" style='margin: 2px;'

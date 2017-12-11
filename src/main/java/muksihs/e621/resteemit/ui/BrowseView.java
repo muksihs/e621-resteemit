@@ -30,8 +30,8 @@ import gwt.material.design.client.ui.MaterialModal;
 import gwt.material.design.client.ui.MaterialPanel;
 import gwt.material.design.client.ui.html.Br;
 import muksihs.e621.resteemit.client.Event;
-import muksihs.e621.resteemit.client.Event.Rating;
 import muksihs.e621.resteemit.shared.Consts;
+import muksihs.e621.resteemit.shared.E621Rating;
 import muksihs.e621.resteemit.shared.PostPreview;
 
 public class BrowseView extends EventBusComposite {
@@ -49,6 +49,10 @@ public class BrowseView extends EventBusComposite {
 	protected MaterialCheckBox ratingQuestionable;
 	@UiField
 	protected MaterialCheckBox ratingExplicit;
+	@UiField
+	MaterialButton loadFilter;
+	@UiField
+	MaterialButton saveFilter;
 	@UiField
 	MaterialButton clearSearch;
 	@UiField
@@ -85,18 +89,18 @@ public class BrowseView extends EventBusComposite {
 			ratingExplicit.setValue(true);
 			checkbox.setValue(false);
 		}
-		Set<Rating> ratings = new HashSet<>();
+		Set<E621Rating> e621Ratings = new HashSet<>();
 		if (ratingSafe.getValue()) {
-			ratings.add(Rating.SAFE);
+			e621Ratings.add(E621Rating.SAFE);
 		}
 		if (ratingQuestionable.getValue()) {
-			ratings.add(Rating.QUESTIONABLE);
+			e621Ratings.add(E621Rating.QUESTIONABLE);
 		}
 		if (ratingExplicit.getValue()) {
-			ratings.add(Rating.EXPLICIT);
+			e621Ratings.add(E621Rating.EXPLICIT);
 		}
 		// update app
-		fireEvent(new Event.SetRating(ratings));
+		fireEvent(new Event.SetRating(e621Ratings));
 	}
 
 	public BrowseView() {

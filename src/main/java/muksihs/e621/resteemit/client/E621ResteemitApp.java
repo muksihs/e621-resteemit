@@ -41,12 +41,12 @@ import e621.models.post.tags.E621Tag;
 import e621.models.post.tags.E621TagTypes;
 import e621.models.tag.index.Tag;
 import elemental2.dom.DomGlobal;
-import muksihs.e621.resteemit.client.Event.Rating;
 import muksihs.e621.resteemit.client.Event.SteemPost;
 import muksihs.e621.resteemit.client.cache.AccountCache;
 import muksihs.e621.resteemit.client.cache.IndexCache;
 import muksihs.e621.resteemit.client.cache.TagsCache;
 import muksihs.e621.resteemit.shared.Consts;
+import muksihs.e621.resteemit.shared.E621Rating;
 import muksihs.e621.resteemit.shared.MatchingTagsState;
 import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.SavedState;
@@ -185,7 +185,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			return a.name.compareToIgnoreCase(b.name);
 		});
 		List<TrendingTag> selectedTags;
-		if (!state.post.getRating().equals(Rating.SAFE.getTag())) {
+		if (!state.post.getRating().equals(E621Rating.SAFE.getTag())) {
 			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 2);
 			selectedTags = state.matchingSteemTags.subList(0, min);
 			TrendingTag nsfwTag = new TrendingTag();
@@ -835,10 +835,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	protected void browseViewLoaded(Event.BrowseViewLoaded event) {
 		if (History.getToken().trim().isEmpty()) {
 			Set<String> boxes = new HashSet<>();
-			boxes.add(Rating.SAFE.getTag());
+			boxes.add(E621Rating.SAFE.getTag());
 			fireEvent(new Event.SetRatingsBoxes(boxes));
-			Set<Rating> safe = new HashSet<>();
-			safe.add(Rating.SAFE);
+			Set<E621Rating> safe = new HashSet<>();
+			safe.add(E621Rating.SAFE);
 			fireEvent(new Event.SetRating(safe));
 		} else {
 			History.fireCurrentHistoryState();
@@ -880,9 +880,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		 * if ALL ratings, then leave settings clear so that more tags can be used as
 		 * part of filtering query
 		 */
-		if (event.getRating().size() != Rating.values().length) {
-			for (Rating rating : event.getRating()) {
-				mustHaveRatings.add(rating.getTag());
+		if (event.getRating().size() != E621Rating.values().length) {
+			for (E621Rating e621Rating : event.getRating()) {
+				mustHaveRatings.add(e621Rating.getTag());
 			}
 		}
 		fireEvent(new Event.LoadInitialPreviews());
@@ -913,7 +913,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		mustHaveRatings.clear();
 		mustHaveTags.clear();
 		mustNotHaveTags.clear();
-		mustHaveRatings.add(Rating.SAFE.getTag());
+		mustHaveRatings.add(E621Rating.SAFE.getTag());
 		activePage = 0;
 		savedPageStartId = 0;
 		fireEvent(new Event.SetRatingsBoxes(mustHaveRatings));
