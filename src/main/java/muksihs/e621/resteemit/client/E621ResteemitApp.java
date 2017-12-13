@@ -219,7 +219,23 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		pendingPost = state;
 		fireEvent(new Event.ConfirmPost());
 	}
-
+	
+	@EventHandler
+	protected void loadFilter(Event.LoadFilter event) {
+		
+	}
+	
+	@EventHandler
+	protected void saveFilter(Event.SaveFilter event) {
+		SavedState hash = getSavedStateHash();
+		hash.setPostId(0);
+		AccountCache accountCache = new AccountCache();
+		SteemPostingInfo info = accountCache.get(DEFAULT_USER);
+		info.getSavedFilters().add(SavedState.asHistoryToken(hash));
+		accountCache.put(DEFAULT_USER, info);
+		fireEvent(new Event.QuickMessage("Filter Saved!"));
+	}
+			
 	@EventHandler
 	protected void getUpvotePreference(Event.GetUpvotePreference event) {
 		SteemPostingInfo user = new AccountCache().get(DEFAULT_USER);
@@ -678,6 +694,10 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	@EventHandler
 	protected void loginLogoutToggle(Event.LoginLogout event) {
 		if (isLoggedIn()) {
+			AccountCache accountCache = new AccountCache();
+			SteemPostingInfo steemPostingInfo = accountCache.get(DEFAULT_USER);
+			steemPostingInfo.setWif(null);
+			accountCache.put(DEFAULT_USER, steemPostingInfo);
 			loggedIn = false;
 			fireEvent(new Event.LoginComplete(false));
 		} else {
@@ -755,7 +775,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 					if (!SteemAuth.wifIsValid(event.getWif(), publicWif)) {
 						new AccountCache().remove(DEFAULT_USER);
 						if (!event.isSilent()) {
-							fireEvent(new Event.AlertMessage("INVALID PRIVATE POSTING KEY"));
+							fireEvent(new Event.AlertMessage("THAT IS NOT YOUR PRIVATE POSTING KEY"));
 						}
 						fireEvent(new Event.LoginComplete(false));
 						return;
@@ -866,6 +886,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void removeFromFilter(Event.RemoveFromFilter event) {
+		if (activePage==0) {
+			savedPageStartId = 0;
+		}
 		reloadingOnFilterChange = true;
 		mustHaveTags.remove(event.getTag().substring(1));
 		mustNotHaveTags.remove(event.getTag().substring(1));
@@ -874,12 +897,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void setRating(Event.SetRating event) {
+		if (activePage==0) {
+			savedPageStartId = 0;
+		}
 		reloadingOnFilterChange = true;
 		mustHaveRatings.clear();
-		/*
-		 * if ALL ratings, then leave settings clear so that more tags can be used as
-		 * part of filtering query
-		 */
 		if (event.getRating().size() != E621Rating.values().length) {
 			for (E621Rating e621Rating : event.getRating()) {
 				mustHaveRatings.add(e621Rating.getTag());
@@ -922,6 +944,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void addToIncludeFilter(Event.AddToIncludeFilter event) {
+		if (activePage==0) {
+			savedPageStartId = 0;
+		}
 		reloadingOnFilterChange = true;
 		mustHaveTags.add(event.getTag());
 		fireEvent(new Event.LoadInitialPreviews());
@@ -929,6 +954,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void addToExcludeFilter(Event.AddToExcludeFilter event) {
+		if (activePage==0) {
+			savedPageStartId = 0;
+		}
 		reloadingOnFilterChange = true;
 		mustNotHaveTags.add(event.getTag());
 		fireEvent(new Event.LoadInitialPreviews());

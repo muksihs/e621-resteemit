@@ -12,6 +12,14 @@ import muksihs.e621.resteemit.shared.View;
 
 public interface Event {
 
+	public class SaveFilter extends GenericEvent {
+
+	}
+
+	public class LoadFilter extends GenericEvent {
+
+	}
+
 	public class UpdateUpvotePreference extends GenericEvent {
 		private final boolean upvote;
 

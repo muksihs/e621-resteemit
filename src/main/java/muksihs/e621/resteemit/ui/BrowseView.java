@@ -114,6 +114,9 @@ public class BrowseView extends EventBusComposite {
 		ratingQuestionable.addClickHandler((e) -> updateRatings(ratingQuestionable));
 		ratingExplicit.addClickHandler((e) -> updateRatings(ratingExplicit));
 		clearSearch.addClickHandler((e)->fireEvent(new Event.ClearSearch()));
+		
+		loadFilter.addClickHandler((e)->fireEvent(new Event.LoadFilter()));
+		saveFilter.addClickHandler((e)->fireEvent(new Event.SaveFilter()));
 	}
 
 	interface MyEventBinder extends EventBinder<BrowseView> {

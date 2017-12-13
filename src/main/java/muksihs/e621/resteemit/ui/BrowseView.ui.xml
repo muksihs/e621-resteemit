@@ -6,44 +6,51 @@
 	
 	</ui:style>
 	<m:MaterialPanel>
-		<m:MaterialPanel style='text-align: right; margin-top: 2px;' ui:field="menu">
-			<m:MaterialPanel
-				style='text-align: left; margin: 4px; display: inline-block;'>
-				<m:MaterialCheckBox ui:field="ratingSafe" text="Show Safe"
-					type="FILLED" />
-			</m:MaterialPanel>
-			<m:MaterialPanel
-				style='text-align: left; margin: 4px; display: inline-block;'>
-				<m:MaterialCheckBox ui:field="ratingQuestionable"
-					text="Show Questionable" type="FILLED" />
-			</m:MaterialPanel>
-			<m:MaterialPanel
-				style='text-align: left; margin: 4px; display: inline-block;'>
-				<m:MaterialCheckBox ui:field="ratingExplicit"
-					text="Show Explicit" type="FILLED" />
-			</m:MaterialPanel>
-			<m:MaterialButton ui:field="loadFilter" style='margin: 2px;'
-				text="Load Filter"/>
+		<m:MaterialPanel style='text-align: right; margin-top: 2px;'
+			ui:field="menu">
+			<m:MaterialPanel>
+				<m:MaterialPanel
+					style='text-align: left; margin: 4px; display: inline-block;'>
+					<m:MaterialCheckBox ui:field="ratingSafe" text="Show Safe"
+						type="FILLED" />
+				</m:MaterialPanel>
+				<m:MaterialPanel
+					style='text-align: left; margin: 4px; display: inline-block;'>
+					<m:MaterialCheckBox ui:field="ratingQuestionable"
+						text="Show Questionable" type="FILLED" />
+				</m:MaterialPanel>
+				<m:MaterialPanel
+					style='text-align: left; margin: 4px; display: inline-block;'>
+					<m:MaterialCheckBox ui:field="ratingExplicit"
+						text="Show Explicit" type="FILLED" />
+				</m:MaterialPanel>
+				<m:MaterialButton ui:field="clearSearch" style='margin: 2px;'
+					text="Clear Search" />
+				<m:MaterialButton ui:field="loadFilter" style='margin: 2px;'
+					text="Load Filter" />
 				<m:MaterialButton ui:field="saveFilter" style='margin: 2px;'
-				text="Save Filter"/>
-			<m:MaterialButton ui:field="clearSearch" style='margin: 2px;'
-				text="Clear Search"/>
-			<m:MaterialButton ui:field="mostRecent" style='margin: 2px;'
-				text="Most Recent"/>
-			<m:MaterialButton ui:field="previous" style='margin: 2px;'
-				text="Previous"/>
-			<m:MaterialButton ui:field="next" style='margin: 2px;'
-				text="Next"/>
+					text="Save Filter" />
+			</m:MaterialPanel>
+			<m:MaterialPanel>
+				<m:MaterialButton ui:field="mostRecent" style='margin: 2px;'
+					text="Most Recent" />
+				<m:MaterialButton ui:field="previous" style='margin: 2px;'
+					text="Previous" />
+				<m:MaterialButton ui:field="next" style='margin: 2px;'
+					text="Next" />
+			</m:MaterialPanel>
 		</m:MaterialPanel>
-		<m:MaterialPanel style="text-align: center; margin-bottom: 4px;" ui:field="posts"/>
-		
-		<m:MaterialPanel style='text-align: right; padding-top: 4px;' ui:field="menuBtm">
+		<m:MaterialPanel style="text-align: center; margin-bottom: 4px;"
+			ui:field="posts" />
+
+		<m:MaterialPanel style='text-align: right; padding-top: 4px;'
+			ui:field="menuBtm">
 			<m:MaterialButton ui:field="previousBtm" style='margin: 2px;'
-				text="Previous"/>
+				text="Previous" />
 			<m:MaterialButton ui:field="nextBtm" style='margin: 2px;'
-				text="Next"/>
+				text="Next" />
 		</m:MaterialPanel>
-		
+
 		<m:MaterialCollapsible ui:field="tags">
 			<m:MaterialCollapsibleItem>
 				<m:MaterialCollapsibleHeader>
