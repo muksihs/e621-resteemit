@@ -185,7 +185,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			return a.name.compareToIgnoreCase(b.name);
 		});
 		List<TrendingTag> selectedTags;
-		if (!state.post.getRating().equals(E621Rating.SAFE.getTag())) {
+		boolean isSafe = state.post.getRating().equals(E621Rating.SAFE.getTag());
+		if (!isSafe) {
 			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 2);
 			selectedTags = state.matchingSteemTags.subList(0, min);
 			TrendingTag nsfwTag = new TrendingTag();
@@ -197,7 +198,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			selectedTags = state.matchingSteemTags.subList(0, min);
 		}
 		TrendingTag e621tag = new TrendingTag();
-		e621tag.name = "e621";
+		if (isSafe) {
+			e621tag.name = "art";
+		} else {
+			e621tag.name = "e621";
+		}
 		selectedTags.add(0, e621tag);
 		state.tagsForPost = new ArrayList<>();
 		Iterator<TrendingTag> iter = selectedTags.iterator();
