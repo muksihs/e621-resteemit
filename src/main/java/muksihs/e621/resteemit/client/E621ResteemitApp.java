@@ -474,19 +474,8 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		imgDiv.setAttribute("style", "max-width: 100%; margin: 4px; text-align: center;");
 		imgDiv.appendChild(imgA);
 
-		long postId = pendingPost.post.getId();
-		AnchorElement e621Link = doc.createAnchorElement();
-		e621Link.setHref(Consts.E621_SHOW_POST + postId);
-		e621Link.setTarget("_blank");
-		e621Link.appendChild(doc.createTextNode("#" + postId));
-		ParagraphElement p2 = doc.createPElement();
-		p2.appendChild(doc.createTextNode("E621: "));
-		p2.appendChild(e621Link);
-		p2.appendChild(doc.createTextNode("."));
-
 		DivElement postDiv = doc.createDivElement();
 		postDiv.appendChild(imgDiv);
-		postDiv.appendChild(p2);
 
 		for (E621TagTypes tagType : E621TagTypes.values()) {
 			StringBuilder sb = new StringBuilder();
@@ -535,6 +524,17 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		p1.appendChild(doc.createTextNode("Curated using Muksihs' E621 Browser: "));
 		p1.appendChild(muksihsLink);
 		p1.appendChild(doc.createTextNode("."));
+		
+		long postId = pendingPost.post.getId();
+		AnchorElement e621Link = doc.createAnchorElement();
+		e621Link.setHref(Consts.E621_SHOW_POST + postId);
+		e621Link.setTarget("_blank");
+		e621Link.appendChild(doc.createTextNode("#" + postId));
+		ParagraphElement p2 = doc.createPElement();
+		p2.appendChild(doc.createTextNode("E621: "));
+		p2.appendChild(e621Link);
+		p2.appendChild(doc.createTextNode("."));
+		postDiv.appendChild(p2);
 
 		Element curatedBy = doc.createElement("center");
 		curatedBy.getStyle().setTextAlign(TextAlign.CENTER);
