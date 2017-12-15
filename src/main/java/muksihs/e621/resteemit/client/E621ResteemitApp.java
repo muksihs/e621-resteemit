@@ -461,20 +461,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private String generatePostHtml() {
 		Document doc = Document.get();
 
-		AnchorElement muksihsLink = doc.createAnchorElement();
-		muksihsLink.setHref("http://muksihs.com/e621-resteemit/");
-		muksihsLink.setTarget("_blank");
-		muksihsLink.appendChild(doc.createTextNode("http://muksihs.com/e621-resteemit/"));
-
-		ParagraphElement p1 = doc.createPElement();
-		p1.appendChild(doc.createTextNode("Curated using Muksihs' E621 Browser: "));
-		p1.appendChild(muksihsLink);
-		p1.appendChild(doc.createTextNode("."));
-
-		Element curatedBy = doc.createElement("center");
-		curatedBy.getStyle().setTextAlign(TextAlign.CENTER);
-		curatedBy.appendChild(p1);
-
 		ImageElement img = doc.createImageElement();
 		img.setSrc(pendingPost.post.getFileUrl());
 		img.setAttribute("style", "max-width: 100%; margin: 0px;");
@@ -499,7 +485,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		p2.appendChild(doc.createTextNode("."));
 
 		DivElement postDiv = doc.createDivElement();
-		postDiv.appendChild(curatedBy);
 		postDiv.appendChild(imgDiv);
 		postDiv.appendChild(p2);
 
@@ -540,6 +525,21 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 				postDiv.appendChild(p3);
 			}
 		}
+		
+		AnchorElement muksihsLink = doc.createAnchorElement();
+		muksihsLink.setHref("http://muksihs.com/e621-resteemit/");
+		muksihsLink.setTarget("_blank");
+		muksihsLink.appendChild(doc.createTextNode("http://muksihs.com/e621-resteemit/"));
+
+		ParagraphElement p1 = doc.createPElement();
+		p1.appendChild(doc.createTextNode("Curated using Muksihs' E621 Browser: "));
+		p1.appendChild(muksihsLink);
+		p1.appendChild(doc.createTextNode("."));
+
+		Element curatedBy = doc.createElement("center");
+		curatedBy.getStyle().setTextAlign(TextAlign.CENTER);
+		curatedBy.appendChild(p1);
+		postDiv.appendChild(curatedBy);
 
 		DivElement tmpDiv = doc.createDivElement();
 		tmpDiv.appendChild(postDiv);

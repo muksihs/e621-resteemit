@@ -19,6 +19,7 @@ import com.google.web.bindery.event.shared.binder.EventHandler;
 
 import gwt.material.design.client.constants.ButtonType;
 import gwt.material.design.client.constants.Color;
+import gwt.material.design.client.constants.Display;
 import gwt.material.design.client.constants.TextAlign;
 import gwt.material.design.client.ui.MaterialAnchorButton;
 import gwt.material.design.client.ui.MaterialButton;
@@ -117,6 +118,9 @@ public class BrowseView extends EventBusComposite {
 		
 		loadFilter.addClickHandler((e)->fireEvent(new Event.LoadFilter()));
 		saveFilter.addClickHandler((e)->fireEvent(new Event.SaveFilter()));
+		
+		loadFilter.setDisplay(Display.NONE);
+		saveFilter.setDisplay(Display.NONE);
 	}
 
 	interface MyEventBinder extends EventBinder<BrowseView> {
