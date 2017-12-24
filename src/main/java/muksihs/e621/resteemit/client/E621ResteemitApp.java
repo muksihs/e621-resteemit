@@ -197,12 +197,12 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 2);
 			selectedTags = state.matchingSteemTags.subList(0, min);
 		}
-		TrendingTag e621tag = new TrendingTag();
-		e621tag.name = "e621";
-		selectedTags.add(0, e621tag);
 		TrendingTag arttag = new TrendingTag();
 		arttag.name = "art";
 		selectedTags.add(0, arttag);
+		TrendingTag e621tag = new TrendingTag();
+		e621tag.name = "e621";
+		selectedTags.add(0, e621tag);
 		state.tagsForPost = new ArrayList<>();
 		Iterator<TrendingTag> iter = selectedTags.iterator();
 		while (iter.hasNext()) {
