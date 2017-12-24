@@ -185,25 +185,24 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			return a.name.compareToIgnoreCase(b.name);
 		});
 		List<TrendingTag> selectedTags;
-		boolean isSafe = state.post.getRating().equals(E621Rating.SAFE.getTag());
+		boolean isSafe = !state.post.getRating().equals(E621Rating.EXPLICIT.getTag());
 		if (!isSafe) {
-			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 2);
+			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 3);
 			selectedTags = state.matchingSteemTags.subList(0, min);
 			TrendingTag nsfwTag = new TrendingTag();
 			nsfwTag.name = "nsfw";
 			state.matchingSteemTags.add(nsfwTag);
 			selectedTags.add(nsfwTag);
 		} else {
-			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 1);
+			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 2);
 			selectedTags = state.matchingSteemTags.subList(0, min);
 		}
 		TrendingTag e621tag = new TrendingTag();
-		if (isSafe) {
-			e621tag.name = "art";
-		} else {
-			e621tag.name = "e621";
-		}
+		e621tag.name = "e621";
 		selectedTags.add(0, e621tag);
+		TrendingTag arttag = new TrendingTag();
+		arttag.name = "art";
+		selectedTags.add(0, arttag);
 		state.tagsForPost = new ArrayList<>();
 		Iterator<TrendingTag> iter = selectedTags.iterator();
 		while (iter.hasNext()) {
