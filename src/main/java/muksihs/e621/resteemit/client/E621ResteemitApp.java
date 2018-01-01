@@ -659,6 +659,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			altName = altName.replaceAll("-+", "-");
 			//skip tags that don't start with letters
 			if (!altName.matches("^[a-z].*")) {
+				liter.remove();
 				continue;
 			}
 			if (altName.replace("-", "").length() < altName.length() - 1) {
