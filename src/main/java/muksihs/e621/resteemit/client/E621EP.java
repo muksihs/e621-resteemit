@@ -19,15 +19,21 @@ public class E621EP implements EntryPoint, IsSdm {
 		@Override
 		public void onFailure(Exception reason) {
 			GWT.log(reason.getMessage(), reason);
+			setSteemJsOptions();
 			Scheduler.get().scheduleDeferred(new E621ResteemitApp());
 		}
 
 		@Override
 		public void onSuccess(Void result) {
+			setSteemJsOptions();
 			Scheduler.get().scheduleDeferred(new E621ResteemitApp());
 		}
 	};
-
+	
+	private static native void setSteemJsOptions();/**
+		$wnd.steem.api.setOptions({ url: 'https://api.steemit.com' });
+	**/
+	
 	@Override
 	public void onModuleLoad() {
 		GWT.log("onModuleLoad");
