@@ -8,7 +8,7 @@
 
 	<!-- System.getProperties() -->
 	<define-configuration-property name="version" is-multi-valued='false'/>
-	<set-configuration-property name="version" value="20180101"/>
+	<set-configuration-property name="version" value="20180106"/>
 
 	<entry-point class='muksihs.e621.resteemit.client.E621EP' />
 
