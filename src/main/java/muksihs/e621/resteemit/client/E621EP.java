@@ -29,18 +29,20 @@ public class E621EP implements EntryPoint, IsSdm {
 			Scheduler.get().scheduleDeferred(new E621ResteemitApp());
 		}
 	};
-	
+
 	private static native void setSteemJsOptions();/*-{
-		$wnd.steem.api.setOptions({ url: 'https://api.steemit.com' });
+		$wnd.steem.api.setOptions({
+			url : 'https://api.steemit.com'
+		});
 	}-*/
-	
+
 	@Override
 	public void onModuleLoad() {
 		GWT.log("onModuleLoad");
 		GWT.setUncaughtExceptionHandler(handler);
 		try {
 			// Location.getProtocol() +
-			String scriptUrl = "//cdn.steemjs.com/lib/latest/steem.min.js?_="+System.currentTimeMillis();
+			String scriptUrl = "//cdn.steemjs.com/lib/latest/steem.min.js?_=" + System.currentTimeMillis();
 			GWT.log("steemjs CDN: " + scriptUrl);
 			ScriptInjector.fromUrl(scriptUrl)//
 					.setRemoveTag(false)//
