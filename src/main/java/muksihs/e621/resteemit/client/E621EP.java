@@ -30,9 +30,9 @@ public class E621EP implements EntryPoint, IsSdm {
 		}
 	};
 	
-	private static native void setSteemJsOptions();/**
+	private static native void setSteemJsOptions();/*-{
 		$wnd.steem.api.setOptions({ url: 'https://api.steemit.com' });
-	**/
+	}-*/
 	
 	@Override
 	public void onModuleLoad() {
