@@ -42,7 +42,7 @@ public class E621EP implements EntryPoint, IsSdm {
 		GWT.setUncaughtExceptionHandler(handler);
 		try {
 			// Location.getProtocol() +
-			String scriptUrl = "//cdn.steemjs.com/lib/latest/steem.min.js?_=" + System.currentTimeMillis();
+			String scriptUrl = "https://cdn.steemjs.com/lib/latest/steem.min.js";
 			GWT.log("steemjs CDN: " + scriptUrl);
 			ScriptInjector.fromUrl(scriptUrl)//
 					.setRemoveTag(false)//
