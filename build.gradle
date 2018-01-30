@@ -71,8 +71,8 @@ gwt {
 	compiler {
 		ea = false //enable assert statements for testing result conditions
 		strict = true;
-		//style = "OBF";
-		style = "PRETTY";
+		style = "OBF";
+		//style = "PRETTY";
 		//style = "DETAILED";
 		localWorkers = 4;
 	}
