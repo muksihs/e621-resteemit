@@ -10,8 +10,8 @@ import com.google.web.bindery.event.shared.binder.EventHandler;
 import gwt.material.design.client.ui.MaterialButton;
 import gwt.material.design.client.ui.MaterialLink;
 import gwt.material.design.client.ui.MaterialModal;
-import muksihs.e621.resteemit.client.E621ResteemitApp.MostRecentPostInfo;
 import muksihs.e621.resteemit.client.Event;
+import muksihs.e621.resteemit.shared.MostRecentPostInfo;
 
 public class PostDoneUi extends EventBusComposite {
 

@@ -48,6 +48,7 @@ import muksihs.e621.resteemit.client.cache.TagsCache;
 import muksihs.e621.resteemit.shared.Consts;
 import muksihs.e621.resteemit.shared.E621Rating;
 import muksihs.e621.resteemit.shared.MatchingTagsState;
+import muksihs.e621.resteemit.shared.MostRecentPostInfo;
 import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.SavedState;
 import muksihs.e621.resteemit.shared.SteemPostingInfo;
@@ -375,12 +376,6 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			fireEvent(new Event.Loading(false));
 			GWT.log(e.getMessage(), e);
 		}
-	}
-
-	public static class MostRecentPostInfo {
-		public String author;
-		public String firstTag;
-		public String permLink;
 	}
 
 	private MostRecentPostInfo mostRecent;

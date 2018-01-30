@@ -5,8 +5,8 @@ import java.util.Set;
 
 import com.google.web.bindery.event.shared.binder.GenericEvent;
 
-import muksihs.e621.resteemit.client.E621ResteemitApp.MostRecentPostInfo;
 import muksihs.e621.resteemit.shared.E621Rating;
+import muksihs.e621.resteemit.shared.MostRecentPostInfo;
 import muksihs.e621.resteemit.shared.PostPreview;
 import muksihs.e621.resteemit.shared.View;
 
