@@ -70,7 +70,7 @@ import steem.model.accountinfo.Posting;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
-	private static final int MAX_TAGS_PER_POST = 5;
+	private static final int MAX_TAGS_PER_POST = 10;
 	private static final String BENEFICIARY_ACCOUNT = "muksihs";
 	private static final Beneficiary BENEFICIARY = new Beneficiary(BENEFICIARY_ACCOUNT, 1);
 	private static final String DEFAULT_USER = "default-user";
