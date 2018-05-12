@@ -14,8 +14,8 @@
 			<m:MaterialLink style="font-size: 200%;" target="_blank" enabled="false"
 				ui:field="steemit" text="View post at steemit.com"></m:MaterialLink>
 			<m:MaterialDivider></m:MaterialDivider>
-			<m:MaterialLink style="font-size: 200%;" target="_blank" enabled="false"
-				ui:field="chainbb" text="View post at chainbb.com"></m:MaterialLink>
+<!-- 			<m:MaterialLink style="font-size: 200%;" target="_blank" enabled="false" -->
+<!-- 				ui:field="chainbb" text="View post at chainbb.com"></m:MaterialLink> -->
 			<m:MaterialDivider></m:MaterialDivider>
 			<m:MaterialLink style="font-size: 200%;" target="_blank" enabled="false"
 				ui:field="busyorg" text="View post at busy.org"></m:MaterialLink>

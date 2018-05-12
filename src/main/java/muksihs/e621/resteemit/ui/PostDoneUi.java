@@ -27,8 +27,8 @@ public class PostDoneUi extends EventBusComposite {
 	@UiField
 	protected MaterialLink steemit;
 
-	@UiField
-	protected MaterialLink chainbb;
+//	@UiField
+//	protected MaterialLink chainbb;
 
 	@UiField
 	protected MaterialLink busyorg;
@@ -60,8 +60,8 @@ public class PostDoneUi extends EventBusComposite {
 		String href = info.firstTag + "/" + "@" + info.author + "/" + info.permLink;
 		steemit.setHref("https://www.steemit.com/" + href);
 		steemit.setEnabled(true);
-		chainbb.setHref("https://chainbb.com/" + href);
-		chainbb.setEnabled(true);
+//		chainbb.setHref("https://chainbb.com/" + href);
+//		chainbb.setEnabled(true);
 		busyorg.setHref("https://www.busy.org/" + href);
 		busyorg.setEnabled(true);
 	}
