@@ -72,7 +72,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	private static final int MAX_TAGS_PER_POST = 15;
 	private static final String BENEFICIARY_ACCOUNT = "muksihs";
-	private static final Beneficiary BENEFICIARY = new Beneficiary(BENEFICIARY_ACCOUNT, 1);
+	private static final Beneficiary BENEFICIARY = new Beneficiary(BENEFICIARY_ACCOUNT, 10);
 	private static final String DEFAULT_USER = "default-user";
 	/**
 	 * A non-empirical and non-arbitrary number to skew lower usage E621 tags higher
@@ -85,6 +85,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	public E621ResteemitApp() {
 		extensionsWhitelist.addAll(Arrays.asList("png", "jpg", "gif", "jpeg"));
+		e621logout();
 	}
 
 	private static final int MAX_TAGS_PER_QUERY = 6;
@@ -515,9 +516,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		}
 		
 		AnchorElement muksihsLink = doc.createAnchorElement();
-		muksihsLink.setHref("http://muksihs.com/e621-resteemit/");
+		muksihsLink.setHref("http://e621.muksihs.com/e621-resteemit/");
 		muksihsLink.setTarget("_blank");
-		muksihsLink.appendChild(doc.createTextNode("http://muksihs.com/e621-resteemit/"));
+		muksihsLink.appendChild(doc.createTextNode("http://e621.muksihs.com/e621-resteemit/"));
 
 		ParagraphElement p1 = doc.createPElement();
 		p1.appendChild(doc.createTextNode("Curated using Muksihs' E621 Browser: "));
@@ -1150,8 +1151,24 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	};
 	private boolean initialPageLoad;
 
+	private void e621logout() {
+		MethodCallback<Void> noop = new MethodCallback<Void>() {
+			@Override
+			public void onSuccess(Method method, Void response) {
+				GWT.log("E621 logout done");
+			}
+
+			@Override
+			public void onFailure(Method method, Throwable exception) {
+				GWT.log("E621 logout done");
+			}
+		};
+		E621Api.api().logout(noop);
+	}
+	
 	@EventHandler
 	protected void fatalError(Event.FatalError event) {
+		e621logout();
 		new Timer() {
 			@Override
 			public void run() {
@@ -1490,8 +1507,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 			@Override
 			public void onFailure(Method method, Throwable exception) {
+				//getting access denied?
 				// try reloading everything from scratch
-				fatalError(method, exception);
+//				fatalError(method, exception);
 			}
 		};
 		if (tags.length() > 0) {

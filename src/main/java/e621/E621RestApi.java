@@ -7,9 +7,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
 import org.fusesource.restygwt.client.JSONP;
+import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 import org.fusesource.restygwt.client.Options;
 import org.fusesource.restygwt.client.RestService;
+
+import com.google.gwt.core.client.GWT;
 
 import e621.models.post.index.E621Post;
 import e621.models.post.tags.E621Tag;
@@ -58,12 +61,18 @@ public interface E621RestApi extends RestService {
 	@Path("tag/related.json")
 	@JSONP
 	void tagRelated(@QueryParam("tags") String tags, MethodCallback<Map<String, List<List<String>>>> callback);
-	
+
+	@Options(timeout = TIMEOUT)
+	@Path("user/logout.json")
+	@JSONP
+	void logout(MethodCallback<Void> noop);
+
 	@Options(timeout = TIMEOUT)
 	@Path("user/login.json")
 	@JSONP
-	void userLogin(@QueryParam("name")String name, @QueryParam("password") String password, MethodCallback<E621UserLoginResult> callback);
-	
+	void userLogin(@QueryParam("name") String name, @QueryParam("password") String password,
+			MethodCallback<E621UserLoginResult> callback);
+
 	@Options(timeout = TIMEOUT)
 	@Path("user/show.json")
 	@JSONP

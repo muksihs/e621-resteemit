@@ -6,7 +6,7 @@ apply plugin: 'eclipse-wtp'
 apply plugin: 'org.akhikhl.gretty'
 //apply plugin: 'maven'
 
-version = '20171201'
+version = '20180912'
 group = "muksihs"
 
 sourceCompatibility = 1.8
@@ -15,11 +15,6 @@ compileTestJava.options.encoding = 'UTF-8'
 
 farm {
 	webapp ':'
-}
-
-def RTJAR = '/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar';
-if (new File(RTJAR).exists()) {
-	compileJava.options.bootClasspath=RTJAR
 }
 
 buildscript {
