@@ -29,6 +29,7 @@ import e621.models.user.E621UserInfo;
 @Options(serviceRootKey = "E621")
 public interface E621RestApi extends RestService {
 	public static final int TIMEOUT = 15000;
+	public static final int SHORT_TIMEOUT = 1000;
 
 	@Options(timeout = TIMEOUT)
 	@Path("post/index.json")
@@ -57,7 +58,7 @@ public interface E621RestApi extends RestService {
 	@JSONP
 	void tagList(@QueryParam("page") int page, @QueryParam("limit") int limit, MethodCallback<List<Tag>> callback);
 
-	@Options(timeout = TIMEOUT)
+	@Options(timeout = SHORT_TIMEOUT)
 	@Path("tag/related.json")
 	@JSONP
 	void tagRelated(@QueryParam("tags") String tags, MethodCallback<Map<String, List<List<String>>>> callback);

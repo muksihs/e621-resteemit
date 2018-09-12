@@ -1027,6 +1027,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			DomGlobal.console.log("EXCEPTION: " + exception.getMessage());
 			DomGlobal.console.log(exception);
 			DomGlobal.console.log(method);
+			updateAvailableTagsDisplay();
 		}
 
 		@Override
@@ -1507,6 +1508,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 			@Override
 			public void onFailure(Method method, Throwable exception) {
+				fireEvent(new Event.LoadInitialPreviews());
 				//getting access denied?
 				// try reloading everything from scratch
 //				fatalError(method, exception);
