@@ -70,7 +70,7 @@ import steem.model.accountinfo.Posting;
 
 public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, ValueChangeHandler<String> {
 
-	private static final int MAX_TAGS_PER_POST = 15;
+	private static final int MAX_TAGS_PER_POST = 17;
 	private static final String BENEFICIARY_ACCOUNT = "muksihs";
 	private static final Beneficiary BENEFICIARY = new Beneficiary(BENEFICIARY_ACCOUNT, 10);
 	private static final String DEFAULT_USER = "default-user";
@@ -107,6 +107,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private PostPreview zoomPreview;
 
 	public static class TrendingTag {
+		public TrendingTag() {
+		}
+		public TrendingTag(String name) {
+			this.name=name;
+		}
 		public String name;
 		public int topPosts;
 		public int comments;
@@ -189,22 +194,24 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		List<TrendingTag> selectedTags;
 		boolean isSafe = !state.post.getRating().equals(E621Rating.EXPLICIT.getTag());
 		if (!isSafe) {
-			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 3);
+			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 5);
 			selectedTags = state.matchingSteemTags.subList(0, min);
-			TrendingTag nsfwTag = new TrendingTag();
-			nsfwTag.name = "nsfw";
+			TrendingTag yiffTag = new TrendingTag("yiff");
+			state.matchingSteemTags.add(yiffTag);
+			selectedTags.add(yiffTag);
+			TrendingTag nsfwTag = new TrendingTag("nsfw");
 			state.matchingSteemTags.add(nsfwTag);
 			selectedTags.add(nsfwTag);
 		} else {
-			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 2);
+			int min = Math.min(state.matchingSteemTags.size(), MAX_TAGS_PER_POST - 3);
 			selectedTags = state.matchingSteemTags.subList(0, min);
 		}
-		TrendingTag arttag = new TrendingTag();
-		arttag.name = "art";
+		TrendingTag arttag = new TrendingTag("art");
 		selectedTags.add(0, arttag);
-		TrendingTag e621tag = new TrendingTag();
-		e621tag.name = "e621";
+		TrendingTag e621tag = new TrendingTag("e621");
 		selectedTags.add(0, e621tag);
+		TrendingTag furryTag = new TrendingTag("furry");
+		selectedTags.add(0, furryTag);
 		state.tagsForPost = new ArrayList<>();
 		Iterator<TrendingTag> iter = selectedTags.iterator();
 		while (iter.hasNext()) {
