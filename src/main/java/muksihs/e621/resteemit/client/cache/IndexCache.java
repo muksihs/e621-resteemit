@@ -20,7 +20,7 @@ import com.google.gwt.storage.client.StorageMap;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 
 import blazing.chain.LZSEncoding;
-import e621.models.post.index.E621Post;
+import e621.models.posts.Post;
 import elemental2.dom.DomGlobal;
 
 public class IndexCache {
@@ -50,20 +50,20 @@ public class IndexCache {
 		prefix = LIST_E621POST + cachedPageSize + ":";
 	}
 
-	public String put(String key, List<E621Post> posts) {
+	public String put(String key, List<Post> posts) {
 		return _put(prefix + key, posts);
 	}
 
-	private String _put(String prefixedKey, List<E621Post> posts) {
+	private String _put(String prefixedKey, List<Post> posts) {
 		maybeStartExpiresCheck();
 		Cached value = new Cached(posts);
 		// cache older data longer than newer data...
 		long pastDateSec = 0l;
-		for (E621Post post : posts) {
+		for (Post post : posts) {
 			if (post.getCreatedAt() == null) {
 				continue;
 			}
-			long createdSec = post.getCreatedAt().getS();
+			long createdSec = 0l /* post.getCreatedAt().getS() */;
 			pastDateSec = Long.max(createdSec, pastDateSec);
 		}
 		long dateDiffMs = System.currentTimeMillis() - pastDateSec * 1000l;
@@ -155,12 +155,12 @@ public class IndexCache {
 		}
 	}
 
-	public List<E621Post> get(String key) {
+	public List<Post> get(String key) {
 		String prefixedKey = prefix + key;
 		return _get(prefixedKey);
 	}
 
-	private List<E621Post> _get(String prefixedKey) {
+	private List<Post> _get(String prefixedKey) {
 		String jsonString = _getJsonString(prefixedKey);
 		if (jsonString == null) {
 			return null;
@@ -171,7 +171,7 @@ public class IndexCache {
 				startExpiresCheck();
 				return null;
 			}
-			List<E621Post> posts = decoded.getPosts();
+			List<Post> posts = decoded.getPosts();
 			if (posts != null && !posts.isEmpty()) {
 				return posts;
 			}

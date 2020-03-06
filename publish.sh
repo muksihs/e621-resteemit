@@ -10,10 +10,10 @@ cd "$(dirname "$0")"
 z="$(pwd)"
 
 #automatic version bump
-version="$(date +%Y%m%d)"
-sed -i "s#<set-configuration-property name=\"version\" value=\"........\"/>#<set-configuration-property name=\"version\" value=\"$version\"/>#" ./src/main/resources/muksihs/e621/resteemit/e621resteemit.gwt.xml
-git add ./src/main/resources/muksihs/e621/resteemit/e621resteemit.gwt.xml || true
-git commit -a -m "autocommit on build" || true
+#version="$(date +%Y%m%d)"
+#sed -i "s#<set-configuration-property name=\"version\" value=\"........\"/>#<set-configuration-property name=\"version\" value=\"$version\"/>#" ./src/main/resources/muksihs/e621/resteemit/e621resteemit.gwt.xml
+#git add ./src/main/resources/muksihs/e621/resteemit/e621resteemit.gwt.xml || true
+#git commit -a -m "autocommit on build" || true
 
 #build
 gradle clean

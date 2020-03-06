@@ -1,7 +1,5 @@
 package muksihs.e621.resteemit.client;
 
-import java.util.List;
-
 import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 
@@ -10,7 +8,9 @@ import com.google.gwt.core.shared.GWT;
 
 import e621.E621Api;
 import e621.E621RestApi;
-import e621.models.post.index.E621Post;
+import e621.models.posts.E621Post;
+import e621.models.posts.E621PostsResponse;
+import e621.models.posts.Post;
 
 public class BasicApiTests implements ScheduledCommand, IsSdm {
 
@@ -18,16 +18,21 @@ public class BasicApiTests implements ScheduledCommand, IsSdm {
 	public void execute() {
 		GWT.log(this.getClass().getSimpleName());
 		E621RestApi api = E621Api.api();
-		MethodCallback<List<E621Post>> callback = new MethodCallback<List<E621Post>>() {
+		MethodCallback<E621PostsResponse> callback = new MethodCallback<E621PostsResponse>() {
 			@Override
-			public void onSuccess(Method method, List<E621Post> response) {
-				GWT.log("Raw Response Size: " + response.size());
-				for (E621Post post : response) {
+			public void onSuccess(Method method, E621PostsResponse response) {
+				if (response == null || response.getPosts() == null) {
+					GWT.log("null response.");
+					onFailure(method, new RuntimeException("null response"));
+					return;
+				}
+				GWT.log("Raw Response Size: " + response.getPosts().size());
+				for (Post post : response.getPosts()) {
 					GWT.log("id: " + post.getId());
 //					GWT.log("description: " + post.getDescription());
-					GWT.log("sample url: " + post.getSampleUrl());
-					GWT.log("file url: " + post.getFileUrl());
-					GWT.log("preview url: " + post.getPreviewUrl());
+					GWT.log("sample url: " + post.getSample().getUrl());
+					GWT.log("file url: " + post.getFile().getUrl());
+					GWT.log("preview url: " + post.getPreview().getUrl());
 					GWT.log("");
 				}
 			}

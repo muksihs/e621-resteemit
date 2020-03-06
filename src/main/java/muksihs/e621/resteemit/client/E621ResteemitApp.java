@@ -36,12 +36,13 @@ import com.google.web.bindery.event.shared.binder.EventHandler;
 import com.google.web.bindery.event.shared.binder.GenericEvent;
 
 import e621.E621Api;
-import e621.models.post.index.E621Post;
 import e621.models.post.tags.E621Tag;
 import e621.models.post.tags.E621TagTypes;
+import e621.models.posts.E621PostsResponse;
+import e621.models.posts.Post;
+import e621.models.posts.PostsResponse;
 import e621.models.tag.index.Tag;
 import elemental2.dom.DomGlobal;
-import muksihs.e621.resteemit.client.Event.SteemPost;
 import muksihs.e621.resteemit.client.cache.AccountCache;
 import muksihs.e621.resteemit.client.cache.IndexCache;
 import muksihs.e621.resteemit.client.cache.TagsCache;
@@ -220,7 +221,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		StringBuilder sb = new StringBuilder();
 		for (TrendingTag selectedTag : selectedTags) {
 			int tmp = (int) (selectedTag.weight * 100d);
-			sb.append(selectedTag.name + " [" + tmp + "/" + ((int) (selectedTag.totalPayouts / maxPayout * 100d))
+			sb.append(selectedTag.name + " [" + tmp + "/" + (int) (selectedTag.totalPayouts / maxPayout * 100d)
 					+ "], ");
 		}
 		DomGlobal.console.log(String.join(" ", state.tagsForPost));
@@ -277,7 +278,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	@EventHandler
 	protected void zoomImage(Event.ZoomImage event) {
-		this.zoomPreview = event.getPreview();
+		zoomPreview = event.getPreview();
 		fireEvent(new Event.ImageModal());
 	}
 
@@ -343,37 +344,28 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			GWT.log(e1.getMessage(), e1);
 			return;
 		}
-		SteemCallback<VoteResult> voteCb = new SteemCallback<VoteResult>() {
-			@Override
-			public void onResult(Map<String, String> error, VoteResult result) {
-			}
+		SteemCallback<VoteResult> voteCb = (error, result) -> {
 		};
-		SteemCallback<CommentResult> benifCb = new SteemCallback<CommentResult>() {
-			@Override
-			public void onResult(Map<String, String> error, CommentResult result) {
-				if (error != null) {
-					GWT.log("ERROR: " + error);
-					fireEvent(new Event.AlertMessage("ERROR: " + error.toString()));
-				}
-				mostRecent = new MostRecentPostInfo();
-				mostRecent.author = author;
-				mostRecent.firstTag = firstTag;
-				mostRecent.permLink = permLink;
-				fireEvent(new Event.PostDone());
+		SteemCallback<CommentResult> benifCb = (error, result) -> {
+			if (error != null) {
+				GWT.log("ERROR: " + error);
+				fireEvent(new Event.AlertMessage("ERROR: " + error.toString()));
+			}
+			mostRecent = new MostRecentPostInfo();
+			mostRecent.author = author;
+			mostRecent.firstTag = firstTag;
+			mostRecent.permLink = permLink;
+			fireEvent(new Event.PostDone());
+			fireEvent(new Event.Loading(false));
+		};
+		SteemCallback<CommentResult> commentCb = (error, result) -> {
+			if (error != null) {
 				fireEvent(new Event.Loading(false));
+				fireEvent(new Event.AlertMessage("ERROR: " + error.toString()));
 			}
-		};
-		SteemCallback<CommentResult> commentCb = new SteemCallback<CommentResult>() {
-			@Override
-			public void onResult(Map<String, String> error, CommentResult result) {
-				if (error != null) {
-					fireEvent(new Event.Loading(false));
-					fireEvent(new Event.AlertMessage("ERROR: " + error.toString()));
-				}
-				if (result != null) {
-					setBeneficiary(permLink, author, wif, benifCb);
-					upvoteOwnPost(username, permLink, wif, voteCb);
-				}
+			if (result != null) {
+				setBeneficiary(permLink, author, wif, benifCb);
+				upvoteOwnPost(username, permLink, wif, voteCb);
 			}
 		};
 		fireEvent(new Event.Loading(true));
@@ -713,7 +705,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			loggedIn = false;
 			fireEvent(new Event.LoginComplete(false));
 		} else {
-			fireEvent(new Event.Login<GenericEvent>(null));
+			fireEvent(new Event.Login<>(null));
 		}
 	}
 
@@ -744,71 +736,68 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			fireEvent(new Event.Loading(false));
 			return;
 		}
-		SteemCallbackArray<AccountInfo> cb = new SteemCallbackArray<AccountInfo>() {
-			@Override
-			public void onResult(Map<String, String> error, AccountInfo[] result) {
-				fireEvent(new Event.Loading(false));
-				if (error != null) {
-					if (!event.isSilent()) {
-						fireEvent(new Event.AlertMessage(error.toString()));
-					}
-					fireEvent(new Event.LoginComplete(false));
-					return;
+		SteemCallbackArray<AccountInfo> cb = (error, result) -> {
+			fireEvent(new Event.Loading(false));
+			if (error != null) {
+				if (!event.isSilent()) {
+					fireEvent(new Event.AlertMessage(error.toString()));
 				}
-				if (result.length == 0) {
-					if (!event.isSilent()) {
-						fireEvent(new Event.AlertMessage("Username not found!"));
-					}
-					fireEvent(new Event.LoginComplete(false));
-					return;
-				}
-				AccountInfo accountInfo = result[0];
-				if (accountInfo == null) {
-					fireEvent(new Event.LoginComplete(false));
-					return;
-				}
-				Posting posting = accountInfo.getPosting();
-				if (posting == null) {
-					fireEvent(new Event.LoginComplete(false));
-					return;
-				}
-				String[][] keyAuths = posting.getKeyAuths();
-				if (keyAuths == null || keyAuths.length == 0) {
-					fireEvent(new Event.LoginComplete(false));
-					return;
-				}
-				String[] keylist = keyAuths[0];
-				if (keylist == null || keylist.length == 0) {
-					fireEvent(new Event.LoginComplete(false));
-					return;
-				}
-				String publicWif = keylist[0];
-				try {
-					if (!SteemAuth.wifIsValid(event.getWif(), publicWif)) {
-						new AccountCache().remove(DEFAULT_USER);
-						if (!event.isSilent()) {
-							fireEvent(new Event.AlertMessage("THAT IS NOT YOUR PRIVATE POSTING KEY"));
-						}
-						fireEvent(new Event.LoginComplete(false));
-						return;
-					}
-				} catch (JavaScriptException e) {
-					DomGlobal.console.log(e.getMessage());
-					DomGlobal.console.log(e);
-					if (!event.isSilent()) {
-						fireEvent(new Event.AlertMessage(e.getMessage()));
-					}
-					fireEvent(new Event.LoginComplete(false));
-					return;
-				}
-				AccountCache cache = new AccountCache();
-				SteemPostingInfo info = new SteemPostingInfo();
-				info.setUsername(accountInfo.getName());
-				info.setWif(event.getWif());
-				cache.put(DEFAULT_USER, info);
-				fireEvent(new Event.LoginComplete(true));
-				DomGlobal.console.log("Logged in as: " + accountInfo.getName());
+				fireEvent(new Event.LoginComplete(false));
+				return;
 			}
+			if (result.length == 0) {
+				if (!event.isSilent()) {
+					fireEvent(new Event.AlertMessage("Username not found!"));
+				}
+				fireEvent(new Event.LoginComplete(false));
+				return;
+			}
+			AccountInfo accountInfo = result[0];
+			if (accountInfo == null) {
+				fireEvent(new Event.LoginComplete(false));
+				return;
+			}
+			Posting posting = accountInfo.getPosting();
+			if (posting == null) {
+				fireEvent(new Event.LoginComplete(false));
+				return;
+			}
+			String[][] keyAuths = posting.getKeyAuths();
+			if (keyAuths == null || keyAuths.length == 0) {
+				fireEvent(new Event.LoginComplete(false));
+				return;
+			}
+			String[] keylist = keyAuths[0];
+			if (keylist == null || keylist.length == 0) {
+				fireEvent(new Event.LoginComplete(false));
+				return;
+			}
+			String publicWif = keylist[0];
+			try {
+				if (!SteemAuth.wifIsValid(event.getWif(), publicWif)) {
+					new AccountCache().remove(DEFAULT_USER);
+					if (!event.isSilent()) {
+						fireEvent(new Event.AlertMessage("THAT IS NOT YOUR PRIVATE POSTING KEY"));
+					}
+					fireEvent(new Event.LoginComplete(false));
+					return;
+				}
+			} catch (JavaScriptException e) {
+				DomGlobal.console.log(e.getMessage());
+				DomGlobal.console.log(e);
+				if (!event.isSilent()) {
+					fireEvent(new Event.AlertMessage(e.getMessage()));
+				}
+				fireEvent(new Event.LoginComplete(false));
+				return;
+			}
+			AccountCache cache = new AccountCache();
+			SteemPostingInfo info = new SteemPostingInfo();
+			info.setUsername(accountInfo.getName());
+			info.setWif(event.getWif());
+			cache.put(DEFAULT_USER, info);
+			fireEvent(new Event.LoginComplete(true));
+			DomGlobal.console.log("Logged in as: " + accountInfo.getName());
 		};
 		fireEvent(new Event.Loading(true));
 		String username = event.getUsername();
@@ -832,7 +821,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 			}
 		};
 		if (!isLoggedIn()) {
-			fireEvent(new Event.Login<SteemPost>(event));
+			fireEvent(new Event.Login<>(event));
 		} else {
 			fireEvent(new Event.Loading(true));
 			E621Api.api().postTags(event.getPreview().getId(), cb);
@@ -1077,25 +1066,26 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private long savedPageStartId = 0;
 	private long prevBeforeId = 0;
 
-	private MethodCallback<List<E621Post>> onPostsLoaded = new MethodCallback<List<E621Post>>() {
+	private MethodCallback<E621PostsResponse> onPostsLoaded = new MethodCallback<E621PostsResponse>() {
 
 		@Override
-		public void onSuccess(Method method, List<E621Post> response) {
+		public void onSuccess(Method method, E621PostsResponse response) {
 			// do NOT alter response object, it screws up the cache if done!
-			final int responseSize = response.size();
+			final int responseSize = response.getPosts().size();
 			long pageStartId = 0;
 			long nextBeforeId = Long.MAX_VALUE;
-			for (E621Post post : response) {
+			for (Post post : response.getPosts()) {
 				nextBeforeId = Long.min(nextBeforeId, post.getId());
 				pageStartId = Long.max(pageStartId, post.getId());
 			}
 
 			List<PostPreview> previews = new ArrayList<>();
-			Iterator<E621Post> iter = response.iterator();
+			Iterator<Post> iter = response.getPosts().iterator();
 			while (iter.hasNext()) {
-				E621Post next = iter.next();
-				PostPreview preview = new PostPreview(next.getId(), next.getSampleUrl(), next.getFileUrl(),
-						next.getCreatedAt().getS(), next.getTags(), next.getRating(), next.getFileExt());
+				Post next = iter.next();
+				PostPreview preview = new PostPreview(next.getId(), next.getSample().getUrl(), next.getFile().getUrl(),
+						0l /* next.getCreatedAt() */, next.getTags().toString(), next.getRating(),
+						next.getFile().getExt());
 				previews.add(preview);
 			}
 			// remove previews already in the activeset
@@ -1124,7 +1114,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 			boolean moreAvailable = nextBeforeId > 0 && responseSize > 0;
 			int activePageEnd = (1 + activePage) * Consts.PREVIEWS_TO_SHOW;
-			if ((activeSet.size() < activePageEnd) && moreAvailable) {
+			if (activeSet.size() < activePageEnd && moreAvailable) {
 				final long beforeId;
 				if (nextBeforeId == pageStartId) {
 					beforeId = nextBeforeId - CACHED_PAGE_SIZE;
@@ -1160,6 +1150,9 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 	private boolean initialPageLoad;
 
 	private void e621logout() {
+		if (true) {
+			return;
+		}
 		MethodCallback<Void> noop = new MethodCallback<Void>() {
 			@Override
 			public void onSuccess(Method method, Void response) {
@@ -1284,7 +1277,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	protected void additionalPreviewsLoad(long beforeId) {
 		AlignedQuery q = align(beforeId);
-		List<E621Post> cached = INDEX_CACHE.get(q.cachedQueryKey);
+		List<Post> cached = INDEX_CACHE.get(q.cachedQueryKey);
 		if (cached == null) {
 			fireEvent(new Event.QuickMessage("Searching E621... " + q.beforeId));
 			E621Api.api().postIndex(q.query, (int) beforeId, CACHED_PAGE_SIZE, cacheIndexResponse(q.cachedQueryKey));
@@ -1307,7 +1300,7 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 
 	private long getAlignedBeforeId(final long _beforeId) {
 		long beforeId = _beforeId;
-		beforeId = (long) (Math.ceil((double) beforeId / (double) CACHED_PAGE_SIZE) * (double) CACHED_PAGE_SIZE);
+		beforeId = (long) (Math.ceil((double) beforeId / (double) CACHED_PAGE_SIZE) * CACHED_PAGE_SIZE);
 		return beforeId;
 	}
 
@@ -1394,11 +1387,11 @@ public class E621ResteemitApp implements ScheduledCommand, GlobalEventBus, Value
 		return query;
 	}
 
-	private MethodCallback<List<E621Post>> cacheIndexResponse(String cachedPostsKey) {
-		return new MethodCallback<List<E621Post>>() {
+	private MethodCallback<E621PostsResponse> cacheIndexResponse(String cachedPostsKey) {
+		return new MethodCallback<E621PostsResponse>() {
 
 			@Override
-			public void onSuccess(Method method, List<E621Post> response) {
+			public void onSuccess(Method method, E621PostsResponse response) {
 				// do NOT alter response object, it screws up the cache if done!
 				Scheduler.get().scheduleDeferred(() -> INDEX_CACHE.put(cachedPostsKey, response));
 				onPostsLoaded.onSuccess(method, response);
